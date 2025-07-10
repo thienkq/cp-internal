@@ -2,11 +2,37 @@
 
 This template is for creating a monorepo with shadcn/ui.
 
+
+File Structure
+```
+apps
+└── leave-request        # Leave requests app
+    ├── app
+    │   └── page.tsx
+    ├── components
+    │   └── login-form.tsx
+    ├── components.json
+    └── package.json
+packages
+└── ui          # Components for UI and dependencies are installed here.
+    ├── src
+    │   ├── components
+    │   │   └── button.tsx
+    │   ├── hooks
+    │   ├── lib
+    │   │   └── utils.ts
+    │   └── styles
+    │       └── globals.css
+    ├── components.json
+    └── package.json
+package.json
+turbo.json
+
+
+```
+
 ## Usage
 
-```bash
-pnpm dlx shadcn@latest init
-```
 
 ## Adding components
 
