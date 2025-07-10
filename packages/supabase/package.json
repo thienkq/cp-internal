@@ -1,0 +1,24 @@
+{
+    "name": "@workspace/supabase",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "private": true,
+    "scripts": {
+      "build": "tsc",
+      "dev": "tsc --watch",
+      "lint": "eslint src"
+    },
+    "dependencies": {
+      "@supabase/supabase-js": "latest",
+      "@supabase/ssr": "latest"
+    },
+    "peerDependencies": {
+      "next": "*"
+    },
+    "devDependencies": {
+      "@workspace/eslint-config": "workspace:*",
+      "@workspace/typescript-config": "workspace:*",
+      "typescript": "5.8.2"
+    }
+  } 
