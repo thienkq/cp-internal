@@ -31,11 +31,6 @@ before update on public.signup_email_domains
 for each row
 execute procedure public.update_signup_email_domains_updated_at();
 
--- Seed example data
-insert into public.signup_email_domains (domain, type, reason) values
-  ('coderpush.com', 'allow', 'Internal signups')
-on conflict (domain) do nothing;
-
 -- Create the function
 create or replace function public.hook_restrict_signup_by_email_domain(event jsonb)
 returns jsonb

@@ -1,20 +1,15 @@
-import { AuthButton } from "@/components/auth-button"
-import { Card, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { cn } from "@workspace/ui/lib/utils"
-import { FileText, Activity, Book } from "lucide-react"
-import type { LucideIcon } from "lucide-react"
+import { AuthButton } from "@/components/auth-button";
+import { Card, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { cn } from "@workspace/ui/lib/utils";
+import { FileText, Activity, Book } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { cardColors, getCardStyle } from "@/lib/utils";
 
 const cardData: { title: string; Icon: LucideIcon }[] = [
   { title: "Leave Request", Icon: FileText },
   { title: "Pulse", Icon: Activity },
   { title: "Docs", Icon: Book },
-]
-
-const cardStyles = [
-  "bg-duo-green text-white border-b-8 border-[var(--duo-green-dark)] hover:brightness-105",
-  "bg-duo-blue text-white border-b-8 border-[var(--duo-blue-dark)] hover:brightness-105",
-  "bg-duo-purple text-white border-b-8 border-[var(--duo-purple-dark)] hover:brightness-105",
-]
+];
 
 export default function Page() {
   return (
@@ -38,7 +33,7 @@ export default function Page() {
               key={title}
               className={cn(
                 "group rounded-xl p-6 transition-all duration-200 ease-in-out hover:-translate-y-2 cursor-pointer flex flex-col items-center justify-center",
-                cardStyles[index],
+                getCardStyle(cardColors[index % cardColors.length] ?? "green")
               )}
             >
               <CardHeader className="flex flex-col items-center gap-4">
@@ -50,5 +45,5 @@ export default function Page() {
         </div>
       </main>
     </div>
-  )
+  );
 }
