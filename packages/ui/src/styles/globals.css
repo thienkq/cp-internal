@@ -41,6 +41,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --duo-green: oklch(0.795 0.22 145.8);
+  --duo-blue: oklch(0.706 0.17 208.5);
+  --duo-red: oklch(0.662 0.22 23.9);
+  --duo-yellow: oklch(0.86 0.2 98.2);
+  --duo-purple: oklch(0.74 0.17 292.5);
+  --duo-green-dark: oklch(0.65 0.22 145.8);
+  --duo-blue-dark: oklch(0.55 0.17 208.5);
+  --duo-purple-dark: oklch(0.6 0.17 292.5);
+  --page-background: oklch(0.98 0.006 238.8);
 }
 
 .dark {
@@ -76,6 +85,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+  --duo-green: oklch(0.795 0.22 145.8);
+  --duo-blue: oklch(0.706 0.17 208.5);
+  --duo-red: oklch(0.662 0.22 23.9);
+  --duo-yellow: oklch(0.86 0.2 98.2);
+  --duo-purple: oklch(0.74 0.17 292.5);
+  --duo-green-dark: oklch(0.65 0.22 145.8);
+  --duo-blue-dark: oklch(0.55 0.17 208.5);
+  --duo-purple-dark: oklch(0.6 0.17 292.5);
+  --page-background: oklch(0.145 0 0);
 }
 
 @theme inline {
@@ -115,6 +133,15 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-duo-green: var(--duo-green);
+  --color-duo-blue: var(--duo-blue);
+  --color-duo-red: var(--duo-red);
+  --color-duo-yellow: var(--duo-yellow);
+  --color-duo-purple: var(--duo-purple);
+  --color-duo-green-dark: var(--duo-green-dark);
+  --color-duo-blue-dark: var(--duo-blue-dark);
+  --color-duo-purple-dark: var(--duo-purple-dark);
+  --color-page-background: var(--page-background);
 }
 
 @layer base {
@@ -123,5 +150,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-color: var(--page-background);
+    background-image: radial-gradient(var(--border) 0.5px, transparent 0);
+    background-size: 20px 20px;
   }
 }

@@ -1,5 +1,6 @@
 import { AuthButton } from "@/components/auth-button"
 import { Card, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { cn } from "@workspace/ui/lib/utils"
 import { FileText, Activity, Book } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -9,26 +10,40 @@ const cardData: { title: string; Icon: LucideIcon }[] = [
   { title: "Docs", Icon: Book },
 ]
 
+const cardStyles = [
+  "bg-duo-green text-white border-b-8 border-[var(--duo-green-dark)] hover:brightness-105",
+  "bg-duo-blue text-white border-b-8 border-[var(--duo-blue-dark)] hover:brightness-105",
+  "bg-duo-purple text-white border-b-8 border-[var(--duo-purple-dark)] hover:brightness-105",
+]
+
 export default function Page() {
   return (
     <div className="min-h-svh flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-8 py-4 border-b">
-        <span className="text-lg font-semibold">CoderPush</span>
+      <header className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 bg-background/80 backdrop-blur-sm shadow-sm">
+        <span className="text-2xl font-bold text-foreground">CoderPush</span>
         <AuthButton />
       </header>
       {/* Main Content */}
-      <main className="flex flex-1 flex-col items-center justify-center gap-8">
-        <h1 className="text-3xl font-bold">Welcome to CoderPush</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
-          {cardData.map(({ title, Icon }) => (
+      <main className="flex flex-1 flex-col items-center justify-center gap-10 text-center px-4">
+        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
+          CoderPush Internal Tools
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-2xl">
+          Your central hub for internal tools at CoderPush.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+          {cardData.map(({ title, Icon }, index) => (
             <Card
               key={title}
-              className="items-center text-center border transition-transform duration-200 hover:shadow-lg hover:scale-105 cursor-pointer p-3 rounded-lg"
+              className={cn(
+                "group rounded-xl p-6 transition-all duration-200 ease-in-out hover:-translate-y-2 cursor-pointer flex flex-col items-center justify-center",
+                cardStyles[index],
+              )}
             >
-              <CardHeader className="flex flex-col items-center gap-2">
-                <Icon className="size-10 text-primary mb-2" />
-                <CardTitle>{title}</CardTitle>
+              <CardHeader className="flex flex-col items-center gap-4">
+                <Icon className="size-16 transition-transform duration-200 group-hover:scale-110" />
+                <CardTitle className="text-2xl font-bold">{title}</CardTitle>
               </CardHeader>
             </Card>
           ))}
