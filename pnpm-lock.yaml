@@ -26,12 +26,6 @@ importers:
 
   apps/leave-requests:
     dependencies:
-      '@supabase/ssr':
-        specifier: latest
-        version: 0.6.1(@supabase/supabase-js@2.50.5)
-      '@supabase/supabase-js':
-        specifier: latest
-        version: 2.50.5
       '@workspace/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
