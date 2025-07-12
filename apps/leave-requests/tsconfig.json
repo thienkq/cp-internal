@@ -5,6 +5,7 @@
     "jsx": "preserve",
     "paths": {
       "@/*": ["./*"],
+      "@/types/*": ["./types/*"],
       "@workspace/ui/*": ["../../packages/ui/src/*"]
     },
     "plugins": [
