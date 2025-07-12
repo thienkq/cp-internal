@@ -29,6 +29,14 @@ export async function GET(request: Request) {
     }
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-error`)
+  // Forward error and error_description as query params if present
+  const error = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
+  let errorUrl = `${origin}/auth/auth-error`
+  const params = []
+  if (error) params.push(`error=${encodeURIComponent(error)}`)
+  if (errorDescription) params.push(`error_description=${encodeURIComponent(errorDescription)}`)
+  if (params.length > 0) errorUrl += `?${params.join('&')}`
+
+  return NextResponse.redirect(errorUrl)
 }

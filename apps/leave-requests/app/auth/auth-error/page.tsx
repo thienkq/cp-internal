@@ -1,6 +1,12 @@
+"use client";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function AuthError() {
+function AuthErrorContent() {
+  const searchParams = useSearchParams();
+  const errorDescription = searchParams?.get("error_description");
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <div className="p-10 bg-white rounded-lg shadow-md text-center">
@@ -8,9 +14,15 @@ export default function AuthError() {
           Authentication Error
         </h1>
         <p className="mt-4 text-gray-700">
-          Something went wrong during the authentication process.
-          <br />
-          Please try again.
+          {errorDescription ? (
+            <>{decodeURIComponent(errorDescription)}</>
+          ) : (
+            <>
+              Something went wrong during the authentication process.
+              <br />
+              Please try again.
+            </>
+          )}
         </p>
         <Link
           href="/auth/login"
@@ -20,5 +32,13 @@ export default function AuthError() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense>
+      <AuthErrorContent />
+    </Suspense>
   );
 } 
