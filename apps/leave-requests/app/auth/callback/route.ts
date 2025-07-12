@@ -6,10 +6,10 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   // if "next" is in param, use it as the redirect URL
-  let next = searchParams.get('next') ?? '/'
+  let next = searchParams.get('next') ?? '/dashboard'
   if (!next.startsWith('/')) {
     // if "next" is not a relative URL, use the default
-    next = '/'
+    next = '/dashboard'
   }
 
   if (code) {
@@ -29,6 +29,14 @@ export async function GET(request: Request) {
     }
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-error`)
+  // Forward error and error_description as query params if present
+  const error = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
+  let errorUrl = `${origin}/auth/auth-error`
+  const params = []
+  if (error) params.push(`error=${encodeURIComponent(error)}`)
+  if (errorDescription) params.push(`error_description=${encodeURIComponent(errorDescription)}`)
+  if (params.length > 0) errorUrl += `?${params.join('&')}`
+
+  return NextResponse.redirect(errorUrl)
 }

@@ -12,8 +12,17 @@ internal/
 │   └── leave-requests/      # Next.js app for leave requests
 │       ├── app/
 │       │   ├── page.tsx
-│       │   └── ...
+│       │   ├── dashboard/
+│       │   │   └── layout.tsx
+│       │   └── auth/
+│       │       └── login/
 │       ├── components/
+│       │   ├── layout/
+│       │   │   └── top-navbar.tsx
+│       │   ├── user-dropdown-menu.tsx
+│       │   └── auth-button.tsx
+│       ├── lib/
+│       │   └── utils.ts
 │       ├── components.json
 │       └── package.json
 ├── packages/
@@ -29,7 +38,8 @@ internal/
 │   │   │   ├── index.ts
 │   │   │   ├── client.ts
 │   │   │   ├── server.ts
-│   │   │   └── hooks/
+│   │   │   ├── auth.ts      # Authentication utilities
+│   │   │   └── middleware.ts
 │   │   └── package.json
 │   ├── eslint-config/       # Shared ESLint config
 │   └── typescript-config/   # Shared TypeScript config
@@ -47,7 +57,7 @@ internal/
 ## Packages
 
 - **ui**: Shared React component library (shadcn/ui, Tailwind CSS)
-- **supabase**: Supabase client/server utilities
+- **supabase**: Supabase client/server utilities with authentication helpers
 - **@workspace/eslint-config**: Shared ESLint config
 - **@workspace/typescript-config**: Shared TypeScript config
 
@@ -75,10 +85,25 @@ For the `leave-requests` app:
 ```bash
 cd apps/leave-requests
 cp .env.example .env
-# Edit .env as needed for database, email, etc.
 ```
 
-### 4. Start local Supabase (if using Supabase)
+Set up google login via supabase
+
+
+```
+cd apps/leave-request/supabase
+```
+
+Edit `.env` with your Supabase configuration:
+
+```
+SUPABASE_AUTH_GOOGLE_CLIENT_ID=your_google_client_id
+SUPABASE_AUTH_GOOGLE_SECRET=your_google_secret
+```
+
+### 4. Start local Supabase (if using Supabase CLI)
+
+Prerequisite: Supabase CLI version >= 2.30.4 to support hooks
 
 ```bash
 supabase start
