@@ -28,7 +28,10 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: "Role",
-    filterFn: "equals",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    },
     enableSorting: false,
     cell: ({ row }) => (
       <Badge variant={roleColors[row.original.role] || "default"}>
@@ -43,7 +46,10 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "gender",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Gender" />,
-    filterFn: "equals",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    },
     cell: ({ row }) => {
       const gender = (row.original.gender || "").toLowerCase();
       if (!gender) return null;

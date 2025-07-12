@@ -1,6 +1,5 @@
 import { createServerClient } from "@workspace/supabase";
 import { DataTable } from "@/components/users/tables/data-table";
-import type { User } from "@/types";
 import { PageContainer } from "@workspace/ui/components/page-container";
 
 export default async function AdminUserListPage() {
@@ -17,7 +16,7 @@ export default async function AdminUserListPage() {
   return (
     <PageContainer>
       <h1 className="text-2xl font-bold mb-4">User Management</h1>
-      <DataTable data={users as User[]} />
+      <DataTable data={users} />
     </PageContainer>
   );
 }
