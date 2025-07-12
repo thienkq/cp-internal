@@ -26,16 +26,16 @@ export function DataTableToolbar<TData>({
                 onChange={event => table.getColumn("email")?.setFilterValue(event.target.value)}
                 className="max-w-xs"
             />
-            <DataTableFacetedFilter
+            {table.getColumn("gender") && (<DataTableFacetedFilter
                 column={table.getColumn("gender")}
                 title="Gender"
                 options={genderOptions}
-            />
-            <DataTableFacetedFilter
+              />)}
+            {table.getColumn("role") && (<DataTableFacetedFilter
                 column={table.getColumn("role")}
                 title="Role"
                 options={roleOptions}
-            />
+            />)}
             <Button
                 type="button"
                 variant="outline"
