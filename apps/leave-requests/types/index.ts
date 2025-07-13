@@ -8,6 +8,9 @@ export interface User {
   end_date: string | null;
   gender: string;
   manager_id: string | null;
+  phone?: string;
+  date_of_birth?: string;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 } 

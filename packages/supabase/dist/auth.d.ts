@@ -13,7 +13,7 @@ import type { User } from "@supabase/supabase-js";
  */
 export declare function getCurrentUser(): Promise<{
     user: User | null;
-    supabase: import("@supabase/supabase-js").SupabaseClient<any, "public", any, any>;
+    supabase: import("@supabase/supabase-js").SupabaseClient<any, "public", any>;
 }>;
 /**
  * Get the current authenticated user (without the Supabase client)
@@ -45,6 +45,6 @@ export declare function getUser(): Promise<User | null>;
  */
 export declare function requireAuth(redirectTo?: string): Promise<{
     user: User;
-    supabase: import("@supabase/supabase-js").SupabaseClient<any, "public", any, any>;
+    supabase: import("@supabase/supabase-js").SupabaseClient<any, "public", any>;
 }>;
 //# sourceMappingURL=auth.d.ts.map

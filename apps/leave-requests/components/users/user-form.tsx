@@ -1,21 +1,18 @@
 "use client";
-import { useState } from "react";
 import type { User } from "@/types";
 import { Input } from "@workspace/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { Button } from "@workspace/ui/components/button";
 import { createBrowserClient } from "@workspace/supabase";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Label } from "@workspace/ui/components/label";
+import { DatePicker } from "./date-picker";
+import { UserSelect } from "./user-select";
+import { toast } from "sonner";
+import { genderOptions } from "./user-constants";
+import { userSchema, getUserFormDefaults, normalizeUserFormData, UserFormValues } from "./user-form.utils";
 
-const roleOptions = [
-  { label: "Employee", value: "employee" },
-  { label: "Manager", value: "manager" },
-  { label: "Admin", value: "admin" },
-];
-const genderOptions = [
-  { label: "Male", value: "male" },
-  { label: "Female", value: "female" },
-  { label: "Other", value: "other" },
-];
 
 type UserFormProps = {
   initialData: User | null;
@@ -23,101 +20,132 @@ type UserFormProps = {
 };
 
 export default function UserForm({ initialData, pageTitle }: UserFormProps) {
-  const [form, setForm] = useState<Partial<User>>({
-    email: initialData?.email || "",
-    full_name: initialData?.full_name || "",
-    role: initialData?.role || "employee",
-    gender: initialData?.gender || undefined,
-    position: initialData?.position || "",
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+    watch,
+    control,
+  } = useForm<UserFormValues>({
+    resolver: zodResolver(userSchema),
+    defaultValues: getUserFormDefaults(initialData),
   });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  const handleChange = (field: keyof User, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+  const onSubmit = async (data: UserFormValues) => {
     const supabase = createBrowserClient();
+    const normalizedData = normalizeUserFormData(data);
     let res;
     if (initialData) {
-      // Update existing user
-      res = await supabase.from("users").update(form).eq("id", initialData.id);
+      res = await supabase.from("users").update(normalizedData).eq("id", initialData.id).select();
     } else {
-      // Add new user
-      res = await supabase.from("users").insert([form]);
+      res = await supabase.from("users").insert([normalizedData]).select();
     }
-    if (res.error) setMessage(res.error.message);
-    else setMessage("Saved!");
-    setLoading(false);
+    if (res.error) {
+      toast.error("Failed to save user.", { description: res.error.message });
+      return;
+    }
+    if (!res.data || res.data.length === 0) {
+      toast.error("Error: Operation failed.", { description: "The user may not exist or you may not have permission." });
+      return;
+    }
+    toast.success("User saved successfully!");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="mx-auto space-y-4">
       <h2 className="text-xl font-bold mb-2">{pageTitle}</h2>
-      <div>
-        <label className="block mb-1 text-sm font-medium">Email</label>
-        <Input
-          value={form.email}
-          onChange={e => handleChange("email", e.target.value)}
-          required
-          disabled={!!initialData}
-        />
+      {/* Personal Info Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label className="block mb-1 text-sm font-medium">Full Name</Label>
+            <Input {...register("full_name")} />
+            {errors.full_name && <div className="text-red-600">{errors.full_name.message}</div>}
+          </div>
+          <div>
+            <Label className="block mb-1 text-sm font-medium">Email</Label>
+            <Input {...register("email")} disabled={!!initialData} />
+            {errors.email && <div className="text-red-600">{errors.email.message}</div>}
+          </div>
+          <div>
+            <Label className="block mb-1 text-sm font-medium">Gender</Label>
+            <Select
+              value={watch("gender")}
+              onValueChange={value => setValue("gender", value as "male" | "female" | undefined)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Gender" />
+              </SelectTrigger>
+              <SelectContent>
+                {genderOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.gender && <div className="text-red-600">{errors.gender.message}</div>}
+          </div>
+          <Controller
+            control={control}
+            name="date_of_birth"
+            render={({ field }) => (
+              <DatePicker
+                label="Date of Birth"
+                value={field.value}
+                onChange={field.onChange}
+                id="date_of_birth"
+                error={errors.date_of_birth?.message}
+              />
+            )}
+          />
+          <div>
+            <Label className="block mb-1 text-sm font-medium">Phone</Label>
+            <Input {...register("phone")} />
+            {errors.phone && <div className="text-red-600">{errors.phone.message}</div>}
+          </div>
+        </div>
       </div>
-      <div>
-        <label className="block mb-1 text-sm font-medium">Full Name</label>
-        <Input
-          value={form.full_name}
-          onChange={e => handleChange("full_name", e.target.value)}
-          required
-        />
+      {/* Work Info Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-4">Working Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <UserSelect
+              value={watch("manager_id") || undefined}
+              onChange={value => setValue("manager_id", value)}
+              excludeUserId={initialData?.id}
+              label="Manager"
+              placeholder="Select manager"
+              disabled={isSubmitting}
+            />
+            {errors.manager_id && <div className="text-red-600">{errors.manager_id.message}</div>}
+          </div>
+          <div>
+            <Label className="block mb-1 text-sm font-medium">Position</Label>
+            <Input {...register("position")} />
+            {errors.position && <div className="text-red-600">{errors.position.message}</div>}
+          </div>
+          <Controller
+            control={control}
+            name="start_date"
+            render={({ field }) => (
+              <DatePicker
+                label="Start Date"
+                value={field.value}
+                onChange={field.onChange}
+                id="start_date"
+                error={errors.start_date?.message}
+              />
+            )}
+          />
+        </div>
       </div>
-      <div>
-        <label className="block mb-1 text-sm font-medium">Role</label>
-        <Select
-          value={form.role}
-          onValueChange={value => handleChange("role", value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Role" />
-          </SelectTrigger>
-          <SelectContent>
-            {roleOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <label className="block mb-1 text-sm font-medium">Gender</label>
-        <Select
-          value={form.gender}
-          onValueChange={value => handleChange("gender", value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Gender" />
-          </SelectTrigger>
-          <SelectContent>
-            {genderOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <label className="block mb-1 text-sm font-medium">Position</label>
-        <Input
-          value={form.position}
-          onChange={e => handleChange("position", e.target.value)}
-        />
-      </div>
-      <Button type="submit" disabled={loading} className="w-full mt-4">
-        {loading ? "Saving..." : "Save"}
+      <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto mt-4">
+        {isSubmitting ? "Saving..." : "Save"}
       </Button>
-      {message && <div className="text-green-600 mt-2">{message}</div>}
     </form>
   );
 } 
