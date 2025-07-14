@@ -8,6 +8,9 @@ create table public.users (
   end_date date,
   gender text,
   position text,
+  phone text,                
+  date_of_birth date,        
+  is_active boolean default true, 
   manager_id uuid references public.users(id),
   created_at timestamptz default now(),
   updated_at timestamptz default now()

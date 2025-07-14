@@ -13,11 +13,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   // 2. Fetch the user's role from your users table
-  const { data: userData } = await supabase
+  const { data: userData, error } = await supabase
     .from("users")
     .select("role")
     .eq("id", user.id)
     .single();
+
+  if (error) {
+    console.error("Error fetching user data:", error);
+    notFound();
+  }
 
   if (userData?.role !== "admin") {
     notFound(); // Not an admin, show 404
