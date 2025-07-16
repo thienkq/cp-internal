@@ -19,8 +19,8 @@ import { Button } from "@workspace/ui/components/button"
 
 const navigationItems = [
   {
-    title: "Dashboard",
-    url: "/",
+    title: "My Profile",
+    url: "/dashboard/profile",
     icon: Home,
   },
   {

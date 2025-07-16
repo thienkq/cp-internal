@@ -25,5 +25,5 @@ export default async function UserViewPage({ userId }: TUserViewPageProps) {
     pageTitle = "Edit User";
   }
 
-  return <UserForm initialData={user} pageTitle={pageTitle} />;
+  return <UserForm initialData={user} pageTitle={pageTitle} canEditWorkInfo={true} />;
 }
