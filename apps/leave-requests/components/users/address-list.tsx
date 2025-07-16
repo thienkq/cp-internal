@@ -103,6 +103,14 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
     setOpen(false);
   };
 
+  // Sort addresses: primary first, then by created_at descending
+  const sortedAddresses = [...addresses].sort((a, b) => {
+    if (a.is_primary) return -1;
+    if (b.is_primary) return 1;
+    // Optional: sort by created_at descending
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  });
+
   return (
     <div>
       <Button onClick={handleAdd} className="mb-4" disabled={loading || fetching}>Add Address</Button>
@@ -117,13 +125,19 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
         <div className="text-gray-500 mb-4">No addresses found. Add your first address!</div>
       )}
       <ul className="space-y-4">
-        {addresses.map(addr => (
+        {sortedAddresses.map(addr => (
           <li key={addr.id} className="border p-4 rounded flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <div>{addr.address_line}</div>
+              <div className="flex items-center gap-2">
+                <span>{addr.address_line}</span>
+                {addr.is_primary && (
+                  <span className="inline-block px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                    Primary
+                  </span>
+                )}
+              </div>
               <div>{addr.city}{addr.state && ", " + addr.state}{addr.postal_code && ", " + addr.postal_code}</div>
               <div>{addr.country}</div>
-              {addr.is_primary && <span className="text-green-600 font-semibold">Primary</span>}
             </div>
             <div className="flex gap-2 mt-2 md:mt-0">
               <Button size="sm" variant="outline" onClick={() => handleEdit(addr)} disabled={loading || fetching}>Edit</Button>
