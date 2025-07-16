@@ -17,9 +17,10 @@ import { userSchema, getUserFormDefaults, normalizeUserFormData, UserFormValues 
 type UserFormProps = {
   initialData: User | null;
   pageTitle: string;
+  canEditWorkInfo?: boolean; // default false
 };
 
-export default function UserForm({ initialData, pageTitle }: UserFormProps) {
+export default function UserForm({ initialData, pageTitle, canEditWorkInfo = false }: UserFormProps) {
   const {
     register,
     handleSubmit,
@@ -125,20 +126,29 @@ export default function UserForm({ initialData, pageTitle }: UserFormProps) {
           </div>
           <div>
             <Label className="block mb-1 text-sm font-medium">Position</Label>
-            <Input {...register("position")} />
+            <Input {...register("position")} disabled={isSubmitting} />
             {errors.position && <div className="text-red-600">{errors.position.message}</div>}
           </div>
           <Controller
             control={control}
             name="start_date"
             render={({ field }) => (
-              <DatePicker
-                label="Start Date"
-                value={field.value}
-                onChange={field.onChange}
-                id="start_date"
-                error={errors.start_date?.message}
-              />
+              canEditWorkInfo ? (
+                <DatePicker
+                  label="Start Date"
+                  value={field.value}
+                  onChange={field.onChange}
+                  id="start_date"
+                  error={errors.start_date?.message}
+                />
+              ) : (
+                <div>
+                  <Label className="block mb-1 text-sm font-medium">Start Date</Label>
+                  <div className="px-3 py-2 border rounded bg-gray-100 text-gray-700">
+                    {field.value ? new Date(field.value).toLocaleDateString() : "Not set"}
+                  </div>
+                </div>
+              )
             )}
           />
         </div>

@@ -1,5 +1,4 @@
 import { getUser } from "@workspace/supabase"
-
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { TopNavbar } from "@/components/layout/top-navbar"
 import { SidebarProvider, SidebarInset } from "@workspace/ui/components/sidebar"
