@@ -33,11 +33,15 @@ export const columns: ColumnDef<User>[] = [
       return filterValue.includes(row.getValue(columnId));
     },
     enableSorting: false,
-    cell: ({ row }) => (
-      <Badge variant={roleColors[row.original.role] || "default"}>
-        {row.original.role.charAt(0).toUpperCase() + row.original.role.slice(1)}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const role = row.original.role || "";
+      if (!role) return null;
+      return (
+        <Badge variant={roleColors[role] || "default"}>
+          {role.charAt(0).toUpperCase() + role.slice(1)}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "position",
@@ -51,10 +55,11 @@ export const columns: ColumnDef<User>[] = [
       return filterValue.includes(row.getValue(columnId));
     },
     cell: ({ row }) => {
-      const gender = (row.original.gender || "").toLowerCase();
+      const gender = row.original.gender || "";
       if (!gender) return null;
+      const genderLower = gender.toLowerCase();
       return (
-        <Badge variant={genderColors[gender] || "default"}>
+        <Badge variant={genderColors[genderLower] || "default"}>
           {gender.charAt(0).toUpperCase() + gender.slice(1)}
         </Badge>
       );

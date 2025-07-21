@@ -4,7 +4,7 @@ import { X } from "lucide-react"
 import { Button } from "@workspace/ui/components/button";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import type { Table } from "@tanstack/react-table";
-import { DataTableViewOptions } from "./data-table-view-options";
+import { DataTableViewOptions } from "../../common/data-table-view-options";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
