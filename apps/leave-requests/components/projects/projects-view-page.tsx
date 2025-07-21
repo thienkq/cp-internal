@@ -6,15 +6,7 @@ import ProjectForm from "@/components/projects/project-form";
 import { Dialog, DialogContent, DialogTitle } from "@workspace/ui/components/dialog";
 import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
-
-type Project = {
-  id: string;
-  name: string;
-  is_billable: boolean;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
+import { Project } from "@/types";
 
 interface ProjectsClientProps {
   initialProjects: Project[];

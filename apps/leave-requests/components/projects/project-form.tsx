@@ -7,6 +7,7 @@ import { Switch } from "@workspace/ui/components/switch";
 import { toast } from "sonner";
 import { createBrowserClient } from "@workspace/supabase";
 import { useEffect } from "react";
+import { Project } from "@/types";
 
 export type ProjectFormValues = {
   name: string;
@@ -15,7 +16,7 @@ export type ProjectFormValues = {
 };
 
 type ProjectFormProps = {
-  initialData: any | null;
+  initialData: Project | null;
   onSuccess: () => void;
   onCancel: () => void;
 };

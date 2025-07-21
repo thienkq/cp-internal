@@ -4,14 +4,16 @@ import { DataTable } from "../common/data-table";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import { Switch } from "@workspace/ui/components/switch";
+import { Project } from "@/types";
 
-type Project = {
-  id: string;
-  name: string;
-  is_billable: boolean;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
+// Reusable boolean filter function for handling string-to-boolean conversion
+const booleanFilterFn = (row: any, columnId: string, filterValue: any) => {
+  if (!filterValue || filterValue.length === 0) return true;
+  const cellValue = row.getValue(columnId) as boolean;
+  return filterValue.some((value: string) => {
+    const boolValue = value === "true";
+    return cellValue === boolValue;
+  });
 };
 
 interface ProjectTableProps {
@@ -32,14 +34,7 @@ export default function ProjectTable({ data, onEdit, onToggleActive }: ProjectTa
       cell: ({ row }) => (
         row.original.is_billable ? <Badge variant="default">Billable</Badge> : <Badge variant="secondary">Non-billable</Badge>
       ),
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as boolean;
-        return filterValue.some((value: string) => {
-          const boolValue = value === "true";
-          return cellValue === boolValue;
-        });
-      },
+      filterFn: booleanFilterFn,
     },
     {
       header: "Active",
@@ -47,14 +42,7 @@ export default function ProjectTable({ data, onEdit, onToggleActive }: ProjectTa
       cell: ({ row }) => (
         <Switch checked={row.original.is_active} onCheckedChange={val => onToggleActive(row.original, val)} />
       ),
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as boolean;
-        return filterValue.some((value: string) => {
-          const boolValue = value === "true";
-          return cellValue === boolValue;
-        });
-      },
+      filterFn: booleanFilterFn,
     },
     {
       header: "Actions",

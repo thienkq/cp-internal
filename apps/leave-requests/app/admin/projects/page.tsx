@@ -10,7 +10,7 @@ export default async function AdminProjectsPage() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return <div className="text-red-600">Error loading projects: {error.message}</div>;
+    return <div className="text-red-600">Failed to load projects. Please try again later.</div>;
   }
 
   return (
