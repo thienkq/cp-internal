@@ -30,7 +30,7 @@ const navigationItems = [
   },
   {
     title: "My Projects",
-    url: "/my-assignments",
+    url: "/dashboard/my-assignments",
     icon: Briefcase,
   },
   {
