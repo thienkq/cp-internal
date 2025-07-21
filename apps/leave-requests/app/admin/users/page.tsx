@@ -15,7 +15,7 @@ export default async function AdminUserListPage() {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-bold mb-4">User Management</h1>
+      <h1 className="text-2xl font-bold mb-4">Users</h1>
       <DataTable data={users} />
     </PageContainer>
   );

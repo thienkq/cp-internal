@@ -28,3 +28,12 @@ export type Address = {
   created_at?: string;
   updated_at?: string;
 }; 
+
+export type Project = {
+  id: string;
+  name: string;
+  is_billable: boolean;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
