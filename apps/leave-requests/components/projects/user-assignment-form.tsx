@@ -7,6 +7,12 @@ import { Switch } from "@workspace/ui/components/switch";
 import { assignmentRoleOptions } from "@/components/users/user-constants";
 import { Badge } from "@workspace/ui/components/badge";
 
+interface FormErrors {
+  project_id?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
 export default function UserAssignmentForm({
   initial, projects = [], onSave, onCancel, loading
 }: {
@@ -25,19 +31,46 @@ export default function UserAssignmentForm({
     end_date: "",
     is_lead: false,
   });
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const validate = () => {
+    const newErrors: FormErrors = {};
+    if (!form.project_id) {
+      newErrors.project_id = "Project is required.";
+    }
+    if (!form.start_date) {
+      newErrors.start_date = "Start date is required.";
+    }
+    if (form.start_date && form.end_date && form.end_date < form.start_date) {
+      newErrors.end_date = "End date cannot be before start date.";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validate()) {
+      onSave(form);
+    }
+  };
+
   return (
     <form
       className="bg-white border-l-4 border-blue-500 rounded-xl shadow-lg p-8 mb-6 flex flex-col gap-8 transition hover:shadow-xl"
-      onSubmit={e => {
-        e.preventDefault();
-        onSave(form);
-      }}
+      onSubmit={handleSubmit}
     >
       <div className="font-semibold text-xl mb-2 text-blue-700">Assignment Details</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <Label className="mb-1">Project Name</Label>
-          <Select value={form.project_id} onValueChange={v => setForm((f: typeof form) => ({ ...f, project_id: v }))}>
+          <Select
+            value={form.project_id}
+            onValueChange={v => {
+              setForm((f: typeof form) => ({ ...f, project_id: v }));
+              if (errors.project_id) setErrors(e => ({...e, project_id: undefined}));
+            }}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a project" />
             </SelectTrigger>
@@ -47,6 +80,7 @@ export default function UserAssignmentForm({
               ))}
             </SelectContent>
           </Select>
+          {errors.project_id && <p className="text-red-500 text-sm mt-1">{errors.project_id}</p>}
         </div>
         <div>
           <Label className="mb-1">Position</Label>
@@ -63,11 +97,27 @@ export default function UserAssignmentForm({
         </div>
         <div>
           <Label className="mb-1">Start Date</Label>
-          <Input type="date" value={form.start_date} onChange={e => setForm((f: typeof form) => ({ ...f, start_date: e.target.value }))} />
+          <Input
+            type="date"
+            value={form.start_date}
+            onChange={e => {
+              setForm((f: typeof form) => ({ ...f, start_date: e.target.value }));
+              if (errors.start_date || errors.end_date) setErrors(e => ({...e, start_date: undefined, end_date: undefined}));
+            }}
+          />
+          {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
         </div>
         <div>
           <Label className="mb-1">End Date</Label>
-          <Input type="date" value={form.end_date} onChange={e => setForm((f: typeof form) => ({ ...f, end_date: e.target.value }))} />
+          <Input
+            type="date"
+            value={form.end_date}
+            onChange={e => {
+              setForm((f: typeof form) => ({ ...f, end_date: e.target.value }));
+              if (errors.end_date) setErrors(e => ({...e, end_date: undefined}));
+            }}
+          />
+          {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
         </div>
       </div>
       <div className="flex flex-wrap gap-8 items-center mt-2">
