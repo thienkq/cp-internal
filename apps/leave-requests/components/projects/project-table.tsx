@@ -4,6 +4,8 @@ import { DataTable } from "../common/data-table";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import { Switch } from "@workspace/ui/components/switch";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@workspace/ui/components/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 import { Project } from "@/types";
 
 // Reusable boolean filter function for handling string-to-boolean conversion
@@ -20,9 +22,11 @@ interface ProjectTableProps {
   data: Project[];
   onEdit: (project: Project) => void;
   onToggleActive: (project: Project, value: boolean) => void;
+  onViewAssignments: (project: Project) => void;
+  onAssign: (project: Project) => void;
 }
 
-export default function ProjectTable({ data, onEdit, onToggleActive }: ProjectTableProps) {
+export default function ProjectTable({ data, onEdit, onToggleActive, onAssign, onViewAssignments }: ProjectTableProps) {
   const columns: ColumnDef<Project>[] = [
     {
       header: "Name",
@@ -48,7 +52,24 @@ export default function ProjectTable({ data, onEdit, onToggleActive }: ProjectTa
       header: "Actions",
       id: "actions",
       cell: ({ row }) => (
-        <Button size="sm" variant="outline" onClick={() => onEdit(row.original)}>Edit</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost" aria-label="Actions">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(row.original)}>
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewAssignments(row.original)}>
+              View Assignments
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAssign(row.original)}>
+              Assign Users
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
       enableSorting: false,
       enableHiding: false,

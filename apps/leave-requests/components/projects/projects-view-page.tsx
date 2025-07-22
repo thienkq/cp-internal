@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from "@workspace/ui/components/dia
 import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { Project } from "@/types";
+import { useRouter } from "next/navigation";
 
 interface ProjectsClientProps {
   initialProjects: Project[];
@@ -16,6 +17,7 @@ export default function ProjectsClient({ initialProjects }: ProjectsClientProps)
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const router = useRouter();
 
   const fetchProjects = async () => {
     const supabase = createBrowserClient();
@@ -50,6 +52,14 @@ export default function ProjectsClient({ initialProjects }: ProjectsClientProps)
     setDialogOpen(true);
   };
 
+  const handleAssign = (project: Project) => {
+    router.push(`/admin/projects/${project.id}/assignments/new`);
+  };
+
+  const handleViewAssignments = (project: Project) => {
+    router.push(`/admin/projects/${project.id}/assignments`);
+  };
+
   return (
     <>
       <div className="flex justify-between items-center mb-4">
@@ -59,7 +69,9 @@ export default function ProjectsClient({ initialProjects }: ProjectsClientProps)
       <ProjectTable 
         data={projects} 
         onEdit={handleEdit} 
-        onToggleActive={handleToggleActive} 
+        onToggleActive={handleToggleActive}
+        onAssign={handleAssign}
+        onViewAssignments={handleViewAssignments}
       />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
