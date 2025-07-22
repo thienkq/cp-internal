@@ -56,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
   const handleAddNewClick = () => {
-    router.push("/leave/new")
+    router.push("/dashboard/leave/new")
   }
 
   return (
