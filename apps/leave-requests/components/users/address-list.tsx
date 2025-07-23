@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { Address } from "@/types";
 import { Button } from "@workspace/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@workspace/ui/components/dialog";
 import AddressForm from "./address-form";
 import { createBrowserClient } from "@workspace/supabase";
@@ -19,6 +21,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@workspace/ui/components/alert-dialog";
+import { MapPin, Home, Building, Star, Plus, Edit, Trash2, Crown } from "lucide-react";
 
 // Helper to fetch addresses
 async function fetchAddresses(userId: string): Promise<Address[]> {
@@ -27,6 +30,18 @@ async function fetchAddresses(userId: string): Promise<Address[]> {
   if (error) throw new Error(error.message);
   return data || [];
 }
+
+// Get icon and color for address type
+const getAddressTypeIcon = (type: string) => {
+  switch (type) {
+    case "home":
+      return { icon: Home, color: "text-blue-500", bgColor: "bg-blue-50" };
+    case "work":
+      return { icon: Building, color: "text-green-500", bgColor: "bg-green-50" };
+    default:
+      return { icon: MapPin, color: "text-purple-500", bgColor: "bg-purple-50" };
+  }
+};
 
 type AddressListProps = {
   addresses: Address[];
@@ -112,79 +127,180 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
   });
 
   return (
-    <div>
-      <Button onClick={handleAdd} className="mb-4" disabled={loading || fetching}>Add Address</Button>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">My Addresses</h3>
+          <p className="text-sm text-gray-600">Manage your saved addresses</p>
+        </div>
+        <Button 
+          onClick={handleAdd} 
+          disabled={loading || fetching}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Address
+        </Button>
+      </div>
+
+      {/* Loading State */}
       {(loading || fetching) && (
-        <div className="mb-4">
-          <Skeleton className="h-8 w-full mb-2" />
-          <Skeleton className="h-8 w-full mb-2" />
+        <div className="space-y-4">
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
         </div>
       )}
-      {error && <div className="text-red-600 mb-4">{error}</div>}
-      {!loading && !fetching && addresses.length === 0 && !error && (
-        <div className="text-gray-500 mb-4">No addresses found. Add your first address!</div>
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-red-600">
+              <MapPin className="h-4 w-4" />
+              <span className="font-medium">{error}</span>
+            </div>
+          </CardContent>
+        </Card>
       )}
-      <ul className="space-y-4">
-        {sortedAddresses.map(addr => (
-          <li key={addr.id} className="border p-4 rounded flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span>{addr.address_line}</span>
-                {addr.is_primary && (
-                  <span className="inline-block px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                    Primary
-                  </span>
-                )}
-              </div>
-              <div>{addr.city}{addr.state && ", " + addr.state}{addr.postal_code && ", " + addr.postal_code}</div>
-              <div>{addr.country}</div>
-            </div>
-            <div className="flex gap-2 mt-2 md:mt-0">
-              <Button size="sm" variant="outline" onClick={() => handleEdit(addr)} disabled={loading || fetching}>Edit</Button>
-              <AlertDialog open={deleteDialogOpen && addressToDelete?.id === addr.id} onOpenChange={(open: boolean) => {
-                setDeleteDialogOpen(open);
-                if (!open) setAddressToDelete(null);
-              }}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      setAddressToDelete(addr);
-                      setDeleteDialogOpen(true);
-                    }}
-                    disabled={loading || fetching}
-                  >
-                    Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Address</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this address? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={loading} className="bg-red-600 hover:bg-red-700">
-                      {loading ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              {!addr.is_primary && <Button size="sm" variant="secondary" onClick={() => handleSetDefault(addr.id)} disabled={loading || fetching}>Set as Primary</Button>}
-            </div>
-          </li>
-        ))}
-      </ul>
+
+      {/* Empty State */}
+      {!loading && !fetching && addresses.length === 0 && !error && (
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-8 text-center">
+            <MapPin className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-700 mb-2">No addresses found</h4>
+            <p className="text-gray-500 mb-4">Add your first address to get started!</p>
+            <Button onClick={handleAdd} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Your First Address
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Address Cards */}
+      <div className="grid gap-4">
+        {sortedAddresses.map(addr => {
+          const typeInfo = getAddressTypeIcon(addr.type || "other");
+          const IconComponent = typeInfo.icon;
+          
+          return (
+            <Card key={addr.id} className={`shadow-sm border-l-4 ${addr.is_primary ? 'border-l-yellow-500 bg-yellow-50/30' : 'border-l-gray-300'} hover:shadow-md transition-shadow duration-200`}>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                  {/* Address Info */}
+                  <div className="flex-1 space-y-3">
+                    {/* Header with icon and type */}
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${typeInfo.bgColor}`}>
+                        <IconComponent className={`h-5 w-5 ${typeInfo.color}`} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="capitalize">
+                            {addr.type || "Other"}
+                          </Badge>
+                          {addr.is_primary && (
+                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                              <Star className="h-3 w-3 mr-1" />
+                              Primary
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Address Details */}
+                    <div className="space-y-1">
+                      <div className="font-medium text-gray-900">{addr.address_line}</div>
+                      <div className="text-gray-600">
+                        {[addr.city, addr.state, addr.postal_code].filter(Boolean).join(", ")}
+                      </div>
+                      {addr.country && (
+                        <div className="text-gray-500">{addr.country}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-row md:flex-col gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleEdit(addr)} 
+                      disabled={loading || fetching}
+                      className="flex items-center gap-1 hover:bg-blue-50 hover:border-blue-300"
+                    >
+                      <Edit className="h-3 w-3" />
+                      Edit
+                    </Button>
+                    
+                    {!addr.is_primary && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleSetDefault(addr.id)} 
+                        disabled={loading || fetching}
+                        className="flex items-center gap-1 hover:bg-yellow-50 hover:border-yellow-300"
+                      >
+                        <Crown className="h-3 w-3" />
+                        Set Primary
+                      </Button>
+                    )}
+                    
+                    <AlertDialog open={deleteDialogOpen && addressToDelete?.id === addr.id} onOpenChange={(open: boolean) => {
+                      setDeleteDialogOpen(open);
+                      if (!open) setAddressToDelete(null);
+                    }}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setAddressToDelete(addr);
+                            setDeleteDialogOpen(true);
+                          }}
+                          disabled={loading || fetching}
+                          className="flex items-center gap-1 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Address</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this address? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDelete} 
+                            disabled={loading} 
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {loading ? "Deleting..." : "Delete"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Add/Edit Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          {/* Hidden trigger, we control open state manually */}
           <span style={{ display: "none" }} />
         </DialogTrigger>
-        <DialogContent>
-          <DialogTitle>{editingAddress ? "Edit Address" : "Add Address"}</DialogTitle>
+        <DialogContent className="max-w-2xl">
           <AddressForm
             userId={userId}
             address={editingAddress}
