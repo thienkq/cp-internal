@@ -12,3 +12,29 @@ insert into leave_types (name, description, is_paid, supports_carryover, support
 
 insert into company_settings (carryover_expiry_day, carryover_expiry_month, tenure_accrual_rules) values
   (31, 1, '{"1":12,"2":13,"3":15,"4":18,"5":22}');
+
+
+insert into projects (name) values
+  ('Athletica'),
+  ('AWS'),
+  ('Capsule Transit'),
+  ('Casebook'),
+  ('Coin Theaters'),
+  ('Commun1ty'),
+  ('DuxSoup'),
+  ('Ensign'),
+  ('Groopl'),
+  ('HR/Ops'),
+  ('Inhalio'),
+  ('Joe Coffee'),
+  ('Lemonade'),
+  ('Locket'),
+  ('Marketing/Sales/Bizdev'),
+  ('Moneta'),
+  ('Orchestars'),
+  ('R&D'),
+  ('Rsportz'),
+  ('Shrimpl'),
+  ('Skylab'),
+  ('Sleek'),
+  ('Think Global School'); 
