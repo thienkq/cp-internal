@@ -1,50 +1,61 @@
-"use client"
-
+import { getCurrentUser } from "@workspace/supabase";
+import { redirect } from "next/navigation";
 import { Card } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
-import { Separator } from "@workspace/ui/components/separator"
-import { Alert } from "@workspace/ui/components/alert"
-import { Info } from "lucide-react"
+import { PageContainer } from "@workspace/ui/components/page-container"
+import BirthdayWrapper from "@/components/birthday-wrapper";
+import BirthdayBanner from "@/components/birthday-banner";
+import { isBirthdayToday } from "@/lib/birthday-utils";
+import type { User } from "@/types";
 
-// Mock data
-const userName = "Minh Chau"
-const isBirthday = true
-const isAnniversary = true
-const yearsAtCompany = 3
+// Mock data for other stats
 const leaveBalance = 12
 const upcomingHolidays = 2
-const pendingRequests = 1
+const pendingRequests = 1;
 const teamOnLeave = 2
 const recentRequests = [
   { id: 1, type: "Annual Leave", days: 2, start: "23/07/2025", end: "24/07/2025", status: "approved" },
   { id: 2, type: "Sick Leave", days: 1, start: "10/07/2025", end: "10/07/2025", status: "pending" },
 ]
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { user, supabase } = await getCurrentUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  // Fetch user data including date_of_birth
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData) {
+    return (
+      <PageContainer>
+        <div className="text-red-600">Failed to load user data.</div>
+      </PageContainer>
+    );
+  }
+
+  const userName = userData.full_name || user.email || "User";
+  const isBirthday = isBirthdayToday(userData.date_of_birth);
+
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <PageContainer>
+      {/* Birthday Celebration Modal */}
+      <BirthdayWrapper userName={userName} isBirthday={isBirthday} />
+
       {/* Greeting and Congratulatory Banners */}
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
         {isBirthday && (
-          <Alert variant="default" className="flex items-center gap-3 bg-yellow-50 border-yellow-200">
-            <span role="img" aria-label="birthday" className="text-2xl">🎂</span>
-            <div>
-              <div className="font-semibold text-yellow-800">Happy Birthday!</div>
-              <div className="text-sm text-yellow-700">Wishing you a fantastic year ahead. Enjoy your special day!</div>
-            </div>
-          </Alert>
-        )}
-        {isAnniversary && (
-          <Alert variant="default" className="flex items-center gap-3 bg-blue-50 border-blue-200">
-            <span role="img" aria-label="anniversary" className="text-2xl">🎉</span>
-            <div>
-              <div className="font-semibold text-blue-800">Happy Work Anniversary!</div>
-              <div className="text-sm text-blue-700">
-                Congratulations on {yearsAtCompany} year{yearsAtCompany > 1 ? "s" : ""} with us!
-              </div>
-            </div>
-          </Alert>
+          <BirthdayBanner 
+            userName={userName} 
+            dateOfBirth={userData.date_of_birth}
+          />
         )}
       </div>
 
@@ -99,6 +110,6 @@ export default function DashboardPage() {
           )}
         </Card>
       </div>
-    </div>
+    </PageContainer>
   )
 }
