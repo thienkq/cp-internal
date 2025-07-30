@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@workspace/ui/components/tabs";
 import UserForm from "@/components/users/user-form";
 import AddressList from "@/components/users/address-list";
+import ExtendedAbsenceList from "@/components/users/extended-absence-list";
 import type { User, Address } from "@/types";
 import { PageContainer } from "@workspace/ui/components/page-container";
 
@@ -27,12 +28,16 @@ export default async function AdminUserPage({ params }: { params: Promise<{ user
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="addresses">Addresses</TabsTrigger>
+          <TabsTrigger value="absences">Extended Absences</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
           <UserForm initialData={userData} pageTitle="Edit User" canEditWorkInfo={true} />
         </TabsContent>
         <TabsContent value="addresses">
           <AddressList addresses={addressData || []} userId={userId} />
+        </TabsContent>
+        <TabsContent value="absences">
+          <ExtendedAbsenceList userId={userId} />
         </TabsContent>
       </Tabs>
     </PageContainer>

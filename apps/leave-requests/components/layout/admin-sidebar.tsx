@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { Home, Users, Settings, BarChart3, Calendar, BriefcaseBusiness } from "lucide-react"
+import { Home, Users, Settings, BarChart3, Calendar, BriefcaseBusiness, Trophy } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import {
@@ -31,6 +31,11 @@ const adminNavigationItems = [
     title: "Projects",
     url: "/admin/projects",
     icon: BriefcaseBusiness,
+  },
+  {
+    title: "Anniversaries",
+    url: "/admin/anniversaries",
+    icon: Trophy,
   },
   {
     title: "Reports",

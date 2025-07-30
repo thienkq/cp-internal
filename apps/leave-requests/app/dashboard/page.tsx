@@ -5,7 +5,10 @@ import { Badge } from "@workspace/ui/components/badge"
 import { PageContainer } from "@workspace/ui/components/page-container"
 import BirthdayWrapper from "@/components/birthday-wrapper";
 import BirthdayBanner from "@/components/birthday-banner";
+import AnniversaryWrapper from "@/components/anniversary-wrapper";
+import WorkAnniversaryBanner from "@/components/work-anniversary-banner";
 import { isBirthdayToday } from "@/lib/birthday-utils";
+import { isWorkAnniversaryToday, getAnniversaryInfo } from "@/lib/anniversary-utils";
 import type { User } from "@/types";
 
 // Mock data for other stats
@@ -42,11 +45,20 @@ export default async function DashboardPage() {
 
   const userName = userData.full_name || user.email || "User";
   const isBirthday = isBirthdayToday(userData.date_of_birth);
+  const isAnniversary = await isWorkAnniversaryToday(userData.start_date, userData.id);
+  const anniversaryInfo = await getAnniversaryInfo(userData.start_date, userData.id);
 
   return (
     <PageContainer>
       {/* Birthday Celebration Modal */}
       <BirthdayWrapper userName={userName} isBirthday={isBirthday} />
+
+      {/* Work Anniversary Celebration Modal */}
+      <AnniversaryWrapper 
+        userName={userName} 
+        years={anniversaryInfo?.years || 0}
+        isAnniversary={isAnniversary} 
+      />
 
       {/* Greeting and Congratulatory Banners */}
       <div className="space-y-4">
@@ -55,6 +67,13 @@ export default async function DashboardPage() {
           <BirthdayBanner 
             userName={userName} 
             dateOfBirth={userData.date_of_birth}
+          />
+        )}
+        {isAnniversary && anniversaryInfo && (
+          <WorkAnniversaryBanner 
+            userName={userName} 
+            years={anniversaryInfo.years}
+            startDate={userData.start_date}
           />
         )}
       </div>
