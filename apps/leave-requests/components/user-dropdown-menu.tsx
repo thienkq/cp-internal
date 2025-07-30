@@ -1,8 +1,8 @@
 "use client"
-import { User, Settings, LogOut } from "lucide-react"
+import { User, Settings, LogOut, Shield } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@workspace/ui/components/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@workspace/ui/components/dropdown-menu"
 import { useRouter } from "next/navigation"
 import { createBrowserClient, type User as SupabaseUser } from "@workspace/supabase"
 import { useCallback } from "react"
@@ -10,9 +10,12 @@ import { getUserInitials, getUserDisplayName } from "@/lib/utils"
 
 interface UserDropdownMenuProps {
   user?: SupabaseUser | null
+  userProfile?: {
+    role: 'employee' | 'manager' | 'admin'
+  } | null
 }
 
-export function UserDropdownMenu({ user }: UserDropdownMenuProps) {
+export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
   const router = useRouter()
 
   const handleSignOut = useCallback(async () => {
@@ -41,7 +44,7 @@ export function UserDropdownMenu({ user }: UserDropdownMenuProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push('/dashboard')}>
           <User className="w-4 h-4 mr-2" />
           {displayName}
         </DropdownMenuItem>
@@ -49,6 +52,15 @@ export function UserDropdownMenu({ user }: UserDropdownMenuProps) {
           <Settings className="w-4 h-4 mr-2" />
           Settings
         </DropdownMenuItem>
+        {userProfile?.role === 'admin' && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push('/admin')}>
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Dashboard
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="w-4 h-4 mr-2" />
           Sign out
