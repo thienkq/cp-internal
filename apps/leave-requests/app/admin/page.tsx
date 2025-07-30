@@ -1,12 +1,14 @@
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
-import { Calendar, Trophy, Users } from "lucide-react";
+import { Calendar, Trophy, Users, Gift } from "lucide-react";
 import { getThisMonthAnniversaries } from "@/lib/anniversary-utils";
+import { getThisMonthBirthdays } from "@/lib/birthday-utils";
 
 export default async function AdminPage() {
-  // Get this month's anniversaries on the server side
+  // Get this month's anniversaries and birthdays on the server side
   const anniversaries = await getThisMonthAnniversaries();
+  const birthdays = await getThisMonthBirthdays();
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
@@ -85,7 +87,50 @@ export default async function AdminPage() {
               )}
             </CardContent>
           </Card>
-          {/* Add more admin widgets here */}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-pink-500" />
+                This Month's Birthdays
+                <Badge variant="outline" className="ml-2">
+                  {birthdays.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {birthdays.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No birthdays this month</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {birthdays.map((birthday) => (
+                    <div 
+                      key={birthday.user_id} 
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">
+                          {birthday.full_name}
+                        </div>
+                        <div className="text-sm text-gray-600 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(birthday.birthday_date)}
+                          <span className="mx-1">•</span>
+                          {birthday.age} years old
+                        </div>
+                      </div>
+                      <Badge variant={getBadgeVariant(birthday.days_until)}>
+                        {getDaysUntilText(birthday.days_until)}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </PageContainer>

@@ -1,119 +1,91 @@
+import { createServerClient } from "@workspace/supabase";
+
+export interface BirthdayInfo {
+  user_id: string;
+  full_name: string;
+  date_of_birth: string;
+  birthday_date: Date;
+  age: number;
+  days_until: number;
+}
+
 /**
- * Check if today is the user's birthday
- * @param dateOfBirth - The user's date of birth in YYYY-MM-DD format
- * @returns boolean - true if today is the user's birthday
+ * Get birthdays for the current month only
+ * Only includes users with valid date of birth
  */
-export function isBirthdayToday(dateOfBirth: string | null | undefined): boolean {
+export async function getThisMonthBirthdays(): Promise<BirthdayInfo[]> {
+  const supabase = await createServerClient();
+  
+  // Get all users with date of birth
+  const { data: users } = await supabase
+    .from("users")
+    .select("id, full_name, date_of_birth")
+    .not("date_of_birth", "is", null)
+    .eq("is_active", true);
+  
+  if (!users) return [];
+  
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const thisMonthBirthdays = [];
+  
+  for (const user of users) {
+    const birthDate = new Date(user.date_of_birth);
+    const birthdayThisYear = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+    
+    // Check if birthday is in current month
+    if (birthdayThisYear.getMonth() === currentMonth) {
+      const daysUntil = Math.ceil((birthdayThisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const age = currentYear - birthDate.getFullYear();
+      
+      // Include all birthdays in the current month (including passed ones)
+      thisMonthBirthdays.push({
+        user_id: user.id,
+        full_name: user.full_name,
+        date_of_birth: user.date_of_birth,
+        birthday_date: birthdayThisYear,
+        age,
+        days_until: daysUntil
+      });
+    }
+  }
+  
+  // Sort by day of month
+  return thisMonthBirthdays.sort((a, b) => a.birthday_date.getDate() - b.birthday_date.getDate());
+}
+
+/**
+ * Check if today is a user's birthday
+ */
+export function isBirthdayToday(dateOfBirth: string): boolean {
   if (!dateOfBirth) return false;
   
-  try {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    
-    // Check if month and day match (ignore year)
-    return today.getMonth() === birthDate.getMonth() && 
-           today.getDate() === birthDate.getDate();
-  } catch (error) {
-    console.error('Error parsing date of birth:', error);
-    return false;
-  }
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  
+  return birthDate.getMonth() === today.getMonth() && 
+         birthDate.getDate() === today.getDate();
 }
 
 /**
- * Get the user's age based on their date of birth
- * @param dateOfBirth - The user's date of birth in YYYY-MM-DD format
- * @returns number - The user's age, or null if date is invalid
+ * Get birthday message with age
  */
-export function getAge(dateOfBirth: string | null | undefined): number | null {
-  if (!dateOfBirth) return null;
-  
-  try {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    
-    // Set both dates to the same year for comparison
-    const todayThisYear = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const birthdayThisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-    
-    let age = today.getFullYear() - birthDate.getFullYear();
-    
-    // If birthday hasn't occurred yet this year, subtract 1
-    if (todayThisYear < birthdayThisYear) {
-      age--;
-    }
-    
-    // Ensure age is not negative
-    return Math.max(0, age);
-  } catch (error) {
-    console.error('Error calculating age:', error);
-    return null;
-  }
+export function getBirthdayMessage(fullName: string, age: number): string {
+  const ordinalSuffix = getOrdinalSuffix(age);
+  return `Happy ${age}${ordinalSuffix} Birthday, ${fullName}! 🎉`;
 }
 
 /**
- * Format birthday message with age
- * @param userName - The user's name
- * @param dateOfBirth - The user's date of birth
- * @returns string - Formatted birthday message
+ * Get ordinal suffix for numbers
  */
-export function getBirthdayMessage(userName: string, dateOfBirth: string | null | undefined): string {
-  const age = getAge(dateOfBirth);
+export function getOrdinalSuffix(num: number): string {
+  if (num >= 11 && num <= 13) return 'th';
   
-  if (age !== null && age > 0) {
-    return `Happy ${age}${getAgeSuffix(age)} Birthday, ${userName}!`;
-  }
-  
-  return `Happy Birthday, ${userName}!`;
-}
-
-/**
- * Get the appropriate suffix for age numbers
- * @param age - The age number
- * @returns string - The appropriate suffix (st, nd, rd, th)
- */
-function getAgeSuffix(age: number): string {
-  if (age >= 11 && age <= 13) return 'th';
-  
-  const lastDigit = age % 10;
-  switch (lastDigit) {
+  switch (num % 10) {
     case 1: return 'st';
     case 2: return 'nd';
     case 3: return 'rd';
     default: return 'th';
   }
-}
-
-/**
- * Debug function to test age calculation
- * @param dateOfBirth - The date of birth to test
- * @returns object with debug information
- */
-export function debugAgeCalculation(dateOfBirth: string): {
-  age: number | null;
-  today: Date;
-  birthDate: Date;
-  todayThisYear: Date;
-  birthdayThisYear: Date;
-  hasOccurred: boolean;
-} {
-  const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  const todayThisYear = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const birthdayThisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-  
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const hasOccurred = todayThisYear >= birthdayThisYear;
-  
-  if (!hasOccurred) {
-    age--;
-  }
-  
-  return {
-    age: Math.max(0, age),
-    today,
-    birthDate,
-    todayThisYear,
-    birthdayThisYear,
-    hasOccurred
-  };
 } 

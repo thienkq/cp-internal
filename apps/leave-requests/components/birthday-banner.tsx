@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import { Cake, Sparkles, Heart } from "lucide-react";
-import { getBirthdayMessage } from "@/lib/birthday-utils";
+import { getBirthdayMessage, getOrdinalSuffix } from "@/lib/birthday-utils";
 import BirthdayCelebration from "./birthday-celebration";
 
 interface BirthdayBannerProps {
@@ -14,7 +14,26 @@ interface BirthdayBannerProps {
 
 export default function BirthdayBanner({ userName, dateOfBirth }: BirthdayBannerProps) {
   const [showModal, setShowModal] = useState(false);
-  const birthdayMessage = getBirthdayMessage(userName, dateOfBirth);
+  
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth: string | null | undefined): number => {
+    if (!dateOfBirth) return 0;
+    
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    
+    // Adjust age if birthday hasn't occurred yet this year
+    const birthdayThisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+    if (today < birthdayThisYear) {
+      age--;
+    }
+    
+    return Math.max(0, age);
+  };
+  
+  const age = calculateAge(dateOfBirth);
+  const birthdayMessage = getBirthdayMessage(userName, age);
 
   const handleCelebrate = () => {
     setShowModal(true);
