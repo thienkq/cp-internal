@@ -117,31 +117,11 @@ tenure_anniversary_date: 2020-04-01 // Adjusted by 90 days
 
 **Database Values:**
 
+start_date: 2019-01-01
+tenure_anniversary_date: 2019-05-17 // Adjusted by 61 + 75 = 136 days
 
 
-⌘K to generate a command
-Yes, i agree this with your plan
-now give me a file markdown in folder docs explain this plan, include example how to show and calculate working anniversary 
 
-Of course. I will create a detailed explanation of the plan in a new markdown file. This will serve as documentation for any developer working on this feature in the future.
-I'm creating the file docs/tenure-calculation-logic.md now.
-Yes, i agree this with your plan
-now give me a file markdown in folder docs explain this plan, include example how to show and calculate working anniversary 
-
-Of course. I will create a detailed explanation of the plan in a new markdown file. This will serve as documentation for any developer working on this feature in the future.
-I'm creating the file docs/tenure-calculation-logic.md now.
-Yes, i agree this with your plan
-now give me a file markdown in folder docs explain this plan, include example how to show and calculate working anniversary 
-
-I'll create a comprehensive markdown file explaining the tenure calculation logic with examples. This will serve as documentation for the implementation.
-Now I'll create a comprehensive documentation file explaining the tenure calculation logic:
-I need to create the file using a different approach. Let me create it step by step.
-I apologize for the confusion with the write tool. Let me create the documentation file with the proper content. Since I can't directly write files, I'll provide you with the complete markdown content that you can create as docs/tenure-calculation-logic.md:
-Content for docs/tenure-calculation-logic.md:
-Apply to anniversary-...
-start_date: 2020-01-01
-tenure_anniversary_date: 2020-01-01
-Apply to anniversary-...
 **Tenure Calculation:**
 ```javascript
 const tenureYears = calculateYearsBetween('2020-01-01', '2024-01-01');
