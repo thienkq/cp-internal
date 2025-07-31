@@ -48,16 +48,35 @@ The system automatically updates `tenure_anniversary_date` whenever extended abs
 -- Function calculates total days of extended absences (> 30 days)
 -- and pushes the tenure_anniversary_date forward by that amount
 CREATE OR REPLACE FUNCTION public.update_tenure_anniversary_date()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql AS $$
 DECLARE
+    user_id_to_update UUID;
+    user_start_date DATE;
     total_absence_days INTEGER;
     new_tenure_anniversary_date DATE;
 BEGIN
+    -- Determine the user_id from the trigger event
+    IF TG_OP = 'DELETE' THEN
+        user_id_to_update := OLD.user_id;
+    ELSE
+        user_id_to_update := NEW.user_id;
+    END IF;
+
+    -- Get the user's original start date
+    SELECT start_date INTO user_start_date
+    FROM public.users
+    WHERE id = user_id_to_update;
+
+    IF user_start_date IS NULL THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+
     -- Calculate total duration of extended absences (> 30 days)
-    SELECT COALESCE(SUM(end_date - start_date), 0)
+    SELECT COALESCE(SUM(end_date - start_date + 1), 0)
     INTO total_absence_days
     FROM public.extended_absences
-    WHERE user_id = user_id_to_update AND (end_date - start_date) > 30;
+    WHERE user_id = user_id_to_update AND (end_date - start_date + 1) > 30;
 
     -- Adjust tenure anniversary date
     new_tenure_anniversary_date := user_start_date + total_absence_days;
@@ -66,8 +85,16 @@ BEGIN
     UPDATE public.users
     SET tenure_anniversary_date = new_tenure_anniversary_date
     WHERE id = user_id_to_update;
+
+    RETURN COALESCE(NEW, OLD);
 END;
 $$;
+
+-- Create trigger to call the function on extended_absences changes
+CREATE TRIGGER handle_extended_absence_change
+    AFTER INSERT OR UPDATE OR DELETE ON public.extended_absences
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_tenure_anniversary_date();
 ```
 
 ## Examples
