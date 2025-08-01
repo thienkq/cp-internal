@@ -51,24 +51,18 @@ CREATE OR REPLACE FUNCTION public.update_tenure_anniversary_date()
 RETURNS TRIGGER 
 LANGUAGE plpgsql AS $$
 DECLARE
-    user_id_to_update UUID;
-    user_start_date DATE;
+    v_user_id UUID := COALESCE(NEW.user_id, OLD.user_id);
+    v_user_start_date DATE;
     total_absence_days INTEGER;
     new_tenure_anniversary_date DATE;
 BEGIN
-    -- Determine the user_id from the trigger event
-    IF TG_OP = 'DELETE' THEN
-        user_id_to_update := OLD.user_id;
-    ELSE
-        user_id_to_update := NEW.user_id;
-    END IF;
-
     -- Get the user's original start date
-    SELECT start_date INTO user_start_date
-    FROM public.users
-    WHERE id = user_id_to_update;
+    SELECT start_date
+      INTO v_user_start_date
+      FROM public.users
+     WHERE id = v_user_id;
 
-    IF user_start_date IS NULL THEN
+    IF v_user_start_date IS NULL THEN
         RETURN COALESCE(NEW, OLD);
     END IF;
 
@@ -76,15 +70,15 @@ BEGIN
     SELECT COALESCE(SUM(end_date - start_date + 1), 0)
     INTO total_absence_days
     FROM public.extended_absences
-    WHERE user_id = user_id_to_update AND (end_date - start_date + 1) > 30;
+    WHERE user_id = v_user_id AND (end_date - start_date + 1) > 30;
 
     -- Adjust tenure anniversary date
-    new_tenure_anniversary_date := user_start_date + total_absence_days;
+    new_tenure_anniversary_date := v_user_start_date + total_absence_days;
     
     -- Update user record
     UPDATE public.users
     SET tenure_anniversary_date = new_tenure_anniversary_date
-    WHERE id = user_id_to_update;
+    WHERE id = v_user_id;
 
     RETURN COALESCE(NEW, OLD);
 END;
@@ -107,8 +101,6 @@ CREATE TRIGGER handle_extended_absence_change
 - Current date: January 1, 2024
 
 **Database Values:**
-
-
 start_date: 2020-01-01
 tenure_anniversary_date: 2020-01-01
 
@@ -129,46 +121,18 @@ const tenureYears = calculateYearsBetween('2020-01-01', '2024-01-01');
 - Current date: January 1, 2024
 
 **Database Values:**
-
 start_date: 2020-01-01 // Original hire date (never changes)
 tenure_anniversary_date: 2020-04-01 // Adjusted by 90 days
-
-
-### Example 3: Multiple Extended Absences
-
-**Scenario:**
-- Employee joins: January 1, 2019
-- Extended absence 1: March 1, 2020 to May 1, 2020 (61 days)
-- Extended absence 2: June 1, 2022 to August 15, 2022 (75 days)
-- Current date: January 1, 2024
-
-**Database Values:**
-
-start_date: 2019-01-01
-tenure_anniversary_date: 2019-05-17 // Adjusted by 61 + 75 = 136 days
-
-
 
 **Tenure Calculation:**
 ```javascript
-const tenureYears = calculateYearsBetween('2020-01-01', '2024-01-01');
-// Result: 4 years
+const tenureYears = calculateYearsBetween('2020-04-01', '2024-01-01');
+// Result: 3 years, 9 months
 ```
 
-**Anniversary Date:** January 1st every year
-**Leave Accrual:** 18 days (4th year)
+**Anniversary Date:** April 1st every year
+**Leave Accrual:** 15 days (3rd year)
 
-### Example 2: Employee with Extended Absence
-
-**Scenario:**
-- Employee joins: January 1, 2020
-- Extended absence: February 1, 2022 to May 1, 2022 (90 days)
-- Current date: January 1, 2024
-
-**Database Values:**
-start_date: 2020-01-01 // Original hire date (never changes)
-tenure_anniversary_date: 2020-04-01 // Adjusted by 90 days
-Apply to anniversary-...
 ### Example 3: Multiple Extended Absences
 
 **Scenario:**
@@ -180,7 +144,6 @@ Apply to anniversary-...
 **Database Values:**
 start_date: 2019-01-01
 tenure_anniversary_date: 2019-05-17 // Adjusted by 61 + 75 = 136 days
-
 
 **Tenure Calculation:**
 ```javascript
