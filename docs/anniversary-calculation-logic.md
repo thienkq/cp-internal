@@ -121,7 +121,7 @@ CREATE TRIGGER handle_extended_absence_change
 
 ### Scheduled Processing for Future Absences
 
-A daily cron job processes extended absences that have just completed:
+A daily cron job processes extended absences that have completed but haven't been processed yet. **This design ensures recovery from cron job failures**:
 
 ```sql
 -- Function to process newly completed extended absences
@@ -131,11 +131,11 @@ LANGUAGE plpgsql AS $$
 DECLARE
     absence_record RECORD;
 BEGIN
-    -- Find all extended absences that ended yesterday and haven't been processed yet
+    -- Find all extended absences that have ended and haven't been processed yet
     FOR absence_record IN
         SELECT DISTINCT user_id
         FROM public.extended_absences
-        WHERE end_date = CURRENT_DATE - INTERVAL '1 day'
+        WHERE end_date <= CURRENT_DATE
           AND (end_date - start_date + 1) > 30
           AND processed_at IS NULL
     LOOP
@@ -191,6 +191,31 @@ END;
 $$;
 ```
 
+### Why Process ALL Completed Absences?
+
+**Problem with "Yesterday Only" Approach:**
+```sql
+-- ❌ FLAWED: Only processes yesterday's absences
+WHERE end_date = CURRENT_DATE - INTERVAL '1 day'
+```
+
+**Failure Scenario:**
+- Day 1: Absence ends, cron job fails → absence unprocessed
+- Day 2: Cron job runs, looks for Day 1 absences → would catch it
+- Day 3: Cron job runs, looks for Day 2 absences → **misses Day 1 forever**
+
+**Solution: Process ALL Unprocessed Completed Absences:**
+```sql
+-- ✅ ROBUST: Processes all completed unprocessed absences
+WHERE end_date <= CURRENT_DATE AND processed_at IS NULL
+```
+
+**Benefits:**
+- **Recovery-Safe**: Handles cron job failures gracefully
+- **No Data Loss**: Never misses processing an absence
+- **Idempotent**: Can run multiple times safely
+- **Self-Healing**: Catches up automatically after downtime
+
 ### Cron Job Setup
 
 Set up a daily cron job to process completed absences:
@@ -231,8 +256,9 @@ The system uses a `processed_at` timestamp to prevent double-processing of exten
 
 2. **Scheduled Processing (Daily Cron Job)**
    - Only processes absences where `processed_at IS NULL`
-   - Processes absences that ended yesterday
+   - Processes ALL absences that have ended (`end_date <= CURRENT_DATE`)
    - Sets `processed_at = CURRENT_TIMESTAMP` after processing
+   - **Recovery-Safe**: Catches missed absences from cron job failures
 
 3. **Modification Handling**
    - If modifying an already processed absence (`processed_at IS NOT NULL`)
@@ -359,12 +385,16 @@ SELECT
     ea.end_date,
     (ea.end_date - ea.start_date + 1) as absence_days,
     ea.processed_at,
-    u.tenure_anniversary_date
+    u.tenure_anniversary_date,
+    CASE 
+        WHEN ea.processed_at IS NOT NULL THEN '✅ Processed'
+        WHEN ea.end_date <= CURRENT_DATE THEN '⚠️ Should be processed'
+        ELSE '📅 Future absence'
+    END as processing_status
 FROM public.extended_absences ea
 JOIN public.users u ON ea.user_id = u.id
 WHERE ea.end_date <= CURRENT_DATE 
   AND (ea.end_date - ea.start_date + 1) > 30
-  AND ea.end_date >= CURRENT_DATE - INTERVAL '7 days'
 ORDER BY ea.end_date DESC;
 
 -- Alert if there are unprocessed completed absences
