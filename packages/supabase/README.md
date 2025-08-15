@@ -1,10 +1,22 @@
-# Authentication Utilities
+# Supabase Utilities Package
 
-The authentication utilities are now available in the workspace package `@workspace/supabase` and can be used across all apps in the monorepo.
+A comprehensive package providing Supabase client/server utilities, authentication helpers, and database management tools for all apps in the internal tools monorepo.
 
-## Available Functions
+## 🎯 Purpose
 
-### `getCurrentUser()`
+This package serves as the **centralized Supabase integration layer** for the entire monorepo, providing:
+
+- **Authentication Utilities**: User management, session handling, and auth guards
+- **Database Clients**: Type-safe Supabase client instances for browser and server
+- **Middleware Integration**: Next.js middleware for authentication and routing
+- **Type Definitions**: Shared TypeScript types for database schemas
+- **Consistent Configuration**: Unified Supabase setup across all apps
+
+## 🚀 Available Utilities
+
+### **Authentication Functions**
+
+#### **`getCurrentUser()`**
 Gets the current authenticated user and Supabase client.
 
 **Returns:** `Promise<{ user: User | null, supabase: SupabaseClient }>`
@@ -19,7 +31,7 @@ export default async function MyComponent() {
   
   if (user) {
     // User is authenticated
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id);
+    const { data } = await supabase.from('users').select('*').eq('id', user.id);
     return <div>Welcome, {user.email}!</div>;
   }
   
@@ -27,7 +39,7 @@ export default async function MyComponent() {
 }
 ```
 
-### `getUser()`
+#### **`getUser()`**
 Gets the current authenticated user (without the Supabase client).
 
 **Returns:** `Promise<User | null>`
@@ -48,7 +60,7 @@ export default async function MyComponent() {
 }
 ```
 
-### `requireAuth(redirectTo?)`
+#### **`requireAuth(redirectTo?)`**
 Requires authentication and throws an error if user is not authenticated.
 
 **Parameters:**
@@ -76,16 +88,81 @@ export default async function ProtectedPage() {
 }
 ```
 
-## Benefits
+### **Client Functions**
 
-1. **Workspace-wide DRY Principle:** No more repeating the same authentication logic across apps
-2. **Consistency:** All authentication logic is centralized and consistent across the entire monorepo
-3. **Maintainability:** Changes to authentication logic only need to be made in one place
-4. **Type Safety:** Proper TypeScript types for all functions
-5. **Flexibility:** Different functions for different use cases
-6. **Reusability:** Available to all apps in the monorepo
+#### **`createBrowserClient()`**
+Creates a Supabase client for browser-side operations.
+
+```typescript
+import { createBrowserClient } from "@workspace/supabase";
+
+const supabase = createBrowserClient();
+
+// Use in client components
+const { data } = await supabase.from('profiles').select('*');
+```
+
+#### **`createServerClient()`**
+Creates a Supabase client for server-side operations with proper cookie handling.
+
+```typescript
+import { createServerClient } from "@workspace/supabase";
+
+export async function GET(request: Request) {
+  const supabase = createServerClient(request);
+  
+  // Use in API routes or server components
+  const { data } = await supabase.from('users').select('*');
+  return Response.json(data);
+}
+```
+
+## 📦 Installation & Usage
+
+### **Importing Utilities**
+
+```typescript
+// Authentication utilities
+import { getCurrentUser, getUser, requireAuth } from "@workspace/supabase";
+
+// Client creation
+import { createBrowserClient, createServerClient } from "@workspace/supabase";
+
+// Middleware
+import { updateSession } from "@workspace/supabase";
+```
+
+### **Environment Setup**
+
+Ensure your app has the required environment variables:
+
+```bash
+# .env.local
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## 🔧 Development
+
+### **Package Structure**
+```
+src/
+├── auth.ts              # Authentication utilities
+├── client.ts            # Client creation functions
+├── server.ts            # Server-side utilities
+├── middleware.ts        # Middleware integration
+├── hooks/               # Custom React hooks
+└── index.ts             # Main exports
+```
 
 
-## Package Location
+## 📦 Package Information
 
-These utilities are now located in `packages/supabase/src/auth.ts` and exported from `packages/supabase/src/index.ts`, making them available to all apps in the monorepo via `@workspace/supabase`. 
+- **Location**: `packages/supabase/`
+- **Import Path**: `@workspace/supabase`
+- **Dependencies**: Supabase JS, Next.js, React
+- **Build Output**: Compiled to `dist/` directory
+
+---
+
+**Note**: This package provides the foundation for all Supabase operations in the monorepo. Apps should import from `@workspace/supabase`, not from the `dist/` directory directly. 
