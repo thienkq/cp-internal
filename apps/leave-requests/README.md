@@ -1,6 +1,6 @@
 # Leave Requests App
 
-A comprehensive HR management application for managing employee leave requests, project assignments, and company policies. Built with Next.js 14, Supabase, and TypeScript.
+A comprehensive HR management application for managing employee leave requests, project assignments, and company policies. Built with Next.js 15, Supabase, and TypeScript.
 
 ## 🎯 What This App Does
 
@@ -26,7 +26,6 @@ app/
 │   ├── company-policy/     # Company settings
 │   ├── bonus-leave/        # Bonus leave management
 │   ├── anniversaries/      # Work anniversary tracking
-│   ├── set-admin/          # Admin role management
 │   └── settings/           # General admin settings
 ├── dashboard/               # User dashboard
 │   ├── page.tsx            # User overview
@@ -65,8 +64,6 @@ app/
   - 4th year: 18 days
   - 5th year+: 22 days
 - **Extended Absences**: Special handling for absences >30 days
-- **Project Impact**: Track how leave affects project timelines
-- **Approval Workflow**: Multi-level approval system
 
 ## 🛠️ Development Setup
 
@@ -110,7 +107,6 @@ touch components/new-feature/NewFeatureComponent.tsx
 #### **3. New Database Table**
 ```bash
 # Create migration
-cd supabase
 supabase migration new create_new_table
 
 # Run migration and seed in local
