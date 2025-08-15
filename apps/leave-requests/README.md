@@ -75,7 +75,7 @@ app/
 ### **Quick Start**
 1. **Install dependencies**: `pnpm install` (from monorepo root)
 2. **Set up environment**: Copy `.env.example` to `.env` and configure
-3. **Start Supabase**: `cd supabase && supabase start`
+3. **Start Supabase**: `supabase start`
 4. **Run the app**: `turbo dev` (from monorepo root)
 
 ### **Required Environment Variables**
@@ -113,7 +113,7 @@ touch components/new-feature/NewFeatureComponent.tsx
 cd supabase
 supabase migration new create_new_table
 
-# Apply migration
+# Run migration and seed in local
 supabase db reset
 ```
 

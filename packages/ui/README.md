@@ -16,6 +16,8 @@ This package serves as the **single source of truth** for all UI components in t
 
 ### **Adding Components to Your App**
 
+> **Important**: When you run the shadcn/ui CLI in your app, components are automatically added to the **shared UI package** (`packages/ui`), not to your individual app. This ensures all apps in the monorepo can use the same components.
+
 ```bash
 cd apps/your-app
 pnpm dlx shadcn@latest add <component-name>
@@ -27,6 +29,11 @@ pnpm dlx shadcn@latest add button
 pnpm dlx shadcn@latest add card
 pnpm dlx shadcn@latest add form
 ```
+
+**What Happens:**
+1. Component is added to `packages/ui/src/components/`
+2. All apps in the monorepo can now import and use the component
+3. No need to copy components between apps
 
 ### **Importing Components**
 

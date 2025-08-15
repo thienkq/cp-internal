@@ -111,9 +111,9 @@ You'll need to configure Google OAuth in both your Google Cloud Console and Supa
 ##### **Google Cloud Console Setup:**
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one
-3. Enable Google+ API
-4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"
-5. Set Application Type to "Web application"
+3. Configure OAuth consent screen (APIs & Services → OAuth consent screen) 
+4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs" 
+5. Set Application Type to "Web application" 
 6. Add Authorized redirect URIs:
    - **Local**: `http://localhost:54321/auth/v1/callback`
    - **Production**: `https://your-project.supabase.co/auth/v1/callback`
@@ -142,13 +142,24 @@ supabase start
 
 After starting, you'll see output like this:
 ```bash
-API URL: http://localhost:54321
-DB URL: postgresql://postgres:postgres@localhost:54322/5432
-Studio URL: http://localhost:54323
-Inbucket URL: http://localhost:54324
-JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
-anon key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-service_role key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+         API URL: http://127.0.0.1:54321
+     GraphQL URL: http://127.0.0.1:54321/graphql/v1
+  S3 Storage URL: http://127.0.0.1:54321/storage/v1/s3
+          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      Studio URL: http://127.0.0.1:54323
+    Inbucket URL: http://127.0.0.1:54324
+      JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
+        anon key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+service_role key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+   S3 Access Key: 625729a08b95bf1b7ff351a663f3a23c
+   S3 Secret Key: 850181e4652dd023b7a98c58ae0d2d34bd487ee0cc3254aed6eda37307425907
+       S3 Region: local
+```
+
+Initialize the database in local 
+
+```
+supabase db reset
 ```
 
 ### 5. Set up app environment variables

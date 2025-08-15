@@ -99,7 +99,7 @@ import { createBrowserClient } from "@workspace/supabase";
 const supabase = createBrowserClient();
 
 // Use in client components
-const { data } = await supabase.from('profiles').select('*');
+const { data } = await supabase.from('users').select('*');
 ```
 
 #### **`createServerClient()`**
