@@ -20,8 +20,41 @@ export interface AnniversaryInfo {
 }
 
 /**
+ * Check if an extended absence should be processed for tenure calculation
+ * Follows the documented business rules:
+ * - Only absences longer than 30 days affect tenure
+ * - Only completed absences (end_date <= current_date) are processed
+ * - Future absences are not processed until they complete
+ */
+export function shouldProcessAbsenceForTenure(
+  absence: ExtendedAbsence,
+  currentDate: Date = new Date()
+): boolean {
+  const absenceStart = new Date(absence.start_date);
+  const absenceEnd = new Date(absence.end_date);
+  const current = currentDate;
+  
+  // Only process absences that have ended
+  if (absenceEnd > current) {
+    return false;
+  }
+  
+  // Calculate absence duration in days
+  const durationDays = Math.ceil((absenceEnd.getTime() - absenceStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  
+  // Only absences longer than 30 days affect tenure
+  return durationDays > 30;
+}
+
+/**
  * Calculate effective tenure by deducting extended absences
  * Extended absence = any period longer than 30 consecutive days
+ * 
+ * This function implements the same logic as the pre-calculated approach:
+ * - Only processes absences that have ended (end_date <= current_date)
+ * - Only counts absences longer than 30 days
+ * - Handles overlap calculations correctly
+ * - Follows the same business rules as the documented system
  */
 export async function calculateEffectiveTenure(
   startDate: string,
@@ -30,18 +63,23 @@ export async function calculateEffectiveTenure(
 ): Promise<{ years: number; months: number; days: number }> {
   const supabase = await createServerClient();
   
-  // Get all extended absences for the user that overlap with the service period
+  // Get all extended absences for the user that have ended by the target date
+  // This matches the documented logic: only process completed absences
   const { data: absences } = await supabase
     .from("extended_absences")
     .select("*")
     .eq("user_id", userId)
-    .gte("start_date", startDate)
     .lte("end_date", targetDate.toISOString().split('T')[0]);
 
   let totalAbsenceDays = 0;
 
   if (absences) {
     for (const absence of absences) {
+      // Use helper function to determine if absence should be processed
+      if (!shouldProcessAbsenceForTenure(absence, targetDate)) {
+        continue;
+      }
+      
       const absenceStart = new Date(absence.start_date);
       const absenceEnd = new Date(absence.end_date);
       
@@ -49,7 +87,7 @@ export async function calculateEffectiveTenure(
       const serviceStart = new Date(startDate);
       const serviceEnd = targetDate;
       
-      // Find the actual overlap period
+      // Find the actual overlap period 
       const overlapStart = new Date(Math.max(absenceStart.getTime(), serviceStart.getTime()));
       const overlapEnd = new Date(Math.min(absenceEnd.getTime(), serviceEnd.getTime()));
       
@@ -58,10 +96,8 @@ export async function calculateEffectiveTenure(
         // Calculate overlap duration in days
         const overlapDays = Math.ceil((overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         
-        // Only count absences longer than 30 days
-        if (overlapDays > 30) {
-          totalAbsenceDays += overlapDays;
-        }
+        // Add to total (helper function already ensured > 30 days)
+        totalAbsenceDays += overlapDays;
       }
     }
   }
@@ -73,7 +109,7 @@ export async function calculateEffectiveTenure(
   // Effective service days = total days - absence days
   const effectiveDays = Math.max(0, totalDays - totalAbsenceDays);
   
-  // Convert to years, months, days (simpler and more accurate)
+  // Convert to years, months, days (same calculation as documented approach)
   const years = Math.floor(effectiveDays / 365);
   const remainingDays = effectiveDays % 365;
   const months = Math.floor(remainingDays / 30);
