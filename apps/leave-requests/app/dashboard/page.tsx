@@ -34,7 +34,11 @@ export default async function DashboardPage() {
   }
 
   // Calculate real leave balance based on tenure
-  const effectiveTenure = await calculateEffectiveTenure(userData.start_date, userData.id);
+  // If no start_date is set, default to 0 years (new employee rate of 12 days)
+  const effectiveTenure = userData.start_date 
+    ? await calculateEffectiveTenure(userData.start_date, userData.id)
+    : { years: 0, months: 0, days: 0 };
+  
   const getLeaveBalance = (years: number): number => {
     if (years < 1) return 12;
     if (years < 2) return 13;
@@ -61,8 +65,12 @@ export default async function DashboardPage() {
 
   const userName = userData.full_name || user.email || "User";
   const isBirthday = isBirthdayToday(userData.date_of_birth);
-  const isAnniversary = await isWorkAnniversaryToday(userData.start_date, userData.id);
-  const anniversaryInfo = await getAnniversaryInfo(userData.start_date, userData.id);
+  const isAnniversary = userData.start_date 
+    ? await isWorkAnniversaryToday(userData.start_date, userData.id)
+    : false;
+  const anniversaryInfo = userData.start_date 
+    ? await getAnniversaryInfo(userData.start_date, userData.id)
+    : null;
 
   return (
     <PageContainer>
@@ -79,13 +87,32 @@ export default async function DashboardPage() {
       {/* Greeting and Congratulatory Banners */}
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
+        
+        {/* Start Date Reminder Banner */}
+        {!userData.start_date && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="text-yellow-600">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-yellow-800">
+                <p className="font-medium">Start Date Not Set</p>
+                <p className="text-sm">Your leave balance is currently set to the default rate. 
+                <a href="/dashboard/profile" className="text-yellow-700 underline ml-1">Set your start date</a> to get the correct leave balance based on your tenure.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {isBirthday && (
           <BirthdayBanner 
             userName={userName} 
             dateOfBirth={userData.date_of_birth}
           />
         )}
-        {isAnniversary && anniversaryInfo && (
+        {isAnniversary && anniversaryInfo && userData.start_date && (
           <WorkAnniversaryBanner 
             userName={userName} 
             years={anniversaryInfo.years}
@@ -100,7 +127,12 @@ export default async function DashboardPage() {
           <div className="text-3xl font-bold text-blue-600">{leaveBalance}</div>
           <div className="text-sm text-gray-500">Leave Balance</div>
           <div className="text-xs text-gray-400 mt-1">
-            {effectiveTenure.years > 0 ? `${effectiveTenure.years} year${effectiveTenure.years > 1 ? 's' : ''} of service` : 'New employee'}
+            {!userData.start_date 
+              ? 'Start date not set' 
+              : effectiveTenure.years > 0 
+                ? `${effectiveTenure.years} year${effectiveTenure.years > 1 ? 's' : ''} of service` 
+                : 'New employee'
+            }
           </div>
         </Card>
         <Card className="p-6 text-center">
