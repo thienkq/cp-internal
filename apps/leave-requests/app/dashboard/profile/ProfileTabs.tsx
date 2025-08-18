@@ -16,7 +16,7 @@ export default function ProfileTabs({ userData, addressData, userId }: {
         <TabsTrigger value="addresses">Addresses</TabsTrigger>
       </TabsList>
       <TabsContent value="profile">
-        <UserForm initialData={userData} pageTitle="My Profile" />
+        <UserForm initialData={userData} pageTitle="My Profile" canEditWorkInfo={true} />
       </TabsContent>
       <TabsContent value="addresses">
         <AddressList addresses={addressData || []} userId={userId} />

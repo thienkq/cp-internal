@@ -19,9 +19,14 @@ import { Button } from "@workspace/ui/components/button"
 
 const navigationItems = [
   {
+    title: "My Dashboard",
+    url: "/dashboard",
+    icon: Home,
+  },
+  {
     title: "My Profile",
     url: "/dashboard/profile",
-    icon: Home,
+    icon: Users,
   },
   {
     title: "My Requests",
@@ -33,17 +38,6 @@ const navigationItems = [
     url: "/dashboard/my-assignments",
     icon: Briefcase,
   },
-  {
-    title: "My Reports",
-    url: "/reports",
-    icon: BarChart3,
-  },
-  {
-    title: "Team Calendar",
-    url: "/calendar",
-    icon: Calendar,
-  },
-
   {
     title: "Official holidays",
     url: "/holidays",

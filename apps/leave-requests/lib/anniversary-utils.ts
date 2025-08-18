@@ -61,6 +61,11 @@ export async function calculateEffectiveTenure(
   userId: string,
   targetDate: Date = new Date()
 ): Promise<{ years: number; months: number; days: number }> {
+  // Return default values if no start date is set
+  if (!startDate) {
+    return { years: 0, months: 0, days: 0 };
+  }
+  
   const supabase = await createServerClient();
   
   // Get all extended absences for the user that have ended by the target date
