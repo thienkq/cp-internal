@@ -11,6 +11,8 @@ Employee,"As an employee, I want to submit leave for future years, so that I can
 Employee,"As an employee, I want to see a leave calendar, so that I can view my own and my team's leave schedule.",Can view a personal and team calendar with color-coded leave status.,Low
 Employee,"As a employee, I want to see a congratulatory message on my birthday, so that I feel recognized and valued.","On the user's birthday, a congratulatory message is displayed on the dashboard; visible only to the user; appears once per year on the correct date.",High
 Employee,"As a employee, I want to see message on celebrating on my work anniversary, so that my contributions are acknowledged","On the anniversary of the user, a congratulatory message is displayed on the dashboard; includes number of years completed; visible only to the user; appears once per year on the correct date",High
+Employee,"As an employee, I want to update my profile and addresses, so that my information is always current and accurate.","Can edit personal information, contact details, and manage multiple addresses; changes are saved and reflected immediately.",High
+Employee,"As an employee, I want to update my project assignments, so that I can reflect my current work responsibilities.","Can view current project assignments and request changes; admin approval required for assignment modifications.",High
 ,,,
 Manager,"As a manager, I want to receive email notifications for leave requests, so that I can respond promptly.","Receives email when a team member submits a request, with approve/reject link.",High
 Manager,"As a manager, I want to approve or reject leave requests, so that I can manage my team's availability.","Can view, approve, or reject requests",High
