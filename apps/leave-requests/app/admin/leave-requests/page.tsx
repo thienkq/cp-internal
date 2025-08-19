@@ -2,7 +2,7 @@ import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { createServerClient } from "@workspace/supabase";
-import { LeaveRequestList } from "@/components/leave/leave-request-list";
+import { AllLeaveRequestsTable } from "@/components/admin/all-leave-requests-table";
 import { Button } from "@workspace/ui/components/button";
 import { FileText, Filter, Download } from "lucide-react";
 import Link from "next/link";
@@ -22,11 +22,7 @@ export default async function AdminLeaveRequestsPage() {
     `)
     .order("created_at", { ascending: false });
 
-  // Separate requests by status
-  const pendingRequests = allLeaveRequests?.filter(req => req.status === "pending") || [];
-  const approvedRequests = allLeaveRequests?.filter(req => req.status === "approved") || [];
-  const rejectedRequests = allLeaveRequests?.filter(req => req.status === "rejected") || [];
-  const canceledRequests = allLeaveRequests?.filter(req => req.status === "canceled") || [];
+
 
   const getStatusCount = (status: string) => {
     return allLeaveRequests?.filter(req => req.status === status).length || 0;
@@ -76,55 +72,12 @@ export default async function AdminLeaveRequestsPage() {
           </Card>
         </div>
 
-        {/* Pending Requests */}
-        {pendingRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Pending Requests</h2>
-            <LeaveRequestList
-              leaveRequests={pendingRequests}
-              title="Requests Awaiting Approval"
-              showUserColumn={true}
-              showActions={true}
-            />
-          </div>
-        )}
-
-        {/* Approved Requests */}
-        {approvedRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Approved Requests</h2>
-            <LeaveRequestList
-              leaveRequests={approvedRequests}
-              title="Recently Approved"
-              showUserColumn={true}
-              showActions={false}
-            />
-          </div>
-        )}
-
-        {/* Rejected Requests */}
-        {rejectedRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Rejected Requests</h2>
-            <LeaveRequestList
-              leaveRequests={rejectedRequests}
-              title="Recently Rejected"
-              showUserColumn={true}
-              showActions={false}
-            />
-          </div>
-        )}
-
-        {/* All Requests */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">All Leave Requests</h2>
-          <LeaveRequestList
-            leaveRequests={allLeaveRequests || []}
-            title="Complete History"
-            showUserColumn={true}
-            showActions={false}
-          />
-        </div>
+        {/* All Leave Requests */}
+        <AllLeaveRequestsTable
+          leaveRequests={allLeaveRequests || []}
+          title="All Leave Requests"
+          showActions={true}
+        />
       </div>
     </PageContainer>
   );
