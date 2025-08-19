@@ -1,14 +1,11 @@
 import { PageContainer } from "@workspace/ui/components/page-container";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
-import { Badge } from "@workspace/ui/components/badge";
+import { Card } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { createServerClient } from "@workspace/supabase";
 import { getCurrentUser } from "@workspace/supabase";
 import { redirect } from "next/navigation";
-import { LeaveRequestList } from "@/components/leave/leave-request-list";
-import { Filter, Download, Calendar } from "lucide-react";
+import { LeaveRequestTable } from "@/components/leave/leave-request-table";
+import { Download } from "lucide-react";
 import { LeaveRequestYearFilter } from "@/components/leave/leave-request-year-filter";
-import type { LeaveRequest } from "@/types";
 
 interface PageProps {
   searchParams: Promise<{
@@ -45,12 +42,7 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
     .lte("start_date", endOfYear)
     .order("start_date", { ascending: false });
 
-  // Separate requests by status for better organization
-  const pendingRequests = leaveRequests?.filter(req => req.status === "pending") || [];
-  const approvedRequests = leaveRequests?.filter(req => req.status === "approved") || [];
-  const rejectedRequests = leaveRequests?.filter(req => req.status === "rejected") || [];
-  const canceledRequests = leaveRequests?.filter(req => req.status === "canceled") || [];
-
+  // Helper functions for stats
   const getStatusCount = (status: string) => {
     return leaveRequests?.filter(req => req.status === status).length || 0;
   };
@@ -117,84 +109,19 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
           </Card>
         </div>
 
-        {/* Pending Requests */}
-        {pendingRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Pending Requests</h2>
-            <LeaveRequestList
-              leaveRequests={pendingRequests}
-              title="Requests Awaiting Approval"
-              showUserColumn={false}
-              showActions={false}
-            />
-          </div>
-        )}
-
-        {/* Approved Requests */}
-        {approvedRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Approved Requests</h2>
-            <LeaveRequestList
-              leaveRequests={approvedRequests}
-              title="Approved Requests"
-              showUserColumn={false}
-              showActions={false}
-            />
-          </div>
-        )}
-
-        {/* Rejected Requests */}
-        {rejectedRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Rejected Requests</h2>
-            <LeaveRequestList
-              leaveRequests={rejectedRequests}
-              title="Rejected Requests"
-              showUserColumn={false}
-              showActions={false}
-            />
-          </div>
-        )}
-
-        {/* Canceled Requests */}
-        {canceledRequests.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Canceled Requests</h2>
-            <LeaveRequestList
-              leaveRequests={canceledRequests}
-              title="Canceled Requests"
-              showUserColumn={false}
-              showActions={false}
-            />
-          </div>
-        )}
-
-        {/* All Requests for the Year */}
+        {/* All Requests for the Year - Table View */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">All Requests for {selectedYear}</h2>
-          <LeaveRequestList
+          <LeaveRequestTable
             leaveRequests={leaveRequests || []}
             title={`${selectedYear} Leave History`}
             showUserColumn={false}
             showActions={false}
+            emptyMessage={`You haven't submitted any leave requests for ${selectedYear} yet.`}
           />
         </div>
 
-        {/* No Requests Message */}
-        {(!leaveRequests || leaveRequests.length === 0) && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Leave Requests</h3>
-              <p className="text-gray-500 mb-4">
-                You haven't submitted any leave requests for {selectedYear} yet.
-              </p>
-              <Button asChild>
-                <a href="/dashboard/leave/new">Submit New Request</a>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+
       </div>
     </PageContainer>
   );
