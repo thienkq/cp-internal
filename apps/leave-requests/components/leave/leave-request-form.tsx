@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { useRouter } from "next/navigation"
-import { createBrowserClient } from "@workspace/supabase"
+
+import { submitLeaveRequest } from "@/app/dashboard/leave/new/actions"
+import { leaveRequestSchema, type LeaveRequestFormData } from "@/lib/leave-request-schema"
 
 import { Button } from "@workspace/ui/components/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
@@ -21,42 +21,6 @@ import { Calendar, FileText, Users, Mail, Info, X, Plus } from "lucide-react"
 
 import { ProjectMultiSelect } from "@/components/leave/project-multi-select"
 import { UserMultiSelect } from "@/components/leave/user-multi-select"
-
-const leaveRequestSchema = z.object({
-  leave_type_id: z.number().min(1, "Please select a leave type"),
-  start_date: z.string().min(1, "Start date is required"),
-  end_date: z.string().nullable(), // allow null for half-day
-  is_half_day: z.boolean(),        // required
-  half_day_type: z.enum(["morning", "afternoon"]).nullable(), // allow null
-  message: z.string().min(10, "Please provide a reason (at least 10 characters)"),
-  emergency_contact: z.string().nullable(),
-  projects: z.array(z.object({
-    id: z.string().nullable(),
-    name: z.string()
-  })),
-  current_manager_id: z.string().nullable(),
-  backup_id: z.string().nullable(),
-  internal_notifications: z.array(z.string()),
-  external_notifications: z.array(z.string())
-}).refine((data) => {
-  if (!data.is_half_day && !data.end_date) {
-    return false
-  }
-  return true
-}, {
-  message: "End date is required for full day requests",
-  path: ["end_date"]
-}).refine((data) => {
-  if (data.is_half_day && !data.half_day_type) {
-    return false
-  }
-  return true
-}, {
-  message: "Please select morning or afternoon for half day requests",
-  path: ["half_day_type"]
-})
-
-type LeaveRequestFormData = z.infer<typeof leaveRequestSchema>
 
 interface LeaveRequestFormProps {
   leaveTypes: Array<{
@@ -77,14 +41,9 @@ interface LeaveRequestFormProps {
     full_name: string
     email: string
   }>
-  currentUser: {
-    id: string
-    email: string
-  }
 }
 
-export function LeaveRequestForm({ leaveTypes, projects, users, currentUser }: LeaveRequestFormProps) {
-  const router = useRouter()
+export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [externalEmailInput, setExternalEmailInput] = useState("")
 
@@ -126,34 +85,27 @@ export function LeaveRequestForm({ leaveTypes, projects, users, currentUser }: L
   const onSubmit = async (data: LeaveRequestFormData) => {
     setIsSubmitting(true)
     try {
-      const supabase = createBrowserClient()
-      
-      const leaveRequest = {
-        user_id: currentUser.id,
-        leave_type_id: data.leave_type_id,
-        start_date: data.start_date,
-        end_date: data.is_half_day ? null : data.end_date,
-        is_half_day: data.is_half_day,
-        half_day_type: data.half_day_type || null,
-        message: data.message,
-        emergency_contact: data.emergency_contact || null,
-        projects: data.projects.length > 0 ? data.projects : null,
-        current_manager_id: data.current_manager_id || null,
-        backup_id: data.backup_id || null,
-        internal_notifications: data.internal_notifications.length > 0 ? data.internal_notifications : null,
-        external_notifications: data.external_notifications.length > 0 ? data.external_notifications : null,
-        status: 'pending'
+      // Create FormData for server action
+      const formData = new FormData()
+      formData.append("leave_type_id", data.leave_type_id.toString())
+      formData.append("start_date", data.start_date)
+      formData.append("end_date", data.end_date || "")
+      formData.append("is_half_day", data.is_half_day.toString())
+      if (data.half_day_type) {
+        formData.append("half_day_type", data.half_day_type)
       }
+      formData.append("message", data.message)
+      formData.append("emergency_contact", data.emergency_contact || "")
+      formData.append("projects", JSON.stringify(data.projects))
+      formData.append("current_manager_id", data.current_manager_id || "")
+      formData.append("backup_id", data.backup_id || "")
+      formData.append("internal_notifications", JSON.stringify(data.internal_notifications))
+      formData.append("external_notifications", JSON.stringify(data.external_notifications))
 
-      const { error } = await supabase
-        .from('leave_requests')
-        .insert([leaveRequest])
-
-      if (error) throw error
-
-      router.push('/dashboard?success=leave-request-submitted')
+      await submitLeaveRequest(formData)
     } catch (error) {
       console.error('Error submitting leave request:', error)
+      // You can add proper error handling here later
     } finally {
       setIsSubmitting(false)
     }
@@ -162,13 +114,6 @@ export function LeaveRequestForm({ leaveTypes, projects, users, currentUser }: L
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Info Alert */}
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Your internal manager must approve your request. All selected internal users and external emails will be notified when you submit this request.
-          </AlertDescription>
-        </Alert>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Leave Details */}
@@ -390,13 +335,11 @@ export function LeaveRequestForm({ leaveTypes, projects, users, currentUser }: L
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {users
-                            .filter(user => user.id !== currentUser.id)
-                            .map(user => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.full_name || user.email}
-                              </SelectItem>
-                            ))}
+                          {users.map(user => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.full_name || user.email}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -418,13 +361,11 @@ export function LeaveRequestForm({ leaveTypes, projects, users, currentUser }: L
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {users
-                            .filter(user => user.id !== currentUser.id)
-                            .map(user => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.full_name || user.email}
-                              </SelectItem>
-                            ))}
+                          {users.map(user => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.full_name || user.email}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -506,7 +447,6 @@ export function LeaveRequestForm({ leaveTypes, projects, users, currentUser }: L
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
             className="flex-1"
           >
             Cancel

@@ -31,7 +31,6 @@ export default async function NewLeaveRequestPage() {
           leaveTypes={leaveTypes}
           projects={projects}
           users={users}
-          currentUser={{ id: user.id, email: user.email ?? "" }}
         />
       </PageContainer>
     )
