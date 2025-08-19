@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 
 import { submitLeaveRequest } from "@/app/dashboard/leave/new/actions"
 import { leaveRequestSchema, type LeaveRequestFormData } from "@/lib/leave-request-schema"
+import { createFormDataFromLeaveRequest } from "@/lib/leave-request-form-utils"
 
 import { Button } from "@workspace/ui/components/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
@@ -85,23 +86,8 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
   const onSubmit = async (data: LeaveRequestFormData) => {
     setIsSubmitting(true)
     try {
-      // Create FormData for server action
-      const formData = new FormData()
-      formData.append("leave_type_id", data.leave_type_id.toString())
-      formData.append("start_date", data.start_date)
-      formData.append("end_date", data.end_date || "")
-      formData.append("is_half_day", data.is_half_day.toString())
-      if (data.half_day_type) {
-        formData.append("half_day_type", data.half_day_type)
-      }
-      formData.append("message", data.message)
-      formData.append("emergency_contact", data.emergency_contact || "")
-      formData.append("projects", JSON.stringify(data.projects))
-      formData.append("current_manager_id", data.current_manager_id || "")
-      formData.append("backup_id", data.backup_id || "")
-      formData.append("internal_notifications", JSON.stringify(data.internal_notifications))
-      formData.append("external_notifications", JSON.stringify(data.external_notifications))
-
+      // Create FormData for server action using utility function
+      const formData = createFormDataFromLeaveRequest(data)
       await submitLeaveRequest(formData)
     } catch (error) {
       console.error('Error submitting leave request:', error)
