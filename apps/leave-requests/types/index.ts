@@ -47,3 +47,40 @@ export type ExtendedAbsence = {
   created_at?: string;
   updated_at?: string;
 };
+
+export interface LeaveRequest {
+  id: string;
+  user_id: string;
+  leave_type_id: number;
+  projects?: Array<{ id: string; name: string }> | null;
+  internal_notifications?: string[] | null;
+  external_notifications?: string[] | null;
+  current_manager_id?: string | null;
+  backup_id?: string | null;
+  start_date: string;
+  end_date?: string | null;
+  is_half_day: boolean;
+  half_day_type?: 'morning' | 'afternoon' | null;
+  message?: string | null;
+  emergency_contact?: string | null;
+  status: 'pending' | 'approved' | 'rejected' | 'canceled';
+  approval_notes?: string | null;
+  cancel_reason?: string | null;
+  approved_by_id?: string | null;
+  approved_at?: string | null;
+  canceled_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  user?: {
+    full_name: string;
+    email: string;
+  };
+  leave_type?: {
+    name: string;
+    description?: string;
+  };
+  approved_by?: {
+    full_name: string;
+  };
+}

@@ -23,6 +23,11 @@ const adminNavigationItems = [
     icon: Home,
   },
   {
+    title: "Leave Requests",
+    url: "/admin/leave-requests",
+    icon: Calendar,
+  },
+  {
     title: "Users",
     url: "/admin/users",
     icon: Users,

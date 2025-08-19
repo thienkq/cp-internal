@@ -29,8 +29,8 @@ const navigationItems = [
     icon: Users,
   },
   {
-    title: "My Requests",
-    url: "/requests",
+    title: "My Leave Requests",
+    url: "/dashboard/leave-requests",
     icon: FileText,
   },
   {
