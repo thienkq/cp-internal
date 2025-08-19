@@ -91,7 +91,9 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
       formData.append("start_date", data.start_date)
       formData.append("end_date", data.end_date || "")
       formData.append("is_half_day", data.is_half_day.toString())
-      formData.append("half_day_type", data.half_day_type || "")
+      if (data.half_day_type) {
+        formData.append("half_day_type", data.half_day_type)
+      }
       formData.append("message", data.message)
       formData.append("emergency_contact", data.emergency_contact || "")
       formData.append("projects", JSON.stringify(data.projects))

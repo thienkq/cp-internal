@@ -5,6 +5,13 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 import { leaveRequestSchema } from "@/lib/leave-request-schema"
 
+// Helper function to safely parse half_day_type
+function parseHalfDayType(value: FormDataEntryValue | null): "morning" | "afternoon" | null {
+  if (!value || value === "") return null
+  if (value === "morning" || value === "afternoon") return value
+  return null
+}
+
 export async function submitLeaveRequest(formData: FormData) {
   try {
     const supabase = await createServerClient()
@@ -26,12 +33,12 @@ export async function submitLeaveRequest(formData: FormData) {
     }
 
     // Parse and validate the data
-    const validatedData = leaveRequestSchema.parse({
+    const parsedData = {
       leave_type_id: parseInt(rawData.leave_type_id as string) || 0,
       start_date: rawData.start_date as string,
       end_date: rawData.end_date as string || null,
       is_half_day: rawData.is_half_day === "true",
-      half_day_type: rawData.half_day_type as "morning" | "afternoon" | null,
+      half_day_type: parseHalfDayType(rawData.half_day_type),
       message: rawData.message as string,
       emergency_contact: rawData.emergency_contact as string || null,
       projects: rawData.projects ? JSON.parse(rawData.projects as string) : [],
@@ -39,7 +46,10 @@ export async function submitLeaveRequest(formData: FormData) {
       backup_id: rawData.backup_id as string || null,
       internal_notifications: rawData.internal_notifications ? JSON.parse(rawData.internal_notifications as string) : [],
       external_notifications: rawData.external_notifications ? JSON.parse(rawData.external_notifications as string) : []
-    })
+    }
+
+
+    const validatedData = leaveRequestSchema.parse(parsedData)
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
