@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 
 import { submitLeaveRequest } from "@/app/dashboard/leave/new/actions"
 import { leaveRequestSchema, type LeaveRequestFormData } from "@/lib/leave-request-schema"
+import { createFormDataFromLeaveRequest } from "@/lib/leave-request-form-utils"
 
 import { Button } from "@workspace/ui/components/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
@@ -46,6 +47,7 @@ interface LeaveRequestFormProps {
 export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [externalEmailInput, setExternalEmailInput] = useState("")
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm<LeaveRequestFormData>({
     resolver: zodResolver(leaveRequestSchema),
@@ -84,28 +86,22 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
 
   const onSubmit = async (data: LeaveRequestFormData) => {
     setIsSubmitting(true)
+    setSubmitError(null) // Clear any previous errors
+    
     try {
-      // Create FormData for server action
-      const formData = new FormData()
-      formData.append("leave_type_id", data.leave_type_id.toString())
-      formData.append("start_date", data.start_date)
-      formData.append("end_date", data.end_date || "")
-      formData.append("is_half_day", data.is_half_day.toString())
-      if (data.half_day_type) {
-        formData.append("half_day_type", data.half_day_type)
-      }
-      formData.append("message", data.message)
-      formData.append("emergency_contact", data.emergency_contact || "")
-      formData.append("projects", JSON.stringify(data.projects))
-      formData.append("current_manager_id", data.current_manager_id || "")
-      formData.append("backup_id", data.backup_id || "")
-      formData.append("internal_notifications", JSON.stringify(data.internal_notifications))
-      formData.append("external_notifications", JSON.stringify(data.external_notifications))
-
+      // Create FormData for server action using utility function
+      const formData = createFormDataFromLeaveRequest(data)
       await submitLeaveRequest(formData)
+      // If we reach here, submission was successful and redirect will happen
     } catch (error) {
       console.error('Error submitting leave request:', error)
-      // You can add proper error handling here later
+      
+      // Extract meaningful error message for the user
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unexpected error occurred while submitting your leave request. Please try again.'
+      
+      setSubmitError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -441,6 +437,15 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
             </Card>
           </div>
         </div>
+
+        {/* Error Display */}
+        {submitError && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {submitError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Submit Buttons */}
         <div className="flex gap-3">
