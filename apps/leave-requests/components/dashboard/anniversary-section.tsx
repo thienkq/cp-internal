@@ -16,13 +16,13 @@ export async function AnniversarySection({
   userName, 
   dateOfBirth, 
   startDate, 
-  userId 
+  userId
 }: AnniversarySectionProps) {
-  const isBirthday = isBirthdayToday(dateOfBirth);
-  const isAnniversary = startDate 
+  const isBirthday = dateOfBirth ? isBirthdayToday(dateOfBirth) : false;
+  const isAnniversary = startDate
     ? await isWorkAnniversaryToday(startDate, userId)
     : false;
-  const anniversaryInfo = startDate 
+  const anniversaryInfo = startDate
     ? await getAnniversaryInfo(startDate, userId)
     : null;
 
@@ -39,7 +39,7 @@ export async function AnniversarySection({
       />
 
       {/* Birthday Banner */}
-      {isBirthday && (
+      {isBirthday && dateOfBirth && (
         <BirthdayBanner 
           userName={userName} 
           dateOfBirth={dateOfBirth}
