@@ -7,6 +7,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Calendar, Clock, User, FileText, AlertCircle } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { LeaveRequestActions } from "@/components/admin/leave-request-actions";
+import { getStatusBadge, formatDateRange, getDurationText } from "@/lib/leave-request-display-utils";
 
 interface LeaveRequestListProps {
   leaveRequests: LeaveRequest[];
@@ -34,52 +35,6 @@ export function LeaveRequestList({
     // For now, we'll just remove the request from the local state
     // In a real app, you'd want to refresh the data from the server
     window.location.reload();
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "default";
-      case "pending":
-        return "secondary";
-      case "rejected":
-        return "destructive";
-      case "canceled":
-        return "outline";
-      default:
-        return "outline";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const formatDateRange = (startDate: string, endDate?: string | null, isHalfDay?: boolean) => {
-    if (isHalfDay && !endDate) {
-      return `${formatDate(startDate)} (Half day)`;
-    }
-    if (endDate && startDate !== endDate) {
-      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-    }
-    return formatDate(startDate);
-  };
-
-  const getDurationText = (startDate: string, endDate?: string | null, isHalfDay?: boolean) => {
-    if (isHalfDay) return "Half day";
-    
-    if (!endDate) return "1 day";
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
-    return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
   };
 
   if (leaveRequests.length === 0) {
@@ -127,22 +82,18 @@ export function LeaveRequestList({
                       </div>
                     )}
                     
-                    <Badge variant={getStatusBadgeVariant(request.status)}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </Badge>
+                    {getStatusBadge(request.status)}
                   </div>
 
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1 text-gray-600">
                       <Calendar className="h-4 w-4" />
-                      <span>
-                        {formatDateRange(request.start_date, request.end_date, request.is_half_day)}
-                      </span>
+                      {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
                     </div>
                     
                     <div className="flex items-center gap-1 text-gray-600">
                       <Clock className="h-4 w-4" />
-                      <span>{getDurationText(request.start_date, request.end_date, request.is_half_day)}</span>
+                      {getDurationText(request.start_date, request.end_date, request.is_half_day)}
                     </div>
 
                     {request.leave_type && (
