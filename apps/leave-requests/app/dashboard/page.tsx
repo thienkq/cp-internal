@@ -7,9 +7,10 @@ import BirthdayWrapper from "@/components/birthday-wrapper";
 import BirthdayBanner from "@/components/birthday-banner";
 import AnniversaryWrapper from "@/components/anniversary-wrapper";
 import WorkAnniversaryBanner from "@/components/work-anniversary-banner";
+import { LeaveRequestList } from "@/components/leave/leave-request-list";
 import { isBirthdayToday } from "@/lib/birthday-utils";
 import { isWorkAnniversaryToday, getAnniversaryInfo, calculateEffectiveTenure } from "@/lib/anniversary-utils";
-import type { User } from "@/types";
+import type { User, LeaveRequest } from "@/types";
 
 export default async function DashboardPage() {
   const { user, supabase } = await getCurrentUser();
@@ -55,13 +56,65 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .eq("status", "pending");
 
-  // Fetch real recent leave requests (last 5)
+  // Fetch real recent leave requests with joins
   const { data: recentRequests } = await supabase
     .from("leave_requests")
-    .select("*")
+    .select(`
+      *,
+      leave_type:leave_types(name, description),
+      projects,
+      approved_by:users!approved_by_id(full_name)
+    `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5);
+
+  // Fetch all user's leave requests for the leave requests section
+  const { data: allUserRequests } = await supabase
+    .from("leave_requests")
+    .select(`
+      *,
+      leave_type:leave_types(name, description),
+      projects,
+      approved_by:users!approved_by_id(full_name)
+    `)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  // Calculate current year's leave usage
+  const currentYear = new Date().getFullYear();
+  const startOfYear = new Date(currentYear, 0, 1).toISOString();
+  const endOfYear = new Date(currentYear, 11, 31).toISOString();
+  
+  const { data: currentYearRequests } = await supabase
+    .from("leave_requests")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("start_date", startOfYear)
+    .lte("start_date", endOfYear)
+    .eq("status", "approved");
+
+  const getCurrentYearDaysUsed = () => {
+    if (!currentYearRequests) return 0;
+    
+    return currentYearRequests.reduce((total, req) => {
+      if (req.is_half_day) {
+        return total + 0.5;
+      }
+      if (req.end_date && req.start_date !== req.end_date) {
+        const start = new Date(req.start_date);
+        const end = new Date(req.end_date);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        return total + diffDays;
+      }
+      return total + 1;
+    }, 0);
+  };
+
+  const currentYearDaysUsed = getCurrentYearDaysUsed();
+  const remainingLeave = leaveBalance - currentYearDaysUsed;
 
   const userName = userData.full_name || user.email || "User";
   const isBirthday = isBirthdayToday(userData.date_of_birth);
@@ -86,7 +139,15 @@ export default async function DashboardPage() {
 
       {/* Greeting and Congratulatory Banners */}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
+          <a 
+            href="/dashboard/leave-requests" 
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            View All Leave Requests →
+          </a>
+        </div>
         
         {/* Start Date Reminder Banner */}
         {!userData.start_date && (
@@ -122,7 +183,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-4">
         <Card className="p-6 text-center">
           <div className="text-3xl font-bold text-blue-600">{leaveBalance}</div>
           <div className="text-sm text-gray-500">Leave Balance</div>
@@ -136,54 +197,38 @@ export default async function DashboardPage() {
           </div>
         </Card>
         <Card className="p-6 text-center">
-          <div className="text-3xl font-bold text-purple-600">{pendingRequests?.length || 0}</div>
-          <div className="text-sm text-gray-500">Pending Requests</div>
-          <div className="text-xs text-gray-400 mt-1">Awaiting approval</div>
+          <div className="text-3xl font-bold text-green-600">{currentYearDaysUsed}</div>
+          <div className="text-sm text-gray-500">Days Used</div>
+          <div className="text-xs text-gray-400 mt-1">This year</div>
         </Card>
         <Card className="p-6 text-center">
-          <div className="text-3xl font-bold text-green-600">{recentRequests?.length || 0}</div>
-          <div className="text-sm text-gray-500">Total Requests</div>
-          <div className="text-xs text-gray-400 mt-1">All time</div>
+          <div className="text-3xl font-bold text-orange-600">{remainingLeave.toFixed(1)}</div>
+          <div className="text-sm text-gray-500">Remaining</div>
+          <div className="text-xs text-gray-400 mt-1">This year</div>
+        </Card>
+        <Card className="p-6 text-center">
+          <div className="text-3xl font-bold text-purple-600">{pendingRequests?.length || 0}</div>
+          <div className="text-sm text-gray-500">Pending</div>
+          <div className="text-xs text-gray-400 mt-1">Awaiting approval</div>
         </Card>
       </div>
 
-      {/* Recent Leave Requests */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">Recent Leave Requests</h2>
-          <a href="/dashboard/leave/history" className="text-blue-600 text-sm hover:underline">View All</a>
+      {/* My Leave Requests */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">My Leave Requests</h2>
+          <div className="flex items-center gap-2">
+            <a href="/dashboard/leave-requests" className="text-blue-600 text-sm hover:underline">View All</a>
+            <a href="/dashboard/leave/new" className="text-blue-600 text-sm hover:underline">New Request</a>
+          </div>
         </div>
-        <Card className="divide-y">
-          {recentRequests && recentRequests.length > 0 ? (
-            recentRequests.map((req) => (
-              <div key={req.id} className="flex items-center justify-between p-4">
-                <div>
-                  <div className="font-medium">
-                    {req.leave_type || 'Leave'} ({req.days || 1} day{(req.days || 1) > 1 ? "s" : ""})
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date(req.start_date).toLocaleDateString()} - {new Date(req.end_date).toLocaleDateString()}
-                  </div>
-                </div>
-                <div>
-                  <Badge variant={
-                    req.status === "approved"
-                      ? "default"
-                      : req.status === "pending"
-                      ? "secondary"
-                      : req.status === "rejected"
-                      ? "destructive"
-                      : "outline"
-                  }>
-                    {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="p-4 text-center text-gray-400">No recent leave requests.</div>
-          )}
-        </Card>
+        
+        <LeaveRequestList
+          leaveRequests={recentRequests || []}
+          title="Recent Leave Requests"
+          showUserColumn={false}
+          showActions={false}
+        />
       </div>
     </PageContainer>
   )
