@@ -120,7 +120,7 @@ export async function cancelLeaveRequest(requestId: string, cancelReason: string
         updated_at: new Date().toISOString()
       })
       .eq("id", requestId);
-
+    
     if (error) throw error;
 
     revalidatePath("/admin");
