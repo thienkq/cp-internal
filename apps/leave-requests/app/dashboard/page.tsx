@@ -1,17 +1,9 @@
 import { getCurrentUser } from "@workspace/supabase";
 import { redirect } from "next/navigation";
-import { Card } from "@workspace/ui/components/card"
-import { Badge } from "@workspace/ui/components/badge"
 import { PageContainer } from "@workspace/ui/components/page-container"
-import BirthdayWrapper from "@/components/birthday-wrapper";
-import BirthdayBanner from "@/components/birthday-banner";
-import AnniversaryWrapper from "@/components/anniversary-wrapper";
-import WorkAnniversaryBanner from "@/components/work-anniversary-banner";
-import { LeaveRequestList } from "@/components/leave/leave-request-list";
-import { isBirthdayToday } from "@/lib/birthday-utils";
-import { isWorkAnniversaryToday, getAnniversaryInfo, calculateEffectiveTenure } from "@/lib/anniversary-utils";
-import type { User, LeaveRequest } from "@/types";
-
+import { AnniversarySection } from "@/components/dashboard/anniversary-section";
+import { LeaveBalanceSection } from "@/components/dashboard/leave-balance-section";
+import { LeaveRequestsSection } from "@/components/dashboard/leave-requests-section";
 export default async function DashboardPage() {
   const { user, supabase } = await getCurrentUser();
 
@@ -34,21 +26,6 @@ export default async function DashboardPage() {
     );
   }
 
-  // Calculate real leave balance based on tenure
-  // If no start_date is set, default to 0 years (new employee rate of 12 days)
-  const effectiveTenure = userData.start_date 
-    ? await calculateEffectiveTenure(userData.start_date, userData.id)
-    : { years: 0, months: 0, days: 0 };
-  
-  const getLeaveBalance = (years: number): number => {
-    if (years < 1) return 12;
-    if (years < 2) return 13;
-    if (years < 3) return 15;
-    if (years < 4) return 18;
-    return 22;
-  };
-  const leaveBalance = getLeaveBalance(effectiveTenure.years);
-
   // Fetch real pending leave requests
   const { data: pendingRequests } = await supabase
     .from("leave_requests")
@@ -63,81 +40,25 @@ export default async function DashboardPage() {
       *,
       leave_type:leave_types(name, description),
       projects,
-      approved_by:users!approved_by_id(full_name)
+      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // Fetch all user's leave requests for the leave requests section
-  const { data: allUserRequests } = await supabase
-    .from("leave_requests")
-    .select(`
-      *,
-      leave_type:leave_types(name, description),
-      projects,
-      approved_by:users!approved_by_id(full_name)
-    `)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  // Calculate current year's leave usage
-  const currentYear = new Date().getFullYear();
-  const startOfYear = new Date(currentYear, 0, 1).toISOString();
-  const endOfYear = new Date(currentYear, 11, 31).toISOString();
-  
-  const { data: currentYearRequests } = await supabase
-    .from("leave_requests")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("start_date", startOfYear)
-    .lte("start_date", endOfYear)
-    .eq("status", "approved");
-
-  const getCurrentYearDaysUsed = () => {
-    if (!currentYearRequests) return 0;
-    
-    return currentYearRequests.reduce((total, req) => {
-      if (req.is_half_day) {
-        return total + 0.5;
-      }
-      if (req.end_date && req.start_date !== req.end_date) {
-        const start = new Date(req.start_date);
-        const end = new Date(req.end_date);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        return total + diffDays;
-      }
-      return total + 1;
-    }, 0);
-  };
-
-  const currentYearDaysUsed = getCurrentYearDaysUsed();
-  const remainingLeave = leaveBalance - currentYearDaysUsed;
-
   const userName = userData.full_name || user.email || "User";
-  const isBirthday = isBirthdayToday(userData.date_of_birth);
-  const isAnniversary = userData.start_date 
-    ? await isWorkAnniversaryToday(userData.start_date, userData.id)
-    : false;
-  const anniversaryInfo = userData.start_date 
-    ? await getAnniversaryInfo(userData.start_date, userData.id)
-    : null;
 
   return (
     <PageContainer>
-      {/* Birthday Celebration Modal */}
-      <BirthdayWrapper userName={userName} isBirthday={isBirthday} />
-
-      {/* Work Anniversary Celebration Modal */}
-      <AnniversaryWrapper 
-        userName={userName} 
-        years={anniversaryInfo?.years || 0}
-        isAnniversary={isAnniversary} 
+      {/* Anniversary Section */}
+      <AnniversarySection
+        userName={userName}
+        dateOfBirth={userData.date_of_birth}
+        startDate={userData.start_date}
+        userId={user.id}
       />
 
-      {/* Greeting and Congratulatory Banners */}
+      {/* Greeting and Start Date Reminder */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
@@ -166,70 +87,17 @@ export default async function DashboardPage() {
             </div>
           </div>
         )}
-        
-        {isBirthday && (
-          <BirthdayBanner 
-            userName={userName} 
-            dateOfBirth={userData.date_of_birth}
-          />
-        )}
-        {isAnniversary && anniversaryInfo && userData.start_date && (
-          <WorkAnniversaryBanner 
-            userName={userName} 
-            years={anniversaryInfo.years}
-            startDate={userData.start_date}
-          />
-        )}
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-4">
-        <Card className="p-6 text-center">
-          <div className="text-3xl font-bold text-blue-600">{leaveBalance}</div>
-          <div className="text-sm text-gray-500">Leave Balance</div>
-          <div className="text-xs text-gray-400 mt-1">
-            {!userData.start_date 
-              ? 'Start date not set' 
-              : effectiveTenure.years > 0 
-                ? `${effectiveTenure.years} year${effectiveTenure.years > 1 ? 's' : ''} of service` 
-                : 'New employee'
-            }
-          </div>
-        </Card>
-        <Card className="p-6 text-center">
-          <div className="text-3xl font-bold text-green-600">{currentYearDaysUsed}</div>
-          <div className="text-sm text-gray-500">Days Used</div>
-          <div className="text-xs text-gray-400 mt-1">This year</div>
-        </Card>
-        <Card className="p-6 text-center">
-          <div className="text-3xl font-bold text-orange-600">{remainingLeave.toFixed(1)}</div>
-          <div className="text-sm text-gray-500">Remaining</div>
-          <div className="text-xs text-gray-400 mt-1">This year</div>
-        </Card>
-        <Card className="p-6 text-center">
-          <div className="text-3xl font-bold text-purple-600">{pendingRequests?.length || 0}</div>
-          <div className="text-sm text-gray-500">Pending</div>
-          <div className="text-xs text-gray-400 mt-1">Awaiting approval</div>
-        </Card>
-      </div>
+      {/* Leave Balance Section */}
+      <LeaveBalanceSection
+        startDate={userData.start_date}
+        userId={user.id}
+        pendingRequestsCount={pendingRequests?.length || 0}
+      />
 
-      {/* My Leave Requests */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">My Leave Requests</h2>
-          <div className="flex items-center gap-2">
-            <a href="/dashboard/leave-requests" className="text-blue-600 text-sm hover:underline">View All</a>
-            <a href="/dashboard/leave/new" className="text-blue-600 text-sm hover:underline">New Request</a>
-          </div>
-        </div>
-        
-        <LeaveRequestList
-          leaveRequests={recentRequests || []}
-          title="Recent Leave Requests"
-          showUserColumn={false}
-          showActions={false}
-        />
-      </div>
+      {/* Leave Requests Section */}
+      <LeaveRequestsSection leaveRequests={recentRequests || []} />
     </PageContainer>
   )
 }
