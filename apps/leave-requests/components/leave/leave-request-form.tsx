@@ -47,6 +47,7 @@ interface LeaveRequestFormProps {
 export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [externalEmailInput, setExternalEmailInput] = useState("")
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm<LeaveRequestFormData>({
     resolver: zodResolver(leaveRequestSchema),
@@ -85,13 +86,22 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
 
   const onSubmit = async (data: LeaveRequestFormData) => {
     setIsSubmitting(true)
+    setSubmitError(null) // Clear any previous errors
+    
     try {
       // Create FormData for server action using utility function
       const formData = createFormDataFromLeaveRequest(data)
       await submitLeaveRequest(formData)
+      // If we reach here, submission was successful and redirect will happen
     } catch (error) {
       console.error('Error submitting leave request:', error)
-      // You can add proper error handling here later
+      
+      // Extract meaningful error message for the user
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unexpected error occurred while submitting your leave request. Please try again.'
+      
+      setSubmitError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -427,6 +437,15 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
             </Card>
           </div>
         </div>
+
+        {/* Error Display */}
+        {submitError && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {submitError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Submit Buttons */}
         <div className="flex gap-3">
