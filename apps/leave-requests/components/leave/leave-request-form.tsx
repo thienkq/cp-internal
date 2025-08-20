@@ -96,7 +96,8 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
       const result = await submitLeaveRequest(formData)
       
       if (result.success) {
-        // Redirect on success using client-side navigation
+        // Use router.push for smooth client-side navigation
+        // Cache invalidation is handled server-side with revalidatePath()
         router.push(result.redirectTo || '/dashboard')
       } else {
         // Handle server-side error

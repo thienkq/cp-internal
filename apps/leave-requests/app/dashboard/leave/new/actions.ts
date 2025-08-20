@@ -1,6 +1,7 @@
 "use server"
 
 import { createServerClient } from "@workspace/supabase"
+import { revalidatePath } from 'next/cache'
 import { 
   processLeaveRequestFormData, 
   prepareLeaveRequestForInsert,
@@ -52,6 +53,10 @@ export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeav
     
     // Insert into database
     await insertLeaveRequest(supabase, leaveRequest)
+    
+    // Invalidate the cache for all paths that display leave request data
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/leave-requests')
     
     // Return success result instead of redirecting
     return { success: true as const, redirectTo: '/dashboard?success=leave-request-submitted' }
