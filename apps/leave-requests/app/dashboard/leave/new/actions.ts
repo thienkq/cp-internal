@@ -1,12 +1,15 @@
 "use server"
 
 import { createServerClient } from "@workspace/supabase"
-import { redirect } from "next/navigation"
 import { 
   processLeaveRequestFormData, 
   prepareLeaveRequestForInsert,
   type LeaveRequestInsert 
 } from "@/lib/leave-request-form-utils"
+
+type SubmitLeaveRequestResult = 
+  | { success: true; redirectTo: string }
+  | { success: false; error: string }
 
 
 
@@ -34,7 +37,7 @@ async function insertLeaveRequest(supabase: any, leaveRequest: LeaveRequestInser
   }
 }
 
-export async function submitLeaveRequest(formData: FormData) {
+export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeaveRequestResult> {
   try {
     const supabase = await createServerClient()
     
@@ -49,13 +52,16 @@ export async function submitLeaveRequest(formData: FormData) {
     
     // Insert into database
     await insertLeaveRequest(supabase, leaveRequest)
+    
+    // Return success result instead of redirecting
+    return { success: true as const, redirectTo: '/dashboard?success=leave-request-submitted' }
   } catch (error) {
     console.error('Error submitting leave request:', error)
     
-    // Re-throw the error as it's already properly formatted by the helper functions
-    throw error
+    // Return error result instead of throwing
+    return { 
+      success: false as const, 
+      error: error instanceof Error ? error.message : 'An unexpected error occurred'
+    }
   }
-
-  // Redirect on success - outside try/catch to avoid catching NEXT_REDIRECT
-  redirect('/dashboard?success=leave-request-submitted')
 } 
