@@ -31,7 +31,7 @@ function getLeaveImpactIndicator(status: string) {
     return (
       <div className="flex items-center gap-1 text-green-600">
         <CheckCircle className="h-3 w-3" />
-        <span className="text-xs font-medium">Counts as used</span>
+        <span className="text-xs font-medium">Approved</span>
       </div>
     );
   } else if (status === "pending") {
