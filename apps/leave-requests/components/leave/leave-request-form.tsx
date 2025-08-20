@@ -96,15 +96,9 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
       const result = await submitLeaveRequest(formData)
       
       if (result.success) {
-        const redirectUrl = result.redirectTo || '/dashboard'
-        
-        // Use different redirect methods based on environment
-        if (process.env.NODE_ENV === 'production') {
-          window.location.href = redirectUrl
-        } else {
-          // Use Next.js router in development for better DX
-          router.push(redirectUrl)
-        }
+        // Use router.push for smooth client-side navigation
+        // Cache invalidation is handled server-side with revalidatePath()
+        router.push(result.redirectTo || '/dashboard')
       } else {
         // Handle server-side error
         setSubmitError(result.error || 'An unexpected error occurred')
