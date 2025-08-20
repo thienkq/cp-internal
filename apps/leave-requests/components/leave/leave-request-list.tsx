@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
-import { Calendar, Clock, User, FileText, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
+import { Calendar, Clock, User, FileText, AlertCircle, CheckCircle, XCircle, Minus } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { LeaveRequestActions } from "@/components/admin/leave-request-actions";
 import { getStatusBadge, formatDateRange, getDurationText } from "@/lib/leave-request-display-utils";
@@ -17,6 +18,45 @@ interface LeaveRequestListProps {
   onApprove?: (request: LeaveRequest) => void;
   onReject?: (request: LeaveRequest) => void;
   onCancel?: (request: LeaveRequest) => void;
+}
+
+// Helper function to determine if a request counts toward used leave
+function countsTowardUsedLeave(status: string): boolean {
+  return status === "approved" || status === "pending";
+}
+
+// Helper function to get leave impact indicator
+function getLeaveImpactIndicator(status: string) {
+  if (status === "approved") {
+    return (
+      <div className="flex items-center gap-1 text-green-600">
+        <CheckCircle className="h-3 w-3" />
+        <span className="text-xs font-medium">Counts as used</span>
+      </div>
+    );
+  } else if (status === "pending") {
+    return (
+      <div className="flex items-center gap-1 text-orange-600">
+        <Clock className="h-3 w-3" />
+        <span className="text-xs font-medium">Pending (reserved)</span>
+      </div>
+    );
+  } else if (status === "rejected") {
+    return (
+      <div className="flex items-center gap-1 text-red-500">
+        <XCircle className="h-3 w-3" />
+        <span className="text-xs font-medium">Not counted</span>
+      </div>
+    );
+  } else if (status === "canceled") {
+    return (
+      <div className="flex items-center gap-1 text-gray-500">
+        <Minus className="h-3 w-3" />
+        <span className="text-xs font-medium">Not counted</span>
+      </div>
+    );
+  }
+  return null;
 }
 
 export function LeaveRequestList({
@@ -36,6 +76,90 @@ export function LeaveRequestList({
     // In a real app, you'd want to refresh the data from the server
     window.location.reload();
   };
+
+  // Filter requests by category
+  const countedRequests = leaveRequests.filter(req => countsTowardUsedLeave(req.status));
+  const notCountedRequests = leaveRequests.filter(req => !countsTowardUsedLeave(req.status));
+
+  // Helper function to render request items
+  const renderRequestItem = (request: LeaveRequest) => (
+    <div key={request.id} className="p-4 hover:bg-gray-50 transition-colors">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            {showUserColumn && request.user && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User className="h-4 w-4" />
+                <span className="font-medium">{request.user.full_name}</span>
+                <span className="text-gray-400">({request.user.email})</span>
+              </div>
+            )}
+            
+            {getStatusBadge(request.status)}
+            {getLeaveImpactIndicator(request.status)}
+          </div>
+
+          <div className="flex items-center gap-4 text-sm flex-wrap">
+            <div className="flex items-center gap-1 text-gray-600">
+              <Calendar className="h-4 w-4" />
+              {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
+            </div>
+            
+            <div className="flex items-center gap-1 text-gray-600">
+              <Clock className="h-4 w-4" />
+              {getDurationText(request.start_date, request.end_date, request.is_half_day)}
+            </div>
+
+            {request.leave_type && (
+              <Badge variant="outline" className="text-xs">
+                {request.leave_type.name}
+              </Badge>
+            )}
+          </div>
+
+          {request.message && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Reason:</span> {request.message}
+            </div>
+          )}
+
+          {request.projects && request.projects.length > 0 && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Projects:</span>{" "}
+              {request.projects.map((p) => p.name).join(", ")}
+            </div>
+          )}
+
+          {request.status === "approved" && request.approved_by && (
+            <div className="text-sm text-green-600">
+              <span className="font-medium">Approved by:</span> {request.approved_by.full_name}
+            </div>
+          )}
+
+          {request.status === "rejected" && request.approval_notes && (
+            <div className="text-sm text-red-600">
+              <span className="font-medium">Rejection reason:</span> {request.approval_notes}
+            </div>
+          )}
+
+          {request.status === "canceled" && request.cancel_reason && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Cancel reason:</span> {request.cancel_reason}
+            </div>
+          )}
+        </div>
+
+        {showActions && request.status === "pending" && (
+          <div className="ml-4">
+            <LeaveRequestActions 
+              request={request} 
+              onActionComplete={handleActionComplete}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   if (leaveRequests.length === 0) {
     return (
@@ -68,85 +192,54 @@ export function LeaveRequestList({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y">
-          {leaveRequests.map((request) => (
-            <div key={request.id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    {showUserColumn && request.user && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">{request.user.full_name}</span>
-                        <span className="text-gray-400">({request.user.email})</span>
-                      </div>
-                    )}
-                    
-                    {getStatusBadge(request.status)}
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
-                    </div>
-                    
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Clock className="h-4 w-4" />
-                      {getDurationText(request.start_date, request.end_date, request.is_half_day)}
-                    </div>
-
-                    {request.leave_type && (
-                      <Badge variant="outline" className="text-xs">
-                        {request.leave_type.name}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {request.message && (
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Reason:</span> {request.message}
-                    </div>
-                  )}
-
-                  {request.projects && request.projects.length > 0 && (
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Projects:</span>{" "}
-                      {request.projects.map((p) => p.name).join(", ")}
-                    </div>
-                  )}
-
-                  {request.status === "approved" && request.approved_by && (
-                    <div className="text-sm text-green-600">
-                      <span className="font-medium">Approved by:</span> {request.approved_by.full_name}
-                    </div>
-                  )}
-
-                  {request.status === "rejected" && request.approval_notes && (
-                    <div className="text-sm text-red-600">
-                      <span className="font-medium">Rejection reason:</span> {request.approval_notes}
-                    </div>
-                  )}
-
-                  {request.status === "canceled" && request.cancel_reason && (
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Cancel reason:</span> {request.cancel_reason}
-                    </div>
-                  )}
-                </div>
-
-                {showActions && request.status === "pending" && (
-                  <div className="ml-4">
-                    <LeaveRequestActions 
-                      request={request} 
-                      onActionComplete={handleActionComplete}
-                    />
-                  </div>
-                )}
+        <Tabs defaultValue="counted" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mx-4 mt-4">
+            <TabsTrigger value="counted" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Used/Reserved ({countedRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="not-counted" className="flex items-center gap-2">
+              <XCircle className="h-4 w-4" />
+              Not Counted ({notCountedRequests.length})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="counted" className="mt-0">
+            <div className="px-4 pb-2 pt-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
               </div>
             </div>
-          ))}
-        </div>
+            {countedRequests.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No approved or pending leave requests</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {countedRequests.map(renderRequestItem)}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="not-counted" className="mt-0">
+            <div className="px-4 pb-2 pt-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                <XCircle className="h-4 w-4" />
+                <span>These requests do not affect your leave balance</span>
+              </div>
+            </div>
+            {notCountedRequests.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <XCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No rejected or cancelled leave requests</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {notCountedRequests.map(renderRequestItem)}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
