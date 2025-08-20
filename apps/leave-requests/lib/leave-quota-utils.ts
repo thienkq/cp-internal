@@ -334,8 +334,10 @@ export async function calculateLeaveBalance(
 ): Promise<LeaveBalance> {
   const supabase = await createServerClient();
   
-  // Get leave entitlement
-  const entitlement = await calculateCompleteLeaveEntitlement(userId, new Date(`${leaveYear}-12-31`));
+  // Get leave entitlement - use current date for current year, end of year for future years
+  const currentYear = new Date().getFullYear();
+  const targetDate = leaveYear === currentYear ? new Date() : new Date(`${leaveYear}-12-31`);
+  const entitlement = await calculateCompleteLeaveEntitlement(userId, targetDate);
   
   // Get leave requests for the year
   const { data: leaveRequests } = await supabase

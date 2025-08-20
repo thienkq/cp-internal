@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Badge } from "@workspace/ui/components/badge";
 import { calculateCompleteLeaveEntitlement } from "@/lib/leave-quota-utils";
 import { createServerClient } from "@workspace/supabase";
+import { Calendar, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import type { ExtendedAbsence } from "@/types";
 
 interface EnhancedLeaveBalanceSectionProps {
   userId: string;
@@ -22,10 +24,58 @@ function formatAnniversary(dateString: string): string {
   });
 }
 
+interface ExtendedAbsenceWithImpact extends ExtendedAbsence {
+  durationDays: number;
+  tenureImpact: number;
+  isCompleted: boolean;
+}
+
+function calculateAbsenceImpact(absence: ExtendedAbsence): ExtendedAbsenceWithImpact {
+  const startDate = new Date(absence.start_date);
+  const endDate = new Date(absence.end_date);
+  const today = new Date();
+  
+  const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const isCompleted = endDate <= today;
+  
+  // Only absences longer than 30 days affect tenure
+  const tenureImpact = durationDays > 30 ? durationDays : 0;
+  
+  return {
+    ...absence,
+    durationDays,
+    tenureImpact,
+    isCompleted
+  };
+}
+
+function getStatusBadge(absence: ExtendedAbsenceWithImpact) {
+  const today = new Date();
+  const startDate = new Date(absence.start_date);
+  const endDate = new Date(absence.end_date);
+  
+  if (endDate < today) {
+    return <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">Completed</Badge>;
+  } else if (startDate <= today && endDate >= today) {
+    return <Badge variant="outline" className="text-xs text-blue-600 border-blue-300">Ongoing</Badge>;
+  } else {
+    return <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">Upcoming</Badge>;
+  }
+}
+
+function getTenureImpactText(absence: ExtendedAbsenceWithImpact): string {
+  if (absence.tenureImpact > 0) {
+    return `+${absence.tenureImpact} days to tenure`;
+  } else {
+    return "No tenure impact";
+  }
+}
+
 function calculateCorrectedQuota(entitlement: any): { 
   quota: number; 
   isOnboarding: boolean; 
   employmentYear: number;
+  effectiveEmploymentYear: number;
   daysWorked: number;
   explanation: string;
   quotaReason: string;
@@ -35,6 +85,7 @@ function calculateCorrectedQuota(entitlement: any): {
       quota: entitlement.totalQuota,
       isOnboarding: true,
       employmentYear: 1,
+      effectiveEmploymentYear: 1,
       daysWorked: 0,
       explanation: "No start date set, using default quota",
       quotaReason: "Default onboarding year quota (12 days, prorated based on start month)"
@@ -44,51 +95,58 @@ function calculateCorrectedQuota(entitlement: any): {
   const startDate = new Date(entitlement.originalStartDate);
   const currentDate = new Date();
   
-  // Calculate actual days worked
+  // Calculate actual days worked (ignoring extended absences)
   const daysWorked = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Calculate years of service completed
-  const yearsCompleted = Math.floor(daysWorked / 365);
-  const employmentYear = yearsCompleted + 1; // Year 1, 2, 3, 4, 5+
+  // Use the effective employment year that already accounts for extended absences
+  const effectiveEmploymentYear = entitlement.effectiveEmploymentYear;
+  const employmentYear = entitlement.employmentYear; // Original employment year without absences
+  const isOnboarding = entitlement.isOnboardingYear;
   
-  if (daysWorked < 365) {
-    // Still in onboarding year (Year 1)
-    const startMonth = startDate.getMonth() + 1;
-    const proratedQuota = Math.max(1, 12 - startMonth + 1);
-    
+  if (isOnboarding) {
+    // Still in onboarding year (Year 1) - use the calculated quota from entitlement
     return {
-      quota: proratedQuota,
+      quota: entitlement.totalQuota,
       isOnboarding: true,
-      employmentYear: 1,
+      employmentYear: effectiveEmploymentYear,
+      effectiveEmploymentYear,
       daysWorked,
-      explanation: `Onboarding year: ${daysWorked} days worked, started month ${startMonth}`,
-      quotaReason: `Year 1 quota: 12 days prorated by start month (12 - ${startMonth} + 1 = ${proratedQuota} days)`
+      explanation: `Onboarding year: ${daysWorked} days worked total`,
+      quotaReason: entitlement.proratedQuota 
+        ? `Year 1 quota: ${entitlement.totalQuota} days (prorated)`
+        : `Year 1 quota: ${entitlement.totalQuota} days`
     };
   } else {
-    // Post-onboarding years (Year 2, 3, 4, 5+)
-    let quota: number;
+    // Post-onboarding years - use effective employment year
+    const quota = entitlement.totalQuota;
     let quotaReason: string;
     
-    if (employmentYear === 2) {
-      quota = 13;
-      quotaReason = "Year 2 quota: 13 days (completed 1 full year of service)";
-    } else if (employmentYear === 3) {
-      quota = 15;
-      quotaReason = "Year 3 quota: 15 days (completed 2 full years of service)";
-    } else if (employmentYear === 4) {
-      quota = 18;
-      quotaReason = "Year 4 quota: 18 days (completed 3 full years of service)";
+    if (effectiveEmploymentYear === 2) {
+      quotaReason = "Year 2 quota: 13 days (completed 1 effective year of service)";
+    } else if (effectiveEmploymentYear === 3) {
+      quotaReason = "Year 3 quota: 15 days (completed 2 effective years of service)";
+    } else if (effectiveEmploymentYear === 4) {
+      quotaReason = "Year 4 quota: 18 days (completed 3 effective years of service)";
     } else {
-      quota = 22;
-      quotaReason = `Year ${employmentYear >= 5 ? "5+" : employmentYear} quota: 22 days (completed ${yearsCompleted} full years of service)`;
+      quotaReason = `Year ${effectiveEmploymentYear >= 5 ? "5+" : effectiveEmploymentYear} quota: 22 days (completed ${effectiveEmploymentYear - 1} effective years of service)`;
+    }
+    
+    // Add explanation about extended absence impact
+    const absenceImpact = entitlement.extendedAbsenceImpact;
+    const hasAbsences = absenceImpact.totalAbsenceDays > 0;
+    
+    let explanation = `Completed ${effectiveEmploymentYear - 1} effective year(s) of service (${daysWorked} days worked total)`;
+    if (hasAbsences) {
+      explanation += `, delayed by ${absenceImpact.totalAbsenceDays} absence days`;
     }
     
     return {
       quota,
       isOnboarding: false,
-      employmentYear: Math.min(employmentYear, 5), // Cap display at Year 5
+      employmentYear: effectiveEmploymentYear,
+      effectiveEmploymentYear,
       daysWorked,
-      explanation: `Completed ${yearsCompleted} year(s) of service (${daysWorked} days worked)`,
+      explanation,
       quotaReason
     };
   }
@@ -97,7 +155,7 @@ function calculateCorrectedQuota(entitlement: any): {
 export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalanceSectionProps) {
   const entitlement = await calculateCompleteLeaveEntitlement(userId);
   
-  // Get extended absences for current year
+  // Get extended absences for current year and all absences
   const supabase = await createServerClient();
   const currentYear = new Date().getFullYear();
   const { data: currentYearAbsences } = await supabase
@@ -106,6 +164,13 @@ export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalan
     .eq("user_id", userId)
     .gte("start_date", `${currentYear}-01-01`)
     .lte("end_date", `${currentYear}-12-31`);
+  
+  // Get all extended absences for this user to display in the list
+  const { data: allAbsences } = await supabase
+    .from("extended_absences")
+    .select("*")
+    .eq("user_id", userId)
+    .order("start_date", { ascending: false });
   
   // Calculate corrected quota with detailed information
   const quotaAnalysis = calculateCorrectedQuota(entitlement);
@@ -157,8 +222,13 @@ export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalan
             <div>
               <p className="font-medium">Employment Year Status</p>
               <p className="text-sm text-muted-foreground">
-                {quotaAnalysis.isOnboarding ? "Onboarding Year (Prorated)" : `Year ${quotaAnalysis.employmentYear} (Post-Onboarding)`}
+                {quotaAnalysis.isOnboarding ? "Onboarding Year (Prorated)" : `Year ${quotaAnalysis.employmentYear}`}
               </p>
+              {entitlement.extendedAbsenceImpact.totalAbsenceDays > 0 && !quotaAnalysis.isOnboarding && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Would be Year {entitlement.employmentYear} without extended absences
+                </p>
+              )}
               <p className="text-xs text-gray-500 mt-1">
                 {quotaAnalysis.explanation}
               </p>
@@ -169,24 +239,10 @@ export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalan
             </div>
           </div>
         </div>
-        
-        {/* Current Year Extended Absence Impact */}
-        {currentYearAbsenceDays > 0 && (
-          <div className="p-4 border-l-4 border-red-500 bg-red-50 rounded">
-            <h4 className="font-medium text-red-800">Current Year Extended Absence Impact</h4>
-            <div className="mt-2 space-y-1 text-sm text-red-700">
-              <p>Total absence days this year: {currentYearAbsenceDays}</p>
-              <p>Base quota: {quotaAnalysis.quota} days {quotaAnalysis.isOnboarding ? "(Onboarding Year)" : `(Year ${quotaAnalysis.employmentYear})`}</p>
-              {!quotaAnalysis.isOnboarding && (
-                <p>Adjusted quota: {Math.max(1, Math.round(quotaAnalysis.quota - (currentYearAbsenceDays / 365 * quotaAnalysis.quota)))} days</p>
-              )}
-              <p className="text-xs text-red-600">Note: Extended absences may reduce current year's leave entitlement</p>
-            </div>
-          </div>
-        )}
+      
         
         {/* Extended Absence Impact */}
-        {entitlement.extendedAbsenceImpact.totalAbsenceDays > 0 && (
+        {/* {entitlement.extendedAbsenceImpact.totalAbsenceDays > 0 && (
           <div className="p-4 border-l-4 border-orange-500 bg-orange-50 rounded">
             <h4 className="font-medium text-orange-800">Overall Extended Absence Impact</h4>
             <div className="mt-2 space-y-1 text-sm text-orange-700">
@@ -195,14 +251,80 @@ export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalan
               <p>Anniversary delay: {entitlement.extendedAbsenceImpact.anniversaryDelay} days</p>
             </div>
           </div>
+        )} */}
+        
+        {/* Extended Absences List */}
+        {allAbsences && allAbsences.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-gray-800">Extended Absences History</h4>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="space-y-3">
+                {allAbsences.map((absence) => {
+                  const absenceWithImpact = calculateAbsenceImpact(absence);
+                  return (
+                    <div key={absence.id} className="bg-white p-3 rounded-md border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <div className="text-sm">
+                              <div className="font-medium text-gray-900">
+                                {formatDate(absence.start_date)} - {formatDate(absence.end_date)}
+                              </div>
+                              {absence.reason && (
+                                <div className="text-gray-500 text-xs">{absence.reason}</div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm font-medium">{absenceWithImpact.durationDays} days</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(absenceWithImpact)}
+                          <div className="flex items-center gap-1">
+                            {absenceWithImpact.tenureImpact > 0 ? (
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )}
+                            <span className={`text-xs ${absenceWithImpact.tenureImpact > 0 ? 'text-red-700' : 'text-green-700'}`}>
+                              {getTenureImpactText(absenceWithImpact)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {allAbsences.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                  <p className="text-sm">No extended absences recorded</p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
         
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground">Calculated Employment Year</p>
+            <p className="text-muted-foreground">Effective Employment Year</p>
             <p className="font-medium">Year {quotaAnalysis.employmentYear}</p>
-            <p className="text-xs text-gray-500">Based on actual days worked</p>
+            <p className="text-xs text-gray-500">Adjusted for extended absences</p>
           </div>
+          {/* {entitlement.extendedAbsenceImpact.totalAbsenceDays > 0 && (
+            <div>
+              <p className="text-muted-foreground">Original Employment Year</p>
+              <p className="font-medium">Year {entitlement.employmentYear}</p>
+              <p className="text-xs text-gray-500">Without absence adjustments</p>
+            </div>
+          )} */}
         </div>
         
         {/* Extended Absence Status */}
@@ -233,7 +355,10 @@ export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalan
             <p>• Start Date: {entitlement.originalStartDate ? formatDate(entitlement.originalStartDate) : "Not set"}</p>
             <p>• Current Date: {formatDate(new Date().toISOString())}</p>
             <p>• Days Worked: {quotaAnalysis.daysWorked} days</p>
-            <p>• Employment Year: Year {quotaAnalysis.employmentYear}</p>
+            <p>• Effective Employment Year: Year {quotaAnalysis.employmentYear}</p>
+            {entitlement.extendedAbsenceImpact.totalAbsenceDays > 0 && (
+              <p>• Original Employment Year: Year {entitlement.employmentYear} (before absence adjustments)</p>
+            )}
             <p>• Status: {quotaAnalysis.explanation}</p>
             <p>• Quota Calculation: {quotaAnalysis.quotaReason}</p>
             
@@ -246,8 +371,11 @@ export async function EnhancedLeaveBalanceSection({ userId }: EnhancedLeaveBalan
             
             {!quotaAnalysis.isOnboarding && (
               <>
-                <p>• Years Completed: {Math.floor(quotaAnalysis.daysWorked / 365)} full year(s)</p>
+                <p>• Effective Years Completed: {quotaAnalysis.employmentYear - 1} full year(s)</p>
                 <p>• Quota Rules: Year 1: 12, Year 2: 13, Year 3: 15, Year 4: 18, Year 5+: 22</p>
+                {entitlement.extendedAbsenceImpact.totalAbsenceDays > 0 && (
+                  <p>• Extended Absence Delay: {entitlement.extendedAbsenceImpact.totalAbsenceDays} days reduces effective service</p>
+                )}
               </>
             )}
             
