@@ -36,18 +36,15 @@ export async function LeaveBalanceSection({ userId }: LeaveBalanceSectionProps) 
 
       {/* Bonus Leave */}
       <Card className="p-6 text-center relative">
-        <div className="flex items-center justify-center mb-2">
-          <Gift className="w-5 h-5 text-purple-600 mr-2" />
-        </div>
         {bonusLeave ? (
           <>
             <div className="text-3xl font-bold text-purple-600">{bonusLeave.total_granted}</div>
-            <div className="text-sm text-gray-500">Bonus Leave</div>
+            <div className="text-sm text-gray-500 ">Bonus Leave</div>
           </>
         ) : (
           <>
             <div className="text-3xl font-bold text-gray-400">0</div>
-            <div className="text-sm text-gray-500">Bonus Leave</div>
+            <div className="text-sm text-gray-500">Bonus Leave</div> 
             <div className="text-gray-400 mt-1">None granted this year</div>
           </>
         )}
@@ -58,7 +55,7 @@ export async function LeaveBalanceSection({ userId }: LeaveBalanceSectionProps) 
         <div className="text-3xl font-bold text-red-600">{leaveBalance.usedDays + leaveBalance.pendingDays}</div>
         <div className="text-sm text-gray-500">Committed</div>
         <div className="text-gray-400 mt-1">
-          {leaveBalance.usedDays} used + {leaveBalance.pendingDays} pending
+          {leaveBalance.usedDays} approved + {leaveBalance.pendingDays} pending
         </div>
       </Card>
 
