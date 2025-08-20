@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
 
 import { submitLeaveRequest } from "@/app/dashboard/leave/new/actions"
 import { leaveRequestSchema, type LeaveRequestFormData } from "@/lib/leave-request-schema"
@@ -45,6 +46,7 @@ interface LeaveRequestFormProps {
 }
 
 export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFormProps) {
+  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [externalEmailInput, setExternalEmailInput] = useState("")
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -91,8 +93,15 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
     try {
       // Create FormData for server action using utility function
       const formData = createFormDataFromLeaveRequest(data)
-      await submitLeaveRequest(formData)
-      // If we reach here, submission was successful and redirect will happen
+      const result = await submitLeaveRequest(formData)
+      
+      if (result.success) {
+        // Redirect on success using client-side navigation
+        router.push(result.redirectTo || '/dashboard')
+      } else {
+        // Handle server-side error
+        setSubmitError(result.error || 'An unexpected error occurred')
+      }
     } catch (error) {
       console.error('Error submitting leave request:', error)
       
