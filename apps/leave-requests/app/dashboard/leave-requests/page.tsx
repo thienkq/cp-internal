@@ -33,7 +33,7 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
     .from("leave_requests")
     .select(`
       *,
-      leave_type:leave_types(name, description),
+      leave_type:leave_types(name, description, is_paid),
       projects,
       approved_by:users!approved_by_id(full_name)
     `)
@@ -51,7 +51,8 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
     if (!leaveRequests) return 0;
     
     return leaveRequests.reduce((total, req) => {
-      if (req.status === "approved") {
+      // Only count paid leave types against quota (exclude unpaid leave)
+      if (req.status === "approved" && req.leave_type?.is_paid) {
         if (req.is_half_day) {
           return total + 0.5;
         }
@@ -104,8 +105,8 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
           </Card>
           <Card className="p-6 text-center">
             <div className="text-3xl font-bold text-blue-600">{getTotalDays()}</div>
-            <div className="text-sm text-gray-500">Days Used</div>
-            <div className="text-xs text-gray-400 mt-1">Approved requests</div>
+            <div className="text-sm text-gray-500">Quota Days Used</div>
+            <div className="text-xs text-gray-400 mt-1">Paid leave only</div>
           </Card>
         </div>
 

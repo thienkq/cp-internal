@@ -350,11 +350,18 @@ export async function calculateLeaveBalance(
   const targetDate = leaveYear === currentYear ? new Date() : new Date(`${leaveYear}-12-31`);
   const entitlement = await calculateCompleteLeaveEntitlement(userId, targetDate);
   
-  // Get leave requests for the year
+  // Get leave requests for the year - only include paid leave types
   const { data: leaveRequests } = await supabase
     .from("leave_requests")
-    .select("status, start_date, end_date, is_half_day")
+    .select(`
+      status, 
+      start_date, 
+      end_date, 
+      is_half_day,
+      leave_types!inner(is_paid)
+    `)
     .eq("user_id", userId)
+    .eq("leave_types.is_paid", true)
     .gte("start_date", `${leaveYear}-01-01`)
     .lte("start_date", `${leaveYear}-12-31`);
   
@@ -363,6 +370,7 @@ export async function calculateLeaveBalance(
   
   if (leaveRequests) {
     for (const request of leaveRequests) {
+      // Only paid leave types are returned from the query, so all requests count against quota
       const days = calculateLeaveDays(request.start_date, request.end_date, request.is_half_day);
       
       if (request.status === "approved") {
@@ -371,6 +379,7 @@ export async function calculateLeaveBalance(
         pendingDays += days;
       }
       // Note: rejected and canceled requests don't count
+      // Note: Unpaid leave is already filtered out in the query
     }
   }
   
