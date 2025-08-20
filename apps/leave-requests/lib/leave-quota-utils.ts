@@ -237,10 +237,21 @@ function calculateLeaveDays(startDate: string, endDate: string, isHalfDay: boole
   
   const start = new Date(startDate);
   const end = new Date(endDate || startDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   
-  return diffDays;
+  // Count only weekdays (exclude weekends)
+  let workDays = 0;
+  const currentDate = new Date(start);
+  
+  while (currentDate <= end) {
+    const dayOfWeek = currentDate.getDay();
+    // Sunday = 0, Saturday = 6, so exclude both
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      workDays++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return workDays;
 }
 
 // Main Functions
@@ -363,8 +374,8 @@ export async function calculateLeaveBalance(
     }
   }
   
-  const remainingDays = entitlement.totalQuota - usedDays;
-  const availableDays = remainingDays - pendingDays;
+  const remainingDays = entitlement.totalQuota - usedDays - pendingDays;
+  const availableDays = remainingDays; // Same as remaining since both approved and pending are subtracted
   
   return {
     totalQuota: entitlement.totalQuota,
