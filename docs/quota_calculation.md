@@ -6,7 +6,7 @@ This comprehensive leave balance system provides accurate, real-time calculation
 
 This section explains how the system combines three critical components to calculate accurate leave entitlements:
 
-1. **Prorated Leave Calculation** (first-year employees)
+1. **Prorated Leave Calculation** (onboarding year employees)
 2. **Working Anniversary Calculation** (adjusted by extended absences)
 3. **Effective Tenure Impact** (how absences affect anniversary dates)
 
@@ -31,19 +31,19 @@ The complete leave entitlement calculation follows this clear sequence:
 3. DETERMINE employment year status
    ├─ Original employment year = ceil(years since start)
    ├─ Effective employment year = max(1, effective_tenure.years + 1)
-   └─ Is first year = (effective employment year == 1)
+   └─ Is onboarding year = (effective employment year == 1)
 
 4. CALCULATE working anniversary
    ├─ Base anniversary = start_date + 1 year
    └─ Adjusted anniversary = base + total absence days
 
 5. DETERMINE quota based on year status
-   ├─ IF first year (effective)
+   ├─ IF onboarding year (effective employment year = 1)
    │  ├─ Calculate effective start date = original + absence days
    │  ├─ Prorated quota = 12 - effective_start_month + 1
-   │  └─ Use prorated quota
+   │  └─ Use prorated quota (partial year entitlement)
    │
-   └─ ELSE (regular year)
+   └─ ELSE (regular employment year 2+)
       └─ Use tenure-based quota (13, 15, 18, or 22 days)
 
 6. COMPILE results
@@ -64,7 +64,7 @@ The complete leave entitlement calculation follows this clear sequence:
 
 1. **30-Day Threshold**: Only count absences > 30 consecutive days
 2. **Cumulative Absences**: Multiple qualifying absences add up
-3. **Proration Logic**: First year uses month-based calculation
+3. **Proration Logic**: Onboarding year uses month-based calculation
 4. **Anniversary Delay**: Working anniversary shifts by absence duration
 5. **Minimum Quota**: Always at least 1 day (safety floor)
 6. **Default Fallback**: 12 days if no start date exists
@@ -73,9 +73,9 @@ The complete leave entitlement calculation follows this clear sequence:
 
 ```mermaid
 flowchart TD
-    A[Start: Calculate Leave Entitlement] --> B{User has start_date?}
+    A[Start: Calculate Leave Entitlement] --> B{User has start date?}
     
-    B -->|No| C[Return Default:<br/>12 days, first year]
+    B -->|No| C[Return Default:<br/>12 days, onboarding year]
     
     B -->|Yes| D[Calculate Effective Tenure]
     D --> E[Query Extended Absences > 30 days]
@@ -83,17 +83,17 @@ flowchart TD
     F --> G[Effective Tenure = Actual - Absence]
     
     G --> H[Determine Employment Years]
-    H --> I[Original Year = ceil(years_since_start)]
-    H --> J[Effective Year = max(1, effective_tenure.years + 1)]
+    H --> I[Original Year = ceil years since start]
+    H --> J[Effective Year = max 1, effective tenure years + 1]
     
-    J --> K{Is First Year?<br/>(Effective Year == 1)}
+    J --> K{Is Onboarding Year?<br/>Effective Year == 1}
     
     K -->|Yes| L[Calculate Effective Start Date]
     L --> M[Effective Start = Original + Absence Days]
-    M --> N[Prorated Quota = 12 - start_month + 1]
+    M --> N[Prorated Quota = 12 - start month + 1]
     N --> P[Use Prorated Quota]
     
-    K -->|No| Q[Use Tenure-Based Quota]
+    K -->|No| Q[Use Tenure Based Quota]
     Q --> R{Which Year?}
     R -->|Year 2| S[13 days]
     R -->|Year 3| T[15 days]
@@ -108,7 +108,7 @@ flowchart TD
     W --> X[Base Anniversary = Start + 1 Year]
     X --> Y[Adjusted = Base + Absence Days]
     
-    Y --> Z[Compile Results & Return]
+    Y --> Z[Compile Results and Return]
     C --> Z
     
     style C fill:#ffe6e6
@@ -121,8 +121,8 @@ flowchart TD
 | Condition | Action | Result | Example |
 |-----------|--------|--------|---------|
 | **No start date** | Use default | 12 days | New user, no setup |
-| **First year + No absences** | Prorate by month | `12 - start_month + 1` | June start = 7 days |
-| **First year + Extended absence** | Prorate by effective start | `12 - effective_month + 1` | June start + 60 days absence = 4 days |
+| **Onboarding year + No absences** | Prorate by month | `12 - start_month + 1` | June start = 7 days |
+| **Onboarding year + Extended absence** | Prorate by effective start | `12 - effective_month + 1` | June start + 60 days absence = 4 days |
 | **Second year** | Full quota | 13 days | Completed 1 effective year |
 | **Third year** | Full quota | 15 days | Completed 2 effective years |
 | **Fourth year** | Full quota | 18 days | Completed 3 effective years |
@@ -143,7 +143,7 @@ export async function calculateCompleteLeaveEntitlement(
   workingAnniversary: string | null;
   employmentYear: number;
   effectiveEmploymentYear: number;
-  isFirstYear: boolean;
+  isOnboardingYear: boolean;
   totalQuota: number;
   proratedQuota?: number;
   extendedAbsenceImpact: {
@@ -162,14 +162,14 @@ export async function calculateCompleteLeaveEntitlement(
     .single();
   
   if (!user?.start_date) {
-    // If no start date is set, default to 12 days (first year quota)
+    // If no start date is set, default to 12 days (onboarding year quota)
     return {
       originalStartDate: null,
       effectiveStartDate: null,
       workingAnniversary: null,
       employmentYear: 1,
       effectiveEmploymentYear: 1,
-      isFirstYear: true,
+      isOnboardingYear: true,
       totalQuota: 12,
       proratedQuota: 12,
       extendedAbsenceImpact: {
@@ -199,17 +199,17 @@ export async function calculateCompleteLeaveEntitlement(
   const originalEmploymentYear = yearOfEmployment(originalStartDate, targetDate);
   const effectiveEmploymentYear = Math.max(1, effectiveTenure.years + 1);
   
-  // Step 4: Check if still in first year (considering absences)
-  const isFirstYear = effectiveEmploymentYear === 1;
+  // Step 4: Check if still in onboarding year (considering absences)
+  const isOnboardingYear = effectiveEmploymentYear === 1;
   
   // Step 5: Calculate base quota
   let totalQuota: number;
   let proratedQuota: number | undefined;
   
-  if (isFirstYear) {
-    // First year: Use prorated calculation based on EFFECTIVE start
+  if (isOnboardingYear) {
+    // Onboarding year: Use prorated calculation based on EFFECTIVE start
     const effectiveStartDate = calculateEffectiveStartDate(originalStartDate, effectiveTenure);
-    proratedQuota = calculateProratedFirstYearQuota(effectiveStartDate, targetDate);
+    proratedQuota = calculateProratedOnboardingYearQuota(effectiveStartDate, targetDate);
     totalQuota = proratedQuota;
   } else {
     // Regular year: Use tenure-based quota
@@ -225,7 +225,7 @@ export async function calculateCompleteLeaveEntitlement(
     workingAnniversary,
     employmentYear: originalEmploymentYear,
     effectiveEmploymentYear,
-    isFirstYear,
+    isOnboardingYear,
     totalQuota,
     proratedQuota,
     extendedAbsenceImpact: absenceImpact
@@ -305,10 +305,10 @@ function calculateEffectiveStartDate(
 }
 ```
 
-#### **Step 4: Prorated First Year Calculation (Absence-Adjusted)**
+#### **Step 4: Prorated Onboarding Year Calculation (Absence-Adjusted)**
 
 ```typescript
-function calculateProratedFirstYearQuota(
+function calculateProratedOnboardingYearQuota(
   effectiveStartDate: string,
   targetDate: Date
 ): number {
@@ -328,11 +328,11 @@ function calculateProratedFirstYearQuota(
                                (target.getMonth() - effectiveStart.getMonth());
   
   if (effectiveMonthsWorked < 12) {
-    // Still in first year, calculate remaining months
+    // Still in onboarding year, calculate remaining months
     return Math.max(1, 12 - effectiveStartMonth + 1);
   }
   
-  // Completed first year, move to regular calculation
+  // Completed onboarding year, move to regular calculation
   return totalAnnualLeaveDays(2); // Second year quota
 }
 ```
@@ -407,7 +407,7 @@ function formatDuration(days: number): string {
 
 ### Comprehensive Examples
 
-#### **Example 1: First Year Employee with Extended Absence**
+#### **Example 1: Onboarding Year Employee with Extended Absence**
 
 ```
 Employee Details:
@@ -417,7 +417,7 @@ Employee Details:
 
 Step-by-Step Calculation:
 
-1. Original Employment Year: 1 (first year)
+1. Original Employment Year: 1 (onboarding year)
 2. Extended Absence Impact: 106 days (> 30, affects tenure)
 3. Effective Tenure: 
    - Actual days worked: 334 days
@@ -429,7 +429,7 @@ Step-by-Step Calculation:
    - Delayed by: 106 days
    - New working anniversary: September 15, 2024
 
-5. Still in First Year: Yes (effective tenure < 1 year)
+5. Still in Onboarding Year: Yes (effective tenure < 1 year)
 
 6. Prorated Quota Calculation:
    - Effective start: June 1, 2023 + 106 days = September 15, 2023
@@ -461,8 +461,8 @@ Step-by-Step Calculation:
    - Delayed by: 92 days
    - New working anniversary: June 1, 2024
 
-5. Employment Year Status: Just completed first effective year
-6. Quota: Transitions from prorated (first year) to full second year quota
+5. Employment Year Status: Just completed onboarding year
+6. Quota: Transitions from prorated (onboarding year) to full second year quota
 
 Result: Employee gets 13 days (second year quota) starting June 1, 2024
 ```
@@ -489,10 +489,10 @@ Step-by-Step Calculation:
    - Delayed by: 136 days
    - New working anniversary: May 16, 2024
 
-4. Still in First Year: Yes (effective tenure < 1 year)
+4. Still in Onboarding Year: Yes (effective tenure < 1 year)
 5. Prorated Quota: Based on multiple absence impact
 
-Result: Employee still in first year, working anniversary delayed significantly
+Result: Employee still in onboarding year, working anniversary delayed significantly
 ```
 
 #### **Example 4: Employee with No Start Date Set**
@@ -506,9 +506,9 @@ Employee Details:
 Step-by-Step Calculation:
 
 1. Start Date Check: No start date found
-2. Default Behavior: Return default first-year quota
+2. Default Behavior: Return default onboarding year quota
 3. Employment Year: 1 (default)
-4. Quota: 12 days (standard first-year entitlement)
+4. Quota: 12 days (standard onboarding year entitlement)
 5. No Anniversary Calculation: Cannot determine without start date
 6. No Absence Impact: Cannot calculate without employment period
 
@@ -568,7 +568,7 @@ export function EnhancedLeaveBalanceSection({ userId }: { userId: string }) {
             <div>
               <p className="font-medium">Employment Year Status</p>
               <p className="text-sm text-muted-foreground">
-                {entitlement.isFirstYear ? "First Year (Prorated)" : `Year ${entitlement.effectiveEmploymentYear}`}
+                {entitlement.isOnboardingYear ? "Onboarding Year (Prorated)" : `Year ${entitlement.effectiveEmploymentYear}`}
               </p>
             </div>
             <div className="text-right">
@@ -616,9 +616,9 @@ export function EnhancedLeaveBalanceSection({ userId }: { userId: string }) {
 
 1. **30-Day Threshold**: Only absences > 30 days affect tenure and anniversary
 2. **Cumulative Effect**: Multiple absences accumulate to delay anniversary
-3. **Prorated Adjustment**: First-year quota adjusts based on effective start date
+3. **Prorated Adjustment**: Onboarding year quota adjusts based on effective start date
 4. **Anniversary Delay**: Working anniversary shifts by total absence days
 5. **Real-time Calculation**: All calculations update immediately when absences change
-6. **Default Quota Fallback**: If no start date is set, default to 12 days (first-year quota)
+6. **Default Quota Fallback**: If no start date is set, default to 12 days (onboarding year quota)
 
-This integrated system ensures accurate leave entitlements that properly account for extended absences while maintaining fair proration for first-year employees.
+This integrated system ensures accurate leave entitlements that properly account for extended absences while maintaining fair proration for onboarding year employees.
