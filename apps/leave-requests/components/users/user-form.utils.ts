@@ -4,6 +4,7 @@ import type { User } from "@/types";
 export const userSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   full_name: z.string().min(1, "Full name is required"),
+  role: z.enum(["employee", "manager", "admin"]).optional(),
   gender: z.enum(["male", "female"]).optional(),
   position: z.string().optional(),
   phone: z.string().min(8, "Phone number is too short").max(20, "Phone number is too long").optional().or(z.literal("")),
@@ -18,6 +19,7 @@ export function getUserFormDefaults(initialData: User | null): UserFormValues {
   return {
     email: initialData?.email || "",
     full_name: initialData?.full_name || "",
+    role: initialData?.role || undefined,
     gender: (initialData?.gender as "male" | "female" | undefined) || undefined,
     position: initialData?.position || "",
     phone: initialData?.phone || "",
@@ -36,5 +38,6 @@ export function normalizeUserFormData(data: UserFormValues) {
     phone: data.phone || null,
     position: data.position || null,
     gender: data.gender || null,
+    role: data.role || null,
   };
 } 

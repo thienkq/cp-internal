@@ -5,6 +5,8 @@ import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { Badge } from "@workspace/ui/components/badge";
 
+
+
 const roleColors: Record<string, "default" | "secondary" | "destructive"> = {
   employee: "default",
   manager: "secondary",
@@ -72,7 +74,7 @@ export const columns: ColumnDef<User>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row, table }) => <DataTableRowActions row={row} onUpdate={() => (table.options.meta as any)?.onUpdate?.()} />,
     enableSorting: false,
     enableHiding: false,
   },

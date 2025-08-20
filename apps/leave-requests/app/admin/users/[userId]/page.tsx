@@ -33,7 +33,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ user
           <TabsTrigger value="bonus-leave">Bonus Leave</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
-          <UserForm initialData={userData} pageTitle="Edit User" canEditWorkInfo={true} />
+          <UserForm initialData={userData} pageTitle="Edit User" canEditWorkInfo={true} canEditRole={true} />
         </TabsContent>
         <TabsContent value="addresses">
           <AddressList addresses={addressData || []} userId={userId} />
