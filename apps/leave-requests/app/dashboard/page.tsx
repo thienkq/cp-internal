@@ -33,7 +33,8 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .eq("status", "pending");
 
-  // Fetch real recent leave requests with joins
+  // Fetch all leave requests for current year with joins
+  const currentYear = new Date().getFullYear();
   const { data: recentRequests } = await supabase
     .from("leave_requests")
     .select(`
@@ -43,8 +44,9 @@ export default async function DashboardPage() {
       approved_by:users!leave_requests_approved_by_id_fkey(full_name)
     `)
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+    .gte("start_date", `${currentYear}-01-01`)
+    .lte("start_date", `${currentYear}-12-31`)
+    .order("created_at", { ascending: false });
 
   const userName = userData.full_name || user.email || "User";
 
@@ -90,11 +92,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Leave Balance Section */}
-      <LeaveBalanceSection
-        startDate={userData.start_date}
-        userId={user.id}
-        pendingRequestsCount={pendingRequests?.length || 0}
-      />
+      <LeaveBalanceSection userId={user.id} />
 
       {/* Leave Requests Section */}
       <LeaveRequestsSection leaveRequests={recentRequests || []} />
