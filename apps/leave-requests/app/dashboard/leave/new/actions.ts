@@ -49,12 +49,13 @@ export async function submitLeaveRequest(formData: FormData) {
     
     // Insert into database
     await insertLeaveRequest(supabase, leaveRequest)
-
-    redirect('/dashboard?success=leave-request-submitted')
   } catch (error) {
     console.error('Error submitting leave request:', error)
     
     // Re-throw the error as it's already properly formatted by the helper functions
     throw error
   }
+
+  // Redirect on success - outside try/catch to avoid catching NEXT_REDIRECT
+  redirect('/dashboard?success=leave-request-submitted')
 } 
