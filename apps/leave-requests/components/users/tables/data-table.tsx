@@ -4,7 +4,7 @@ import { columns } from "./columns";
 import type { User } from "@/types";
 import { genderOptions, roleOptions } from "../user-constants";
 
-export function DataTable({ data }: { data: User[] }) {
+export function DataTable({ data, onUpdate }: { data: User[]; onUpdate?: () => void }) {
   return (
     <GenericDataTable 
       data={data} 
@@ -25,6 +25,7 @@ export function DataTable({ data }: { data: User[] }) {
           options: roleOptions,
         },
       ]}
+      onUpdate={onUpdate}
     />
   );
 } 

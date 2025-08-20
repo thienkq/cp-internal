@@ -36,6 +36,7 @@ interface DataTableProps<TData, TValue> {
     title: string;
     options: { label: string; value: string; icon?: React.ComponentType<{ className?: string }> }[];
   }[];
+  onUpdate?: () => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +44,7 @@ export function DataTable<TData, TValue>({
   data,
   searchField,
   filters,
+  onUpdate,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -63,6 +65,9 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    meta: {
+      onUpdate,
+    },
   });
 
   return (

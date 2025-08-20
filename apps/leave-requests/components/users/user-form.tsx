@@ -13,7 +13,7 @@ import { Label } from "@workspace/ui/components/label";
 import { DatePicker } from "./date-picker";
 import { UserSelect } from "./user-select";
 import { toast } from "sonner";
-import { genderOptions } from "./user-constants";
+import { genderOptions, roleOptions } from "./user-constants";
 import { userSchema, getUserFormDefaults, normalizeUserFormData, UserFormValues } from "./user-form.utils";
 import { User as UserIcon, Briefcase, Phone, Mail, Calendar, MapPin } from "lucide-react";
 
@@ -21,9 +21,10 @@ type UserFormProps = {
   initialData: User | null;
   pageTitle: string;
   canEditWorkInfo?: boolean; // default false
+  canEditRole?: boolean; // default false, only admins should be able to edit roles
 };
 
-export default function UserForm({ initialData, pageTitle, canEditWorkInfo = false }: UserFormProps) {
+export default function UserForm({ initialData, pageTitle, canEditWorkInfo = false, canEditRole = false }: UserFormProps) {
   const {
     register,
     handleSubmit,
@@ -180,6 +181,33 @@ export default function UserForm({ initialData, pageTitle, canEditWorkInfo = fal
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {canEditRole && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <UserIcon className="h-4 w-4 text-red-500" />
+                    Role *
+                  </Label>
+                  <Select
+                    value={watch("role")}
+                    onValueChange={value => setValue("role", value as "employee" | "manager" | "admin")}
+                  >
+                    <SelectTrigger className="w-full border-gray-300 focus:border-red-500 focus:ring-red-500">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.role && (
+                    <div className="text-red-600 text-sm font-medium">{errors.role.message}</div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <UserIcon className="h-4 w-4 text-blue-500" />
