@@ -39,6 +39,8 @@ export interface LeaveRequestInsert {
 
 // Enhanced interface that includes all data needed for email templates
 export interface LeaveRequestWithEmailData extends LeaveRequestInsert {
+  // The actual leave request ID (added after database insertion)
+  id?: string
   // Email template data (to avoid database queries)
   requester_name: string
   requester_email: string

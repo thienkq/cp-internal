@@ -34,16 +34,20 @@ async function getAuthenticatedUser(supabase: any) {
 }
 
 /**
- * Inserts the leave request into the database
+ * Inserts the leave request into the database and returns the created record ID
  */
-async function insertLeaveRequest(supabase: any, leaveRequest: LeaveRequestInsert) {
-  const { error } = await supabase
+async function insertLeaveRequest(supabase: any, leaveRequest: LeaveRequestInsert): Promise<string> {
+  const { data, error } = await supabase
     .from('leave_requests')
     .insert([leaveRequest])
+    .select('id')
+    .single()
 
   if (error) {
     throw error
   }
+
+  return data.id
 }
 
 
@@ -110,10 +114,10 @@ async function sendLeaveRequestNotification(
 
     // Send actionable emails to HR and managers
     const actionableRecipients = [...hrEmails, ...managerEmails];
-    if (actionableRecipients.length > 0) {
+    if (actionableRecipients.length > 0 && enrichedLeaveRequest.id) {
       const actionEmailData = {
         ...baseEmailData,
-        leaveRequestId: enrichedLeaveRequest.user_id, // We'll need the actual ID from the insert
+        leaveRequestId: enrichedLeaveRequest.id, // Use the actual leave request ID
         dashboardUrl,
       };
       
@@ -121,7 +125,7 @@ async function sendLeaveRequestNotification(
       
       await sendEmail({
         to: [...new Set(actionableRecipients)], // Remove duplicates
-        subject: `Leave Request ${enrichedLeaveRequest.requester_name} - Action Required: `,
+        subject: `Leave Request ${enrichedLeaveRequest.requester_name} - Action Required `,
         html: actionHtmlBody,
       });
     }
@@ -169,11 +173,17 @@ export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeav
       user.email || ''
     )
     
-    // Insert into database
-    await insertLeaveRequest(supabase, leaveRequest)
+    // Insert into database and get the created ID
+    const createdLeaveRequestId = await insertLeaveRequest(supabase, leaveRequest)
     
-    // Send email notification (no database queries!)
-    await sendLeaveRequestNotification(enrichedLeaveRequest, validatedData);
+    // Add the actual leave request ID to the enriched data
+    const enrichedLeaveRequestWithId = {
+      ...enrichedLeaveRequest,
+      id: createdLeaveRequestId
+    }
+    
+    // Send email notification
+    await sendLeaveRequestNotification(enrichedLeaveRequestWithId, validatedData);
 
     // Invalidate the cache for all paths that display leave request data
     revalidatePath('/dashboard')
