@@ -16,6 +16,8 @@ export interface RawFormData {
   backup_id: FormDataEntryValue | null
   internal_notifications: FormDataEntryValue | null
   external_notifications: FormDataEntryValue | null
+  _leaveTypes: FormDataEntryValue | null
+  _users: FormDataEntryValue | null
 }
 
 export interface LeaveRequestInsert {
@@ -33,6 +35,21 @@ export interface LeaveRequestInsert {
   internal_notifications: string[] | null
   external_notifications: string[] | null
   status: string
+}
+
+// Enhanced interface that includes all data needed for email templates
+export interface LeaveRequestWithEmailData extends LeaveRequestInsert {
+  // The actual leave request ID (added after database insertion)
+  id?: string
+  // Email template data (to avoid database queries)
+  requester_name: string
+  requester_email: string
+  leave_type_name: string
+  manager_name: string | null
+  manager_email: string | null
+  backup_name: string | null
+  backup_email: string | null
+  internal_notification_emails: string[] | null
 }
 
 /**
@@ -60,7 +77,9 @@ export function extractFormData(formData: FormData): RawFormData {
     current_manager_id: formData.get("current_manager_id"),
     backup_id: formData.get("backup_id"),
     internal_notifications: formData.get("internal_notifications"),
-    external_notifications: formData.get("external_notifications")
+    external_notifications: formData.get("external_notifications"),
+    _leaveTypes: formData.get("_leaveTypes"),
+    _users: formData.get("_users")
   }
 }
 
@@ -122,10 +141,58 @@ export function prepareLeaveRequestForInsert(validatedData: LeaveRequestFormData
 }
 
 /**
- * Creates FormData object from validated leave request data for server submission
- * This is the inverse operation of extractFormData/parseFormData
+ * Enriches leave request data with information needed for email templates
  */
-export function createFormDataFromLeaveRequest(data: LeaveRequestFormData): FormData {
+export function enrichLeaveRequestWithEmailData(
+  validatedData: LeaveRequestFormData,
+  userId: string,
+  leaveTypes: Array<{ id: number; name: string }>,
+  users: Array<{ id: string; full_name: string; email: string }>,
+  requesterName: string,
+  requesterEmail: string
+): LeaveRequestWithEmailData {
+  const baseRequest = prepareLeaveRequestForInsert(validatedData, userId);
+  
+  // Find leave type name
+  const leaveType = leaveTypes.find(lt => lt.id === validatedData.leave_type_id);
+  
+  // Find manager details
+  const manager = validatedData.current_manager_id 
+    ? users.find(u => u.id === validatedData.current_manager_id)
+    : null;
+  
+  // Find backup person details
+  const backup = validatedData.backup_id 
+    ? users.find(u => u.id === validatedData.backup_id)
+    : null;
+  
+  // Get internal notification emails
+  const internalNotificationEmails = validatedData.internal_notifications.length > 0 
+    ? validatedData.internal_notifications 
+    : null;
+  
+  return {
+    ...baseRequest,
+    requester_name: requesterName,
+    requester_email: requesterEmail,
+    leave_type_name: leaveType?.name || 'Unknown',
+    manager_name: manager?.full_name || null,
+    manager_email: manager?.email || null,
+    backup_name: backup?.full_name || null,
+    backup_email: backup?.email || null,
+    internal_notification_emails: internalNotificationEmails
+  };
+}
+
+/**
+ * Creates FormData object from validated leave request data for server submission
+ * This includes reference data to avoid database queries in email notifications
+ */
+export function createFormDataFromLeaveRequest(
+  data: LeaveRequestFormData,
+  leaveTypes: Array<{ id: number; name: string }>,
+  users: Array<{ id: string; full_name: string; email: string }>
+): FormData {
   const formData = new FormData()
   
   formData.append("leave_type_id", data.leave_type_id.toString())
@@ -145,7 +212,37 @@ export function createFormDataFromLeaveRequest(data: LeaveRequestFormData): Form
   formData.append("internal_notifications", JSON.stringify(data.internal_notifications))
   formData.append("external_notifications", JSON.stringify(data.external_notifications))
   
+  // Add reference data for email templates (to avoid database queries)
+  formData.append("_leaveTypes", JSON.stringify(leaveTypes))
+  formData.append("_users", JSON.stringify(users))
+  
   return formData
+}
+
+/**
+ * Extracts reference data from FormData for email templates
+ */
+export function extractReferenceData(formData: FormData): {
+  leaveTypes: Array<{ id: number; name: string }>;
+  users: Array<{ id: string; full_name: string; email: string }>;
+} {
+  const rawData = extractFormData(formData);
+  
+  let leaveTypes: Array<{ id: number; name: string }> = [];
+  let users: Array<{ id: string; full_name: string; email: string }> = [];
+  
+  try {
+    if (rawData._leaveTypes && typeof rawData._leaveTypes === 'string') {
+      leaveTypes = JSON.parse(rawData._leaveTypes);
+    }
+    if (rawData._users && typeof rawData._users === 'string') {
+      users = JSON.parse(rawData._users);
+    }
+  } catch (error) {
+    console.warn('Failed to parse reference data:', error);
+  }
+  
+  return { leaveTypes, users };
 }
 
 /**

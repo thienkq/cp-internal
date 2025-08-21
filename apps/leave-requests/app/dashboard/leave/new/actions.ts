@@ -7,9 +7,13 @@ import { generateLeaveRequestInfoTemplate, generateLeaveRequestActionTemplate } 
 import { 
   processLeaveRequestFormData, 
   prepareLeaveRequestForInsert,
+  enrichLeaveRequestWithEmailData,
+  extractReferenceData,
   type LeaveRequestInsert,
-  type LeaveRequestFormData
+  type LeaveRequestFormData,
+  type LeaveRequestWithEmailData
 } from "@/lib/leave-request-form-utils"
+import { calculateWorkingDays, formatWorkingDays } from '@/lib/utils';
 import type { User } from "@workspace/supabase";
 
 type SubmitLeaveRequestResult = 
@@ -30,108 +34,90 @@ async function getAuthenticatedUser(supabase: any) {
 }
 
 /**
- * Inserts the leave request into the database
+ * Inserts the leave request into the database and returns the created record ID
  */
-async function insertLeaveRequest(supabase: any, leaveRequest: LeaveRequestInsert) {
-  const { error } = await supabase
+async function insertLeaveRequest(supabase: any, leaveRequest: LeaveRequestInsert): Promise<string> {
+  const { data, error } = await supabase
     .from('leave_requests')
     .insert([leaveRequest])
+    .select('id')
+    .single()
 
   if (error) {
     throw error
   }
+
+  return data.id
 }
 
 
 
 async function sendLeaveRequestNotification(
-  supabase: any,
-  leaveRequest: LeaveRequestInsert,
-  validatedData: LeaveRequestFormData,
-  requester: User
+  enrichedLeaveRequest: LeaveRequestWithEmailData,
+  validatedData: LeaveRequestFormData
 ) {
   try {
-    // Fetch all required data for the email template
-    const [requesterProfile, leaveType, managerProfile, backupProfile] = await Promise.all([
-      supabase
-        .from('users')
-        .select('full_name')
-        .eq('id', requester.id)
-        .single()
-        .then(({ data }: any) => data),
-      supabase
-        .from('leave_types')
-        .select('name')
-        .eq('id', leaveRequest.leave_type_id)
-        .single()
-        .then(({ data }: any) => data),
-      leaveRequest.current_manager_id
-        ? supabase
-            .from('users')
-            .select('full_name, email')
-            .eq('id', leaveRequest.current_manager_id)
-            .single()
-            .then(({ data }: any) => data)
-        : Promise.resolve(null),
-      leaveRequest.backup_id
-        ? supabase
-            .from('users')
-            .select('full_name, email')
-            .eq('id', leaveRequest.backup_id)
-            .single()
-            .then(({ data }: any) => data)
-        : Promise.resolve(null)
-    ]);
-    
-    const requesterName = requesterProfile?.full_name || requester.email || 'Unknown User';
     const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
-    // Base email data
+    // Calculate working days
+    const workingDays = calculateWorkingDays(
+      enrichedLeaveRequest.start_date,
+      enrichedLeaveRequest.end_date,
+      enrichedLeaveRequest.is_half_day
+    );
+    const formattedDays = formatWorkingDays(workingDays);
+    
+    // Base email data - no database queries needed!
     const baseEmailData = {
-      requesterName,
-      requesterEmail: requester.email || '',
-      leaveType: leaveType?.name || 'Unknown',
-      startDate: leaveRequest.start_date,
-      endDate: leaveRequest.end_date,
-      isHalfDay: leaveRequest.is_half_day,
-      halfDayType: leaveRequest.half_day_type,
-      message: leaveRequest.message,
-      emergencyContact: leaveRequest.emergency_contact,
-      projects: leaveRequest.projects,
-      managerName: managerProfile?.full_name || null,
-      backupName: backupProfile?.full_name || null,
-      status: leaveRequest.status,
+      requesterName: enrichedLeaveRequest.requester_name,
+      requesterEmail: enrichedLeaveRequest.requester_email,
+      leaveType: enrichedLeaveRequest.leave_type_name,
+      startDate: enrichedLeaveRequest.start_date,
+      endDate: enrichedLeaveRequest.end_date,
+      isHalfDay: enrichedLeaveRequest.is_half_day,
+      halfDayType: enrichedLeaveRequest.half_day_type,
+      workingDays,
+      formattedDays,
+      message: enrichedLeaveRequest.message,
+      emergencyContact: enrichedLeaveRequest.emergency_contact,
+      projects: enrichedLeaveRequest.projects,
+      managerName: enrichedLeaveRequest.manager_name,
+      managerEmail: enrichedLeaveRequest.manager_email,
+      backupName: enrichedLeaveRequest.backup_name,
+      status: enrichedLeaveRequest.status,
     };
 
     // Prepare recipient groups
     const hrEmails = process.env.HR_EMAIL ? [process.env.HR_EMAIL] : [];
-    const managerEmails = managerProfile?.email ? [managerProfile.email] : [];
+    const managerEmails = enrichedLeaveRequest.manager_email ? [enrichedLeaveRequest.manager_email] : [];
     const informationalEmails = [];
     
     // Add requester to informational emails
-    if (requester.email) {
-      informationalEmails.push(requester.email);
+    if (enrichedLeaveRequest.requester_email) {
+      informationalEmails.push(enrichedLeaveRequest.requester_email);
     }
     
     // Add backup person to informational emails
-    if (backupProfile?.email) {
-      informationalEmails.push(backupProfile.email);
+    if (enrichedLeaveRequest.backup_email) {
+      informationalEmails.push(enrichedLeaveRequest.backup_email);
     }
     
-    // Add internal/external notifications to informational emails
-    if (validatedData.internal_notifications) {
-      informationalEmails.push(...validatedData.internal_notifications);
+    // Add internal notification emails from the enriched data
+    if (enrichedLeaveRequest.internal_notification_emails) {
+      informationalEmails.push(...enrichedLeaveRequest.internal_notification_emails);
     }
+    
+    // Add external notification emails
     if (validatedData.external_notifications) {
       informationalEmails.push(...validatedData.external_notifications);
     }
 
     // Send actionable emails to HR and managers
     const actionableRecipients = [...hrEmails, ...managerEmails];
-    if (actionableRecipients.length > 0) {
+    if (actionableRecipients.length > 0 && enrichedLeaveRequest.id) {
       const actionEmailData = {
         ...baseEmailData,
-        leaveRequestId: leaveRequest.user_id, // We'll need the actual ID from the insert
+        leaveRequestId: enrichedLeaveRequest.id, // Use the actual leave request ID
         dashboardUrl,
       };
       
@@ -139,7 +125,7 @@ async function sendLeaveRequestNotification(
       
       await sendEmail({
         to: [...new Set(actionableRecipients)], // Remove duplicates
-        subject: `Leave Request - Action Required: ${requesterName}`,
+        subject: `Leave Request ${enrichedLeaveRequest.requester_name} - Action Required `,
         html: actionHtmlBody,
       });
     }
@@ -151,7 +137,7 @@ async function sendLeaveRequestNotification(
       
       await sendEmail({
         to: uniqueInformationalEmails,
-        subject: `Leave Request Confirmation: ${requesterName}`,
+        subject: `Leave Request: ${enrichedLeaveRequest.requester_name}`,
         html: infoHtmlBody,
       });
     }
@@ -168,17 +154,36 @@ export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeav
     // Process and validate form data
     const validatedData = processLeaveRequestFormData(formData)
     
+    // Extract reference data from form
+    const { leaveTypes, users } = extractReferenceData(formData)
+    
     // Get authenticated user
     const user = await getAuthenticatedUser(supabase)
     
     // Prepare leave request for database insertion
     const leaveRequest = prepareLeaveRequestForInsert(validatedData, user.id)
     
-    // Insert into database
-    await insertLeaveRequest(supabase, leaveRequest)
+    // Create enriched leave request with email data (no DB queries needed!)
+    const enrichedLeaveRequest = enrichLeaveRequestWithEmailData(
+      validatedData,
+      user.id,
+      leaveTypes,
+      users,
+      user.user_metadata?.full_name || user.email || 'Unknown User',
+      user.email || ''
+    )
+    
+    // Insert into database and get the created ID
+    const createdLeaveRequestId = await insertLeaveRequest(supabase, leaveRequest)
+    
+    // Add the actual leave request ID to the enriched data
+    const enrichedLeaveRequestWithId = {
+      ...enrichedLeaveRequest,
+      id: createdLeaveRequestId
+    }
     
     // Send email notification
-    await sendLeaveRequestNotification(supabase, leaveRequest, validatedData, user);
+    await sendLeaveRequestNotification(enrichedLeaveRequestWithId, validatedData);
 
     // Invalidate the cache for all paths that display leave request data
     revalidatePath('/dashboard')

@@ -98,6 +98,50 @@ export function getUserDisplayName(user: User | null | undefined): string {
   return user.email || "User"
 }
 
+/**
+ * Calculate the number of working days between two dates, excluding weekends
+ * For half-day requests, returns 0.5 days
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format (optional, defaults to startDate)
+ * @param isHalfDay - Whether this is a half-day request
+ * @returns number - Working days as a decimal (0.5 for half-day, whole numbers for full days)
+ */
+export function calculateWorkingDays(startDate: string, endDate?: string | null, isHalfDay: boolean = false): number {
+  if (isHalfDay) {
+    return 0.5;
+  }
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate || startDate);
+  
+  // Count only weekdays (exclude weekends)
+  let workDays = 0;
+  const currentDate = new Date(start);
+  
+  while (currentDate <= end) {
+    const dayOfWeek = currentDate.getDay();
+    // Sunday = 0, Saturday = 6, so exclude both
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      workDays++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return workDays;
+}
+
+/**
+ * Format working days with appropriate unit (day/days)
+ * @param days - Number of working days (can be decimal for half-days)
+ * @returns string - Formatted string like "1 day", "2 days", "0.5 days"
+ */
+export function formatWorkingDays(days: number): string {
+  if (days === 0.5) {
+    return "0.5 days";
+  }
+  return `${days} ${days === 1 ? "day" : "days"}`;
+}
+
 // Card styling utilities for homepage
 export const cardColors = ["green", "blue", "purple"];
 

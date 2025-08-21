@@ -41,7 +41,9 @@ export default async function DashboardPage() {
       *,
       leave_type:leave_types(name, description),
       projects,
-      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
+      approved_by:users!leave_requests_approved_by_id_fkey(full_name),
+      current_manager:users!leave_requests_current_manager_id_fkey(full_name, email),
+      backup_person:users!leave_requests_backup_id_fkey(full_name, email)
     `)
     .eq("user_id", user.id)
     .gte("start_date", `${currentYear}-01-01`)

@@ -130,9 +130,56 @@ export function LeaveRequestList({
             </div>
           )}
 
+          {request.emergency_contact && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Emergency Contact:</span> {request.emergency_contact}
+            </div>
+          )}
+
+          {request.current_manager && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Manager:</span> {request.current_manager.full_name}
+              <span className="text-gray-400 ml-1">({request.current_manager.email})</span>
+            </div>
+          )}
+
+          {request.backup_person && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Backup Person:</span> {request.backup_person.full_name}
+              <span className="text-gray-400 ml-1">({request.backup_person.email})</span>
+            </div>
+          )}
+
+          {request.external_notifications && request.external_notifications.length > 0 && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">External Notifications:</span>
+              <div className="ml-4 flex flex-wrap gap-1 mt-1">
+                {request.external_notifications.map((email, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {email}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs text-gray-400 mt-2">
+            <span className="font-medium">Created:</span> {new Date(request.created_at).toLocaleString()}
+            {request.updated_at !== request.created_at && (
+              <span className="ml-3">
+                <span className="font-medium">Updated:</span> {new Date(request.updated_at).toLocaleString()}
+              </span>
+            )}
+          </div>
+
           {request.status === "approved" && request.approved_by && (
             <div className="text-sm text-green-600">
               <span className="font-medium">Approved by:</span> {request.approved_by.full_name}
+              {request.approved_at && (
+                <span className="text-gray-500 ml-2">
+                  on {new Date(request.approved_at).toLocaleString()}
+                </span>
+              )}
             </div>
           )}
 
@@ -142,9 +189,18 @@ export function LeaveRequestList({
             </div>
           )}
 
-          {request.status === "canceled" && request.cancel_reason && (
+          {request.status === "canceled" && (
             <div className="text-sm text-gray-600">
-              <span className="font-medium">Cancel reason:</span> {request.cancel_reason}
+              {request.cancel_reason && (
+                <>
+                  <span className="font-medium">Cancel reason:</span> {request.cancel_reason}
+                </>
+              )}
+              {request.canceled_at && (
+                <div className="text-xs text-gray-400 mt-1">
+                  <span className="font-medium">Canceled at:</span> {new Date(request.canceled_at).toLocaleString()}
+                </div>
+              )}
             </div>
           )}
         </div>
