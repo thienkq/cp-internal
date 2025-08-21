@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import { submitLeaveRequest } from "@/app/dashboard/leave/new/actions"
 import { leaveRequestSchema, type LeaveRequestFormData } from "@/lib/leave-request-schema"
@@ -96,9 +97,8 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
       const result = await submitLeaveRequest(formData)
       
       if (result.success) {
-        // Use router.push for smooth client-side navigation
-        // Cache invalidation is handled server-side with revalidatePath()
-        router.push(result.redirectTo || '/dashboard')
+        toast.success("Leave request submitted successfully!")
+        router.push('/dashboard')
       } else {
         // Handle server-side error
         setSubmitError(result.error || 'An unexpected error occurred')

@@ -9,7 +9,7 @@ import {
 } from "@/lib/leave-request-form-utils"
 
 type SubmitLeaveRequestResult = 
-  | { success: true; redirectTo: string }
+  | { success: true;}
   | { success: false; error: string }
 
 
@@ -58,12 +58,10 @@ export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeav
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/leave-requests')
     
-    // Return success result instead of redirecting
-    return { success: true as const, redirectTo: '/dashboard?success=leave-request-submitted' }
+    return { success: true as const }
   } catch (error) {
     console.error('Error submitting leave request:', error)
     
-    // Return error result instead of throwing
     return { 
       success: false as const, 
       error: error instanceof Error ? error.message : 'An unexpected error occurred'
