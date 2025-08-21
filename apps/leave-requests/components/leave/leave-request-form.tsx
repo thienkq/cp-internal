@@ -111,7 +111,7 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
     
     try {
       // Create FormData for server action using utility function
-      const formData = createFormDataFromLeaveRequest(data)
+      const formData = createFormDataFromLeaveRequest(data, leaveTypes, users)
       const result = await submitLeaveRequest(formData)
       
       if (result.success) {
