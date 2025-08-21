@@ -150,19 +150,6 @@ export function LeaveRequestList({
             </div>
           )}
 
-          {request.internal_notifications && request.internal_notifications.length > 0 && (
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">Internal Notifications:</span>
-              <div className="ml-4 flex flex-wrap gap-1 mt-1">
-                {request.internal_notifications.map((email, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {email}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
           {request.external_notifications && request.external_notifications.length > 0 && (
             <div className="text-sm text-gray-600">
               <span className="font-medium">External Notifications:</span>
