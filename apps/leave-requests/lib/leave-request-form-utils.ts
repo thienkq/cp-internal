@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { leaveRequestSchema, type LeaveRequestFormData } from "./leave-request-schema"
 
+export type { LeaveRequestFormData }
 
 export interface RawFormData {
   leave_type_id: FormDataEntryValue | null
