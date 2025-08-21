@@ -351,7 +351,11 @@ export function generateLeaveRequestActionTemplate(data: LeaveRequestActionEmail
       </div>
 
       <div class="action-buttons">
-        <a href="${data.dashboardUrl}/admin/leave-requests" class="btn btn-view">View Dashboard</a>
+        <a href="${data.dashboardUrl}/admin" 
+           class="btn btn-view" 
+           style="background-color: #3b82f6; color: white; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 0 10px; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+           View Dashboard
+        </a>
       </div>
 
       <div class="table-container">
