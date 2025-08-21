@@ -4,6 +4,7 @@ import {
   shouldProcessAbsenceForTenure,
   ExtendedAbsence 
 } from "./anniversary-utils";
+import { calculateWorkingDays } from "./utils";
 
 /**
  * Leave Quota Calculation Utilities
@@ -231,27 +232,7 @@ function formatDuration(days: number): string {
 }
 
 function calculateLeaveDays(startDate: string, endDate: string, isHalfDay: boolean): number {
-  if (isHalfDay) {
-    return 0.5;
-  }
-  
-  const start = new Date(startDate);
-  const end = new Date(endDate || startDate);
-  
-  // Count only weekdays (exclude weekends)
-  let workDays = 0;
-  const currentDate = new Date(start);
-  
-  while (currentDate <= end) {
-    const dayOfWeek = currentDate.getDay();
-    // Sunday = 0, Saturday = 6, so exclude both
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      workDays++;
-    }
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  return workDays;
+  return calculateWorkingDays(startDate, endDate, isHalfDay);
 }
 
 // Main Functions

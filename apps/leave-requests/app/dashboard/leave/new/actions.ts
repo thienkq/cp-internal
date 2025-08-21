@@ -10,6 +10,7 @@ import {
   type LeaveRequestInsert,
   type LeaveRequestFormData
 } from "@/lib/leave-request-form-utils"
+import { calculateWorkingDays, formatWorkingDays } from '@/lib/utils';
 import type { User } from "@workspace/supabase";
 
 type SubmitLeaveRequestResult = 
@@ -86,6 +87,14 @@ async function sendLeaveRequestNotification(
     const requesterName = requesterProfile?.full_name || requester.email || 'Unknown User';
     const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
+    // Calculate working days
+    const workingDays = calculateWorkingDays(
+      leaveRequest.start_date,
+      leaveRequest.end_date,
+      leaveRequest.is_half_day
+    );
+    const formattedDays = formatWorkingDays(workingDays);
+    
     // Base email data
     const baseEmailData = {
       requesterName,
@@ -95,10 +104,13 @@ async function sendLeaveRequestNotification(
       endDate: leaveRequest.end_date,
       isHalfDay: leaveRequest.is_half_day,
       halfDayType: leaveRequest.half_day_type,
+      workingDays,
+      formattedDays,
       message: leaveRequest.message,
       emergencyContact: leaveRequest.emergency_contact,
       projects: leaveRequest.projects,
       managerName: managerProfile?.full_name || null,
+      managerEmail: managerProfile?.email || null,
       backupName: backupProfile?.full_name || null,
       status: leaveRequest.status,
     };
@@ -119,6 +131,9 @@ async function sendLeaveRequestNotification(
     }
     
     // Add internal/external notifications to informational emails
+    console.log('internal_notifications:', validatedData.internal_notifications);
+    console.log('external_notifications:', validatedData.external_notifications);
+    
     if (validatedData.internal_notifications) {
       informationalEmails.push(...validatedData.internal_notifications);
     }
@@ -146,12 +161,13 @@ async function sendLeaveRequestNotification(
 
     // Send informational emails to requester, backup, and other notifications
     const uniqueInformationalEmails = [...new Set(informationalEmails.filter(email => email))];
+    console.log('uniqueInformationalEmails', uniqueInformationalEmails);
     if (uniqueInformationalEmails.length > 0) {
       const infoHtmlBody = generateLeaveRequestInfoTemplate(baseEmailData);
       
       await sendEmail({
         to: uniqueInformationalEmails,
-        subject: `Leave Request Confirmation: ${requesterName}`,
+        subject: `Leave Request: ${requesterName}`,
         html: infoHtmlBody,
       });
     }

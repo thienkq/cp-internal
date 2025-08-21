@@ -77,10 +77,28 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
 
   const addExternalEmail = () => {
     const email = externalEmailInput.trim()
-    if (email && !externalNotifications.includes(email)) {
-      form.setValue("external_notifications", [...externalNotifications, email])
-      setExternalEmailInput("")
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    
+    if (!email) {
+      toast.error("Please enter an email address")
+      return
     }
+    
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address")
+      return
+    }
+    
+    if (externalNotifications.includes(email)) {
+      toast.error("This email is already added")
+      return
+    }
+    
+    form.setValue("external_notifications", [...externalNotifications, email])
+    setExternalEmailInput("")
+    toast.success(`Added ${email} to external notifications`)
   }
 
   const removeExternalEmail = (email: string) => {
