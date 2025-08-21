@@ -104,7 +104,7 @@ async function sendLeaveRequestNotification(
     };
 
     // Prepare recipient groups
-    const hrEmails = ['hr@coderpush.com'];
+    const hrEmails = process.env.HR_EMAIL ? [process.env.HR_EMAIL] : [];
     const managerEmails = managerProfile?.email ? [managerProfile.email] : [];
     const informationalEmails = [];
     
