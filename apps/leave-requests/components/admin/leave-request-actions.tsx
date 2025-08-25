@@ -6,15 +6,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Label } from "@workspace/ui/components/label";
 import { approveLeaveRequest, rejectLeaveRequest, cancelLeaveRequest } from "@/app/admin/leave-requests/actions";
+import { approveLeaveRequest as managerApproveLeaveRequest, rejectLeaveRequest as managerRejectLeaveRequest, cancelLeaveRequest as managerCancelLeaveRequest } from "@/app/manager/actions";
 import { LeaveRequest } from "@/types";
 import { toast } from "sonner";
 
 interface LeaveRequestActionsProps {
   request: LeaveRequest;
   onActionComplete: () => void;
+  isManagerView?: boolean;
 }
 
-export function LeaveRequestActions({ request, onActionComplete }: LeaveRequestActionsProps) {
+export function LeaveRequestActions({ request, onActionComplete, isManagerView = false }: LeaveRequestActionsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject" | "cancel" | null>(null);
   const [notes, setNotes] = useState("");
@@ -32,13 +34,19 @@ export function LeaveRequestActions({ request, onActionComplete }: LeaveRequestA
       
       switch (actionType) {
         case "approve":
-          result = await approveLeaveRequest(request.id, notes.trim() || undefined);
+          result = isManagerView 
+            ? await managerApproveLeaveRequest(request.id, notes.trim() || undefined)
+            : await approveLeaveRequest(request.id, notes.trim() || undefined);
           break;
         case "reject":
-          result = await rejectLeaveRequest(request.id, notes);
+          result = isManagerView 
+            ? await managerRejectLeaveRequest(request.id, notes)
+            : await rejectLeaveRequest(request.id, notes);
           break;
         case "cancel":
-          result = await cancelLeaveRequest(request.id, notes);
+          result = isManagerView 
+            ? await managerCancelLeaveRequest(request.id, notes)
+            : await cancelLeaveRequest(request.id, notes);
           break;
         default:
           return;

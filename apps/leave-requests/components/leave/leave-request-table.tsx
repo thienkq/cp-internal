@@ -8,6 +8,7 @@ import { Calendar, Clock, FileText, User, Eye } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { getStatusBadge, formatDateRange, getDurationText, formatDate } from "@/lib/leave-request-display-utils";
 import { UserLeaveRequestActions } from "@/components/leave/user-leave-request-actions";
+import { LeaveRequestActions } from "@/components/admin/leave-request-actions";
 
 interface LeaveRequestTableProps {
   leaveRequests: LeaveRequest[];
@@ -15,6 +16,7 @@ interface LeaveRequestTableProps {
   showUserColumn?: boolean;
   showActions?: boolean;
   showUserActions?: boolean;
+  isManagerView?: boolean;
   emptyMessage?: string;
 }
 
@@ -24,6 +26,7 @@ export function LeaveRequestTable({
   showUserColumn = false,
   showActions = false,
   showUserActions = false,
+  isManagerView = false,
   emptyMessage = "No leave requests found"
 }: LeaveRequestTableProps) {
 
@@ -161,10 +164,18 @@ export function LeaveRequestTable({
                   
                   {showActions && (
                     <TableCell>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
+                      {request.status === "pending" ? (
+                        <LeaveRequestActions 
+                          request={request} 
+                          onActionComplete={() => window.location.reload()}
+                          isManagerView={isManagerView}
+                        />
+                      ) : (
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      )}
                     </TableCell>
                   )}
                   
