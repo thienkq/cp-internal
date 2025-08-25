@@ -20,6 +20,7 @@ export function LeaveRequestsSection({ leaveRequests }: LeaveRequestsSectionProp
         title="Recent Leave Requests"
         showUserColumn={false}
         showActions={false}
+        showUserActions={true}
       />
     </div>
   );

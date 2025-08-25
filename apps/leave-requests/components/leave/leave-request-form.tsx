@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { submitLeaveRequest } from "@/app/dashboard/leave/new/actions"
+import { editLeaveRequest } from "@/app/dashboard/leave/actions"
 import { leaveRequestSchema, type LeaveRequestFormData } from "@/lib/leave-request-schema"
 import { createFormDataFromLeaveRequest } from "@/lib/leave-request-form-utils"
 
@@ -44,17 +45,40 @@ interface LeaveRequestFormProps {
     full_name: string
     email: string
   }>
+  editMode?: {
+    isEditing: true
+    requestId: string
+    initialData: any
+  }
 }
 
-export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFormProps) {
+export function LeaveRequestForm({ leaveTypes, projects, users, editMode }: LeaveRequestFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [externalEmailInput, setExternalEmailInput] = useState("")
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const form = useForm<LeaveRequestFormData>({
-    resolver: zodResolver(leaveRequestSchema),
-    defaultValues: {
+  // Helper function to get initial values for editing
+  const getInitialValues = (): LeaveRequestFormData => {
+    if (editMode?.isEditing && editMode.initialData) {
+      const data = editMode.initialData
+      return {
+        leave_type_id: data.leave_type_id || 0,
+        start_date: data.start_date || "",
+        end_date: data.end_date || null,
+        is_half_day: data.is_half_day || false,
+        half_day_type: data.half_day_type || null,
+        message: data.message || "",
+        emergency_contact: data.emergency_contact || null,
+        projects: data.projects || [],
+        current_manager_id: data.current_manager_id || null,
+        backup_id: data.backup_id || null,
+        internal_notifications: data.internal_notifications || [],
+        external_notifications: data.external_notifications || []
+      }
+    }
+    
+    return {
       leave_type_id: 0,
       start_date: "",
       end_date: null,
@@ -68,6 +92,11 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
       internal_notifications: [],
       external_notifications: []
     }
+  }
+
+  const form = useForm<LeaveRequestFormData>({
+    resolver: zodResolver(leaveRequestSchema),
+    defaultValues: getInitialValues()
   })
 
   const isHalfDay = form.watch("is_half_day")
@@ -112,10 +141,19 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
     try {
       // Create FormData for server action using utility function
       const formData = createFormDataFromLeaveRequest(data, leaveTypes, users)
-      const result = await submitLeaveRequest(formData)
+      
+      let result
+      if (editMode?.isEditing) {
+        result = await editLeaveRequest(editMode.requestId, formData)
+      } else {
+        result = await submitLeaveRequest(formData)
+      }
       
       if (result.success) {
-        toast.success("Leave request submitted successfully!")
+        const successMessage = editMode?.isEditing 
+          ? "Leave request updated successfully!" 
+          : "Leave request submitted successfully!"
+        toast.success(successMessage)
         router.push('/dashboard')
       } else {
         // Handle server-side error
@@ -125,9 +163,10 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
       console.error('Error submitting leave request:', error)
       
       // Extract meaningful error message for the user
+      const actionType = editMode?.isEditing ? 'updating' : 'submitting'
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'An unexpected error occurred while submitting your leave request. Please try again.'
+        : `An unexpected error occurred while ${actionType} your leave request. Please try again.`
       
       setSubmitError(errorMessage)
     } finally {
@@ -490,7 +529,10 @@ export function LeaveRequestForm({ leaveTypes, projects, users }: LeaveRequestFo
             className="flex-1"
             variant="blue"
           >
-            {isSubmitting ? "Submitting..." : "Submit Request"}
+            {isSubmitting 
+              ? (editMode?.isEditing ? "Updating..." : "Submitting...") 
+              : (editMode?.isEditing ? "Update Request" : "Submit Request")
+            }
           </Button>
         </div>
       </form>

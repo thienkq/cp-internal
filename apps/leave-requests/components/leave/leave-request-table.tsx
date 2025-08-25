@@ -7,12 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Calendar, Clock, FileText, User, Eye } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { getStatusBadge, formatDateRange, getDurationText, formatDate } from "@/lib/leave-request-display-utils";
+import { UserLeaveRequestActions } from "@/components/leave/user-leave-request-actions";
 
 interface LeaveRequestTableProps {
   leaveRequests: LeaveRequest[];
   title: string;
   showUserColumn?: boolean;
   showActions?: boolean;
+  showUserActions?: boolean;
   emptyMessage?: string;
 }
 
@@ -21,6 +23,7 @@ export function LeaveRequestTable({
   title,
   showUserColumn = false,
   showActions = false,
+  showUserActions = false,
   emptyMessage = "No leave requests found"
 }: LeaveRequestTableProps) {
 
@@ -69,7 +72,7 @@ export function LeaveRequestTable({
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Reason</TableHead>
                 <TableHead className="font-semibold">Submitted</TableHead>
-                {showActions && (
+                {(showActions || showUserActions) && (
                   <TableHead className="font-semibold">Actions</TableHead>
                 )}
               </TableRow>
@@ -162,6 +165,15 @@ export function LeaveRequestTable({
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
+                    </TableCell>
+                  )}
+                  
+                  {showUserActions && (
+                    <TableCell>
+                      <UserLeaveRequestActions 
+                        request={request} 
+                        onActionComplete={() => window.location.reload()}
+                      />
                     </TableCell>
                   )}
                 </TableRow>

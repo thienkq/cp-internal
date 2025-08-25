@@ -151,7 +151,7 @@ export function AllLeaveRequestsTable({
                   
                   <TableCell>
                     {request.projects && request.projects.length > 0 ? (
-                      <div className="space-y-1">
+                      <div className="space-y-1 flex flex-wrap gap-1">
                         {request.projects.map((project) => (
                           <Badge key={project.id} variant="secondary" className="text-xs">
                             {project.name}
