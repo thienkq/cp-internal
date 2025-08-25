@@ -1,0 +1,163 @@
+import { getCurrentUser } from "@workspace/supabase";
+import { redirect } from "next/navigation";
+import { PageContainer } from "@workspace/ui/components/page-container";
+import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
+import { Calendar, Clock, Users, CheckSquare } from "lucide-react";
+import { LeaveRequestList } from "@/components/leave/leave-request-list";
+
+export default async function ManagerDashboardPage() {
+  const { user, supabase } = await getCurrentUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  // Fetch user data to confirm manager role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData || !["manager", "admin"].includes(userData.role)) {
+    redirect("/dashboard");
+  }
+
+  // Fetch leave requests where current user is the manager
+  const { data: teamRequests } = await supabase
+    .from("leave_requests")
+    .select(`
+      *,
+      user:users!leave_requests_user_id_fkey(id, full_name, email),
+      leave_type:leave_types(name, description),
+      projects,
+      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
+    `)
+    .eq("current_manager_id", user.id)
+    .order("created_at", { ascending: false });
+
+  // Get statistics
+  const pendingRequests = teamRequests?.filter(req => req.status === 'pending') || [];
+  const approvedRequests = teamRequests?.filter(req => req.status === 'approved') || [];
+  const recentRequests = teamRequests?.slice(0, 5) || [];
+
+  // Get unique team members
+  const teamMembers = teamRequests?.reduce((acc: any[], req) => {
+    if (req.user && !acc.find((member: any) => member.id === req.user.id)) {
+      acc.push(req.user);
+    }
+    return acc;
+  }, [] as any[]) || [];
+
+  const managerName = userData.full_name || user.email || "Manager";
+
+  return (
+    <PageContainer>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Manager Dashboard</h1>
+          <p className="text-gray-600 mt-2">Welcome back, {managerName}! Manage your team's leave requests.</p>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+              <Clock className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingRequests.length}</div>
+              <p className="text-xs text-gray-600">
+                Requests awaiting your approval
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Approved This Month</CardTitle>
+              <CheckSquare className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{approvedRequests.length}</div>
+              <p className="text-xs text-gray-600">
+                Requests you've approved
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Team Members</CardTitle>
+              <Users className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{teamMembers.length}</div>
+              <p className="text-xs text-gray-600">
+                People reporting to you
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+              <Calendar className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{teamRequests?.length || 0}</div>
+              <p className="text-xs text-gray-600">
+                All team leave requests
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pending Requests Section */}
+        {pendingRequests.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-orange-600" />
+                Pending Approvals
+                <Badge variant="secondary">{pendingRequests.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LeaveRequestList
+                leaveRequests={pendingRequests}
+                title=""
+                showUserColumn={true}
+                showActions={true}
+                isManagerView={true}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Requests */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Recent Team Requests</h2>
+            <div className="flex items-center gap-2">
+              <a href="/manager/leave-requests" className="text-blue-600 text-sm hover:underline">
+                View All Requests
+              </a>
+            </div>
+          </div>
+          
+          <LeaveRequestList
+            leaveRequests={recentRequests}
+            title="Latest Leave Requests"
+            showUserColumn={true}
+            showActions={true}
+            isManagerView={true}
+          />
+        </div>
+      </div>
+    </PageContainer>
+  );
+}

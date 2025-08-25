@@ -17,6 +17,7 @@ interface LeaveRequestListProps {
   showUserColumn?: boolean;
   showActions?: boolean;
   showUserActions?: boolean;
+  isManagerView?: boolean;
   onApprove?: (request: LeaveRequest) => void;
   onReject?: (request: LeaveRequest) => void;
   onCancel?: (request: LeaveRequest) => void;
@@ -67,6 +68,7 @@ export function LeaveRequestList({
   showUserColumn = false,
   showActions = false,
   showUserActions = false,
+  isManagerView = false,
   onApprove,
   onReject,
   onCancel,
@@ -213,6 +215,7 @@ export function LeaveRequestList({
             <LeaveRequestActions 
               request={request} 
               onActionComplete={handleActionComplete}
+              isManagerView={isManagerView}
             />
           </div>
         )}

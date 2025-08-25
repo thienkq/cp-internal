@@ -52,13 +52,21 @@ export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
           <Settings className="w-4 h-4 mr-2" />
           Settings
         </DropdownMenuItem>
-        {userProfile?.role === 'admin' && (
+        {(userProfile?.role === 'admin' || userProfile?.role === 'manager') && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/admin')}>
-              <Shield className="w-4 h-4 mr-2" />
-              Admin Dashboard
-            </DropdownMenuItem>
+            {userProfile?.role === 'manager' && (
+              <DropdownMenuItem onClick={() => router.push('/manager')}>
+                <Shield className="w-4 h-4 mr-2" />
+                Manager Dashboard
+              </DropdownMenuItem>
+            )}
+            {userProfile?.role === 'admin' && (
+              <DropdownMenuItem onClick={() => router.push('/admin')}>
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Dashboard
+              </DropdownMenuItem>
+            )}
           </>
         )}
         <DropdownMenuItem onClick={handleSignOut}>
