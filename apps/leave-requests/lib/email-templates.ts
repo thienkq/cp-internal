@@ -15,6 +15,7 @@ interface LeaveRequestEmailData {
   managerEmail: string | null;
   backupName: string | null;
   status: string;
+  cancelReason?: string;
 }
 
 interface LeaveRequestActionEmailData extends LeaveRequestEmailData {
@@ -212,6 +213,13 @@ const generateLeaveRequestTable = (data: LeaveRequestEmailData) => `
         ${data.message ? `<div class="message-content">${data.message}</div>` : 'No message provided'}
       </td>
     </tr>
+    ${data.cancelReason ? `
+    <tr>
+      <th>Cancellation Reason</th>
+      <td>
+        <div class="message-content" style="color: #dc2626; font-weight: 500;">${data.cancelReason}</div>
+      </td>
+    </tr>` : ''}
   </table>
 `;
 

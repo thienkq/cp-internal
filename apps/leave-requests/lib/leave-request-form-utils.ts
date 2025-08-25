@@ -35,6 +35,8 @@ export interface LeaveRequestInsert {
   internal_notifications: string[] | null
   external_notifications: string[] | null
   status: string
+  cancel_reason?: string | null
+  canceled_at?: string | null
 }
 
 // Enhanced interface that includes all data needed for email templates

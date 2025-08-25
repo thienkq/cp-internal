@@ -118,6 +118,7 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
             title={`${selectedYear} Leave History`}
             showUserColumn={false}
             showActions={false}
+            showUserActions={true}
             emptyMessage={`You haven't submitted any leave requests for ${selectedYear} yet.`}
           />
         </div>

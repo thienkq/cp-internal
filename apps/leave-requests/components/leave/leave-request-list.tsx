@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/componen
 import { Calendar, Clock, User, FileText, AlertCircle, CheckCircle, XCircle, Minus } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { LeaveRequestActions } from "@/components/admin/leave-request-actions";
+import { UserLeaveRequestActions } from "@/components/leave/user-leave-request-actions";
 import { getStatusBadge, formatDateRange, getDurationText } from "@/lib/leave-request-display-utils";
 
 interface LeaveRequestListProps {
@@ -15,6 +16,7 @@ interface LeaveRequestListProps {
   title: string;
   showUserColumn?: boolean;
   showActions?: boolean;
+  showUserActions?: boolean;
   onApprove?: (request: LeaveRequest) => void;
   onReject?: (request: LeaveRequest) => void;
   onCancel?: (request: LeaveRequest) => void;
@@ -64,6 +66,7 @@ export function LeaveRequestList({
   title,
   showUserColumn = false,
   showActions = false,
+  showUserActions = false,
   onApprove,
   onReject,
   onCancel,
@@ -208,6 +211,15 @@ export function LeaveRequestList({
         {showActions && request.status === "pending" && (
           <div className="ml-4">
             <LeaveRequestActions 
+              request={request} 
+              onActionComplete={handleActionComplete}
+            />
+          </div>
+        )}
+        
+        {showUserActions && (
+          <div className="ml-4">
+            <UserLeaveRequestActions 
               request={request} 
               onActionComplete={handleActionComplete}
             />
