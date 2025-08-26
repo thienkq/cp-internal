@@ -183,6 +183,11 @@ export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeav
     }
     
     // Send email notification
+    // TODO: Refactor to background job to send email
+    // - Can retry if failed
+    // - Can get leave request data from database instead of form data
+    // - Better performance (non-blocking)
+    // - Can queue multiple notifications
     await sendLeaveRequestNotification(enrichedLeaveRequestWithId, validatedData);
 
     // Invalidate the cache for all paths that display leave request data

@@ -47,7 +47,10 @@ export interface LeaveBalance {
   isOnboardingYear: boolean;
 }
 
-// Constants
+// TODO: Refactor tenure accrual rules to be configurable by admin
+// Current: Hardcoded constants in code
+// Future: Store in database table and cache for performance
+// Constants (temporary - will be replaced by database lookup)
 const TENURE_ACCRUAL_RULES = {
   1: 12,  // Onboarding year (prorated)
   2: 13,  // 2nd year (completed 1 full year)
@@ -320,6 +323,25 @@ export async function calculateCompleteLeaveEntitlement(
   };
 }
 
+// TODO: Refactor leave balance calculation for better performance
+// Current approach: Query all leave requests for user in year and calculate on-demand
+// 
+// Performance issues:
+// - Queries all leave requests every time
+// - Recalculates working days for each request
+// - No caching mechanism
+//
+// Better approaches:
+// 1. Pre-calculated balance table:
+//    - Store monthly/yearly balances in separate table
+//    - Update incrementally when requests are approved/rejected
+//    - Query single row instead of all requests
+//
+// 2. Materialized view:
+//    - Database-level aggregation
+//    - Refresh on leave request changes
+//    - Fast queries with pre-computed sums
+//
 export async function calculateLeaveBalance(
   userId: string,
   leaveYear: number = new Date().getFullYear()

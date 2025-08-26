@@ -204,6 +204,7 @@ export async function editLeaveRequest(requestId: string, formData: FormData): P
     }
     
     // Send email notification
+    // TODO: Refactor to background job to send email
     await sendLeaveRequestChangeNotification(enrichedLeaveRequestWithId, validatedData, 'updated');
 
     // Invalidate the cache for all paths that display leave request data
@@ -301,6 +302,7 @@ export async function cancelLeaveRequest(requestId: string, cancelReason: string
     }
     
     // Send email notification
+    // TODO: Refactor to background job to send email
     await sendLeaveRequestChangeNotification(enrichedLeaveRequest, formDataForEmail, 'canceled', cancelReason);
 
     // Invalidate the cache for all paths that display leave request data
