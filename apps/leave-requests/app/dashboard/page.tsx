@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { getCurrentUser } from "@workspace/supabase";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container"
@@ -93,12 +94,12 @@ async function DashboardContent() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
           <div className="flex items-center gap-4">
-            <a 
+            <Link 
               href="/dashboard/leave-requests" 
               className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
             >
               View All Leave Requests →
-            </a>
+            </Link>
           </div>
         </div>
         
@@ -114,7 +115,7 @@ async function DashboardContent() {
               <div className="text-yellow-800">
                 <p className="font-medium">Start Date Not Set</p>
                 <p className="text-sm">Your leave balance is currently set to the default rate. 
-                <a href="/dashboard/profile" className="text-yellow-700 underline ml-1 hover:text-yellow-800">Set your start date</a> to get the correct leave balance based on your tenure.</p>
+                <Link href="/dashboard/profile" className="text-yellow-700 underline ml-1 hover:text-yellow-800">Set your start date</Link> to get the correct leave balance based on your tenure.</p>
               </div>
             </div>
           </div>
