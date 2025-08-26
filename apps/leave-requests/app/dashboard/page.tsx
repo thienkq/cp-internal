@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container"
 import { AnniversarySection } from "@/components/dashboard/anniversary-section";
 import { LeaveBalanceSection } from "@/components/dashboard/leave-balance-section";
-import { LeaveRequestsSection } from "@/components/dashboard/leave-requests-section";
+import { LeaveRequestsSection } from "@/components/dashboard/leave-requests-section"
 import { 
   DashboardSkeleton, 
   LeaveBalanceSkeleton 
@@ -32,8 +32,8 @@ async function getDashboardData() {
 
   const currentYear = new Date().getFullYear();
 
-  // 🎯 PARALLEL EXECUTION: All queries run simultaneously
-  const [userData, pendingRequests, recentRequests] = await Promise.all([
+  // 🎯 PARALLEL EXECUTION: Only 2 queries needed
+  const [userData, displayLeaveRequests] = await Promise.all([
     // Query 1: Essential user data (fast)
     supabase
       .from("users")
@@ -41,14 +41,7 @@ async function getDashboardData() {
       .eq("id", user.id)
       .single(),
     
-    // Query 2: Lightweight pending count (fast)
-    supabase
-      .from("leave_requests")
-      .select("id, start_date, status")
-      .eq("user_id", user.id)
-      .eq("status", "pending"),
-    
-    // Query 3: Recent requests with optimized joins (medium)
+    // Query 2: Leave requests with joins for display in lists
     supabase
       .from("leave_requests")
       .select(`
@@ -70,20 +63,19 @@ async function getDashboardData() {
       .gte("start_date", `${currentYear}-01-01`)
       .lte("start_date", `${currentYear}-12-31`)
       .order("created_at", { ascending: false })
-      .limit(5)
+      .limit(10)
   ]);
 
   return {
     user,
     userData: userData.data,
-    pendingRequests: pendingRequests.data || [],
-    recentRequests: recentRequests.data || []
+    displayLeaveRequests: displayLeaveRequests.data || []
   };
 }
 
 // 🎯 FAST DASHBOARD CONTENT (Parallel data already loaded)
 async function DashboardContent() {
-  const { user, userData, pendingRequests, recentRequests } = await getDashboardData();
+  const { user, userData, displayLeaveRequests } = await getDashboardData();
 
   if (!userData) {
     return (
@@ -102,11 +94,6 @@ async function DashboardContent() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Welcome back, {userName}!</h1>
           <div className="flex items-center gap-4">
-            {pendingRequests.length > 0 && (
-              <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-medium">
-                {pendingRequests.length} pending request{pendingRequests.length !== 1 ? 's' : ''}
-              </span>
-            )}
             <a 
               href="/dashboard/leave-requests" 
               className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
@@ -149,7 +136,7 @@ async function DashboardContent() {
       </Suspense>
 
       {/* 📋 Leave Requests Section - Data already loaded from parallel fetch */}
-      <LeaveRequestsSection leaveRequests={recentRequests} />
+      <LeaveRequestsSection leaveRequests={displayLeaveRequests as any} />
     </>
   );
 }

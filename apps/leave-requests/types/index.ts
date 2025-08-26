@@ -75,20 +75,20 @@ export interface LeaveRequest {
   user?: {
     full_name: string;
     email: string;
-  }[];
+  };
   leave_type?: {
     name: string;
     description?: string;
-  }[];
+  };
   approved_by?: {
     full_name: string;
-  }[];
+  };
   current_manager?: {
     full_name: string;
     email: string;
-  }[];
+  };
   backup_person?: {
     full_name: string;
     email: string;
-  }[];
+  };
 }
