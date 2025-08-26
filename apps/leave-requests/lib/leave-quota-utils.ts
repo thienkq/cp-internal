@@ -325,23 +325,11 @@ export async function calculateCompleteLeaveEntitlement(
 
 // TODO: Refactor leave balance calculation for better performance
 // Current approach: Query all leave requests for user in year and calculate on-demand
-// 
-// Performance issues:
-// - Queries all leave requests every time
-// - Recalculates working days for each request
-// - No caching mechanism
-//
-// Better approaches:
-// 1. Pre-calculated balance table:
-//    - Store monthly/yearly balances in separate table
-//    - Update incrementally when requests are approved/rejected
-//    - Query single row instead of all requests
-//
-// 2. Materialized view:
-//    - Database-level aggregation
-//    - Refresh on leave request changes
-//    - Fast queries with pre-computed sums
-//
+// Issues identified:
+// - Does not include CARRY OVER RULES to the next year
+// - Multiple queries to Supabase that could be consolidated
+// - Data already fetched in parent components but not reused
+// - Performance impact from on-demand calculations
 export async function calculateLeaveBalance(
   userId: string,
   leaveYear: number = new Date().getFullYear()
