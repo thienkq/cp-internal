@@ -27,7 +27,7 @@ const TENURE_ACCRUAL_RULES = {
 } as const;
 ```
 
-**Future Plan:** Store in database table and cache for performance
+**Future Plan:** Store in database table for admin to easily configure and cache for performance
 
 
 ---
@@ -40,8 +40,8 @@ const TENURE_ACCRUAL_RULES = {
 
 **Issues Identified:**
 - Does not include CARRY OVER RULES to the next year
-- Multiple queries to Supabase that could be consolidated
-- Data already fetched in parent components but not reused
+- Data already fetched in parent components but not reused - recheck if other components such as Anniversary or parent components also include these same queries, then combine to reuse data already fetched
+- Query all leave requests can be optimized by pre-calculated values
 
 **Future Plan:** Optimize calculation logic and implement caching strategies
 
