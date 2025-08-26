@@ -5,6 +5,10 @@ import { PageContainer } from "@workspace/ui/components/page-container"
 import { AnniversarySection } from "@/components/dashboard/anniversary-section";
 import { LeaveBalanceSection } from "@/components/dashboard/leave-balance-section";
 import { LeaveRequestsSection } from "@/components/dashboard/leave-requests-section";
+import { 
+  DashboardSkeleton, 
+  LeaveBalanceSkeleton 
+} from "@/components/skeletons";
 
 // TODO: Dashboard Performance !
 // Based on: https://blog.logrocket.com/fix-nextjs-app-slow-performance/
@@ -17,7 +21,6 @@ import { LeaveRequestsSection } from "@/components/dashboard/leave-requests-sect
 // - Heavy components load separately with skeletons
 // - Better perceived performance
 //
-
 
 // 🚀 OPTIMIZED PARALLEL DATA FETCHING
 async function getDashboardData() {
@@ -151,77 +154,9 @@ async function DashboardContent() {
   );
 }
 
-// 🎨 ENHANCED SKELETON COMPONENTS
-function DashboardSkeleton() {
-  return (
-    <>
-      {/* Greeting skeleton */}
-      <div className="space-y-4 animate-pulse">
-        <div className="flex items-center justify-between">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
-          <div className="h-5 bg-gray-200 rounded w-40"></div>
-        </div>
-      </div>
-
-      {/* Anniversary skeleton */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 animate-pulse">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-          <div className="space-y-2">
-            <div className="h-5 bg-gray-200 rounded w-48"></div>
-            <div className="h-4 bg-gray-200 rounded w-32"></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Leave balance skeleton */}
-      <LeaveBalanceSkeleton />
-
-      {/* Leave requests skeleton */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 animate-pulse">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="h-6 bg-gray-200 rounded w-40"></div>
-            <div className="h-4 bg-gray-200 rounded w-24"></div>
-          </div>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-4 border rounded">
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-32"></div>
-                  <div className="h-3 bg-gray-200 rounded w-48"></div>
-                </div>
-                <div className="h-6 bg-gray-200 rounded w-20"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function LeaveBalanceSkeleton() {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 animate-pulse">
-      <div className="space-y-4">
-        <div className="h-6 bg-gray-200 rounded w-32"></div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-24"></div>
-              <div className="h-8 bg-gray-200 rounded w-16"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // 🚀 MAIN HYBRID DASHBOARD COMPONENT
 // Combines: Parallel Data Fetching + React Suspense
-export default async function HybridDashboardPage() {
+export default async function DashboardPage() {
   return (
     <PageContainer>
       {/* 🎯 SUSPENSE: Shows skeleton while parallel data loads */}
