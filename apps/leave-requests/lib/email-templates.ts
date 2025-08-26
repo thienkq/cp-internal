@@ -250,6 +250,7 @@ export function generateLeaveRequestInfoTemplate(data: LeaveRequestEmailData): s
   `;
 }
 
+
 export function generateLeaveRequestActionTemplate(data: LeaveRequestActionEmailData): string {
   return `
     <!DOCTYPE html>
@@ -271,20 +272,25 @@ export function generateLeaveRequestActionTemplate(data: LeaveRequestActionEmail
         <p>Please review and approve or reject this leave request.</p>
       </div>
 
-      <div class="action-buttons">
-        <a href="${data.dashboardUrl}/admin" 
-           class="btn btn-view" 
-           style="background-color: #3b82f6; color: white; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 0 10px; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
-           View Dashboard
-        </a>
-      </div>
-
       <div class="table-container">
         ${generateLeaveRequestTable(data)}
       </div>
 
+      <div class="action-buttons">
+        <a href="${data.dashboardUrl}/manager" 
+           class="btn btn-view" 
+           style="background-color: #3b82f6; color: white; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 0 10px; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+           Manager Dashboard
+        </a>
+        <a href="${data.dashboardUrl}/admin" 
+           class="btn btn-view" 
+           style="background-color: #6b7280; color: white; text-decoration: none; display: inline-block; padding: 12px 24px; margin: 0 10px; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+           Admin Dashboard
+        </a>
+      </div>
+
       <div class="footer">
-        <p>Please review this leave request in the admin dashboard.</p>
+        <p>Please review this leave request using either the Manager Dashboard (for team managers) or Admin Dashboard (for HR/administrators).</p>
         <p>This is an automated notification. Please do not reply to this email.</p>
       </div>
     </body>
