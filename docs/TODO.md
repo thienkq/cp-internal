@@ -74,10 +74,8 @@ const TENURE_ACCRUAL_RULES = {
 **File:** `apps/leave-requests/app/dashboard/page.tsx:13`
 
 
-**Techniques Implemented:**
-1. **Parallel Data Fetching (Promise.all):** Only 2 queries needed instead of sequential
-2. **React Suspense with Progressive Loading:** Fast content shows immediately, heavy components load separately with skeletons
-3. **Optimized Queries:** Limited to last 10 requests, efficient joins
+**Current status:** Initial performance optimizations have been implemented on the dashboard, including parallel data fetching, React Suspense for progressive loading, and optimized queries.
 
-Continue to refactor the dashboard if needed
-Link ref: https://blog.logrocket.com/fix-nextjs-app-slow-performance/
+**Future Plan:** investigate further optimizations
+
+**Reference:** [Fixing slow performance in a Next.js app](https://blog.logrocket.com/fix-nextjs-app-slow-performance/)
