@@ -14,7 +14,6 @@ import {
 // Based on: https://blog.logrocket.com/fix-nextjs-app-slow-performance/
 //
 // Technique 1: Parallel Data Fetching (Promise.all)
-// - 3 sequential queries = 600ms → 3 parallel queries = 200ms (3x faster!)
 //
 // Technique 2: React Suspense with Progressive Loading
 // - Fast content shows immediately
@@ -41,7 +40,7 @@ async function getDashboardData() {
       .eq("id", user.id)
       .single(),
     
-    // Query 2: Leave requests with joins for display in lists
+    // Query 2: Leave requests with joins for display in lists only show the last 10 requests
     supabase
       .from("leave_requests")
       .select(`
@@ -135,7 +134,7 @@ async function DashboardContent() {
         <LeaveBalanceSection userId={user.id} />
       </Suspense>
 
-      {/* 📋 Leave Requests Section - Data already loaded from parallel fetch */}
+      {/* 📋 Leave Requests Section - Data already loaded from parallel fetch show the last 10 requests*/}
       <LeaveRequestsSection leaveRequests={displayLeaveRequests as any} />
     </>
   );
