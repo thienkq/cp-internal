@@ -71,7 +71,7 @@ export interface LeaveRequest {
   canceled_at?: string | null;
   created_at: string;
   updated_at: string;
-  // Joined fields
+  // Joined fields - Supabase returns arrays for joins
   user?: {
     full_name: string;
     email: string;
