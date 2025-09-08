@@ -31,10 +31,12 @@ as $$
 begin
   -- If user already exists in public.users by email, update their id to match auth.users.id
   if exists (select 1 from public.users where email = new.email) then
+    -- update for public.users table
     update public.users
-    set id = new.id,
+    set 
+        id = new.id,
         full_name = coalesce(new.raw_user_meta_data->>'full_name', full_name),
-        email = new.email
+        updated_at = now()
     where email = new.email;
 
   -- Else insert a new user row
