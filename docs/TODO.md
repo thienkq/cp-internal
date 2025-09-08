@@ -3,7 +3,7 @@
 This document tracks all TODO items found throughout the codebase. Each item includes context, current status, and future implementation plans.
 
 ## Table of Contents
-
+- Update Sending Email
 - [Leave Quota Utils](#leave-quota-utils)
 - [Leave Request Actions](#leave-request-actions)
 - [Dashboard Performance](#dashboard-performance)
