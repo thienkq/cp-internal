@@ -29,8 +29,32 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.users (id, email, full_name, role, start_date, end_date, gender, position, manager_id)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name', 'employee', null, null, null, null, null);
+  -- If user already exists in public.users by email, update their id to match auth.users.id
+  if exists (select 1 from public.users where email = new.email) then
+    update public.users
+    set id = new.id,
+        full_name = coalesce(new.raw_user_meta_data->>'full_name', full_name),
+        email = new.email
+    where email = new.email;
+
+  -- Else insert a new user row
+  else
+    insert into public.users (
+      id, email, full_name, role, start_date, end_date, gender, position, manager_id
+    )
+    values (
+      new.id,
+      new.email,
+      coalesce(new.raw_user_meta_data->>'full_name', ''),
+      'employee',
+      null,
+      null,
+      null,
+      null,
+      null
+    );
+  end if;
+
   return new;
 end;
 $$;
