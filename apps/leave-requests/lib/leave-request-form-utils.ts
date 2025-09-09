@@ -113,7 +113,7 @@ export function validateLeaveRequestData(data: LeaveRequestFormData): LeaveReque
     return leaveRequestSchema.parse(data)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errorMessage = `Validation failed: ${error.issues.map((e: any) => e.message).join(', ')}`
+      const errorMessage = `Validation failed: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`
       throw new Error(errorMessage)
     }
     throw error
@@ -172,7 +172,7 @@ export function enrichLeaveRequestWithEmailData(
   const internalNotificationEmails = validatedData.internal_notifications.length > 0 
     ? validatedData.internal_notifications
         .map(userId => users.find(u => u.id === userId)?.email)
-        .filter(email => email) // Remove any undefined values
+        .filter((email): email is string => !!email) // Remove any undefined values
     : null;
   
   return {
