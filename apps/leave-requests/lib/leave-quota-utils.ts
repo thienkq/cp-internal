@@ -461,7 +461,7 @@ export function calculateCarryoverUsed(
   // Calculate carryover used: overused = b - max(b, c)
   // This represents how many days were used in January that exceeded the carryover allowance
   const maxAllowance = Math.max(usedDaysJan, availableDaysLastYear);
-  const carryoverUsed = Math.max(0, usedDaysJan - maxAllowance);
+  const carryoverUsed = usedDaysJan - maxAllowance;
   
   return carryoverUsed;
 }
