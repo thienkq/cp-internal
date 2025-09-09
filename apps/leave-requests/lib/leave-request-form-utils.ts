@@ -168,9 +168,11 @@ export function enrichLeaveRequestWithEmailData(
     ? users.find(u => u.id === validatedData.backup_id)
     : null;
   
-  // Get internal notification emails
+  // Get internal notification emails by converting user IDs to email addresses
   const internalNotificationEmails = validatedData.internal_notifications.length > 0 
-    ? validatedData.internal_notifications 
+    ? validatedData.internal_notifications
+        .map(userId => users.find(u => u.id === userId)?.email)
+        .filter(email => email) // Remove any undefined values
     : null;
   
   return {
