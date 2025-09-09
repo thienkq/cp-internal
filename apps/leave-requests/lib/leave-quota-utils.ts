@@ -356,7 +356,8 @@ export async function calculateLeaveBalance(
     .gte("start_date", `${leaveYear}-01-01`)
     .lte("start_date", `${leaveYear}-12-31`);
   
-  let usedDays = 0;
+  const usedDaysFebToDec = calculateUsedDaysFebToDec(leaveRequests, currentYear);
+  let usedDays = usedDaysFebToDec;
   let pendingDays = 0;
   
   if (leaveRequests) {
@@ -373,8 +374,10 @@ export async function calculateLeaveBalance(
       // Note: Unpaid leave is already filtered out in the query
     }
   }
+
   
-  const remainingDays = entitlement.totalQuota - usedDays - pendingDays;
+  
+  const remainingDays = entitlement.totalQuota - usedDaysFebToDec - pendingDays;
   const availableDays = remainingDays; // Same as remaining since both approved and pending are subtracted
   
   return {
@@ -385,6 +388,105 @@ export async function calculateLeaveBalance(
     availableDays,
     employmentYear: entitlement.effectiveEmploymentYear,
     isOnboardingYear: entitlement.isOnboardingYear
+  };
+}
+
+// Types for leave request data
+export interface LeaveRequestData {
+  status: string;
+  start_date: string;
+  end_date: string;
+  is_half_day: boolean;
+  leave_types: {
+    is_paid: boolean;
+  };
+}
+
+// Carry-over calculation functions (optimized to use passed data)
+export function calculateUsedDaysFebToDec(
+  leaveRequests: LeaveRequestData[],
+  year: number = new Date().getFullYear()
+): number {
+  const febStart = `${year}-02-01`;
+  const decEnd = `${year}-12-31`;
+  
+  return leaveRequests
+    .filter(request => 
+      request.status === "approved" &&
+      request.leave_types.is_paid &&
+      request.start_date >= febStart &&
+      request.start_date <= decEnd
+    )
+    .reduce((total, request) => {
+      return total + calculateLeaveDays(request.start_date, request.end_date, request.is_half_day);
+    }, 0);
+}
+
+export function calculateUsedDaysJan(
+  leaveRequests: LeaveRequestData[],
+  year: number = new Date().getFullYear()
+): number {
+  const janStart = `${year}-01-01`;
+  const janEnd = `${year}-01-31`;
+  
+  return leaveRequests
+    .filter(request => 
+      request.status === "approved" &&
+      request.leave_types.is_paid &&
+      request.start_date >= janStart &&
+      request.start_date <= janEnd
+    )
+    .reduce((total, request) => {
+      return total + calculateLeaveDays(request.start_date, request.end_date, request.is_half_day);
+    }, 0);
+}
+
+export function calculateAvailableDaysLastYear(
+  lastYearBalance: LeaveBalance
+): number {
+  return lastYearBalance.availableDays;
+}
+
+export function calculateCarryoverUsed(
+  leaveRequests: LeaveRequestData[],
+  lastYearBalance: LeaveBalance,
+  year: number = new Date().getFullYear()
+): number {
+  // Calculate value b: used days from Jan 1st to Jan 31st
+  const usedDaysJan = calculateUsedDaysJan(leaveRequests, year);
+  
+  // Calculate value c: available days from last year after Dec 31st
+  const availableDaysLastYear = calculateAvailableDaysLastYear(lastYearBalance);
+  
+  // Calculate carryover used: overused = b - max(b, c)
+  // This represents how many days were used in January that exceeded the carryover allowance
+  const maxAllowance = Math.max(usedDaysJan, availableDaysLastYear);
+  const carryoverUsed = Math.max(0, usedDaysJan - maxAllowance);
+  
+  return carryoverUsed;
+}
+
+// Convenience function to get all carry-over calculations at once
+export function calculateCarryoverMetrics(
+  leaveRequests: LeaveRequestData[],
+  lastYearBalance: LeaveBalance,
+  year: number = new Date().getFullYear()
+): {
+  usedDaysFebToDec: number;
+  usedDaysJan: number;
+  availableDaysLastYear: number;
+  carryoverUsed: number;
+} {
+  const usedDaysFebToDec = calculateUsedDaysFebToDec(leaveRequests, year);
+  const usedDaysJan = calculateUsedDaysJan(leaveRequests, year);
+  const availableDaysLastYear = calculateAvailableDaysLastYear(lastYearBalance);
+  const carryoverUsed = calculateCarryoverUsed(leaveRequests, lastYearBalance, year);
+  
+  return {
+    usedDaysFebToDec,
+    usedDaysJan,
+    availableDaysLastYear,
+    carryoverUsed
   };
 }
 
