@@ -417,7 +417,7 @@ export async function calculateLeaveBalance(
     (leaveRequests as unknown as LeaveRequestData[]) || [],
     currentYear
   );
-  let usedDays = usedDaysFebToDec;
+  let usedDays = 0;
   let pendingDays = 0;
 
   if (leaveRequests) {
