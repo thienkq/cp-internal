@@ -1,25 +1,34 @@
-import { getCurrentUser } from "@workspace/supabase";
-import { redirect } from "next/navigation";
-import ProfileTabs from "./ProfileTabs";
-import { PageContainer } from "@workspace/ui/components/page-container";
+import { getCurrentUser } from '@workspace/supabase';
+import { redirect } from 'next/navigation';
+import { PageContainer } from '@workspace/ui/components/page-container';
+import ProfilePageClient from './page.client';
 
 export default async function ProfilePage() {
   const { user, supabase } = await getCurrentUser();
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const userId = user?.id as string;
 
-  const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
-  const { data: addressData } = await supabase.from("addresses").select("*").eq("user_id", user.id);
+  const { data: userData } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  const { data: addressData } = await supabase
+    .from('addresses')
+    .select('*')
+    .eq('user_id', userId);
 
   if (!userData) {
-    return <div>User not found.</div>;
+    return redirect('/auth/login');
   }
 
   return (
     <PageContainer>
-      <ProfileTabs userData={userData} addressData={addressData || []} userId={user.id} />
+      <ProfilePageClient
+        userData={userData}
+        addressData={addressData || []}
+        userId={userId}
+      />
     </PageContainer>
   );
-} 
+}

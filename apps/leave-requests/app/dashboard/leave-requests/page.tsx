@@ -2,7 +2,6 @@ import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
 import { getCurrentUser } from "@workspace/supabase";
-import { redirect } from "next/navigation";
 import { LeaveRequestTable } from "@/components/leave/leave-request-table";
 import { Download } from "lucide-react";
 import { LeaveRequestYearFilter } from "@/components/leave/leave-request-year-filter";
@@ -16,9 +15,7 @@ interface PageProps {
 export default async function UserLeaveRequestsPage({ searchParams }: PageProps) {
   const { user, supabase } = await getCurrentUser();
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const userId = user?.id as string;
 
   // Get current year as default
   const currentYear = new Date().getFullYear();
@@ -37,7 +34,7 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
       projects,
       approved_by:users!approved_by_id(full_name)
     `)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .gte("start_date", startOfYear)
     .lte("start_date", endOfYear)
     .order("start_date", { ascending: false });
