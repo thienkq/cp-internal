@@ -2,21 +2,29 @@ import { getCurrentUser } from '@workspace/supabase';
 import { redirect } from 'next/navigation';
 import { PageContainer } from '@workspace/ui/components/page-container';
 import ProfilePageClient from './page.client';
+import { getDb } from '@/db';
+import { users, addresses } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { User, Address } from '@/types';
 
 export default async function ProfilePage() {
-  const { user, supabase } = await getCurrentUser();
+  const { user } = await getCurrentUser();
 
   const userId = user?.id as string;
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
-  const { data: addressData } = await supabase
-    .from('addresses')
-    .select('*')
-    .eq('user_id', userId);
+  const db = getDb();
+
+  const [userData] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+    
+  const addressData = await db
+    .select()
+    .from(addresses)
+    .where(eq(addresses.user_id, userId));
+
 
   if (!userData) {
     return redirect('/auth/login');
@@ -25,8 +33,8 @@ export default async function ProfilePage() {
   return (
     <PageContainer>
       <ProfilePageClient
-        userData={userData}
-        addressData={addressData || []}
+        userData={userData as User}
+        addressData={(addressData as Address[]) || [] }
         userId={userId}
       />
     </PageContainer>
