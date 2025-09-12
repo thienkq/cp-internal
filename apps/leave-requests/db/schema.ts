@@ -72,7 +72,9 @@ export const users = pgTable('users', {
   pgPolicy('Users can update their own profile', { 
     as: 'permissive', 
     for: 'update', 
-    to: ['authenticated'] 
+    to: ['authenticated'],
+    using: sql`(auth.uid() = id)`,
+    withCheck: sql`(auth.uid() = id)`
   }),
   check('users_role_check', sql`role = ANY (ARRAY['employee'::text, 'manager'::text, 'admin'::text])`),
 ]);
@@ -118,7 +120,13 @@ export const projects = pgTable('projects', {
   pgPolicy('Admins can manage projects', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`,
+    withCheck: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
   }),
 ]);
 
@@ -165,7 +173,9 @@ export const projectAssignments = pgTable('project_assignments', {
   pgPolicy('user_crud_own_assignments', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`user_id = auth.uid()`,
+    withCheck: sql`user_id = auth.uid()`
   }),
   check('valid_date_range', sql`(end_date IS NULL) OR (end_date >= start_date)`),
 ]);
@@ -188,12 +198,14 @@ export const companySettings = pgTable('company_settings', {
   pgPolicy('Admins can modify company_settings', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(auth.jwt() ->> 'role' = 'admin'::text)`
   }),
   pgPolicy('Service role can modify', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(auth.role() = 'service_role'::text)`
   }),
 ]);
 
@@ -219,12 +231,14 @@ export const leaveTypes = pgTable('leave_types', {
   pgPolicy('Admins can modify leave_types', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(auth.jwt() ->> 'role' = 'admin'::text)`
   }),
   pgPolicy('Service role can modify', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(auth.role() = 'service_role'::text)`
   }),
 ]);
 
@@ -291,22 +305,32 @@ export const leaveRequests = pgTable('leave_requests', {
   pgPolicy('Users can insert their own leave requests', { 
     as: 'permissive', 
     for: 'insert', 
-    to: ['public'] 
+    to: ['public'],
+    withCheck: sql`(auth.uid() = user_id)`
   }),
   pgPolicy('Service role can do everything', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(auth.role() = 'service_role'::text)`
   }),
   pgPolicy('Admins and managers can view and update all leave requests', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = ANY (ARRAY['admin'::text, 'manager'::text])))))`,
+    withCheck: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = ANY (ARRAY['admin'::text, 'manager'::text])))))`
   }),
   pgPolicy('Users can update their own pending leave requests', { 
     as: 'permissive', 
     for: 'update', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`((auth.uid() = user_id) AND (status = 'pending'::text))`,
+    withCheck: sql`((auth.uid() = user_id) AND (status = ANY (ARRAY['pending'::text, 'canceled'::text])))`
   }),
   check('leave_requests_half_day_type_check', sql`half_day_type = ANY (ARRAY['morning'::text, 'afternoon'::text])`),
   check('leave_requests_status_check', sql`status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'canceled'::text])`),
@@ -336,7 +360,10 @@ export const extendedAbsences = pgTable('extended_absences', {
   pgPolicy('Admins can manage all extended absences', { 
     as: 'permissive', 
     for: 'all', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
   }),
 ]);
 
@@ -375,22 +402,37 @@ export const bonusLeaveGrants = pgTable('bonus_leave_grants', {
   pgPolicy('Admins can view all bonus leave grants', { 
     as: 'permissive', 
     for: 'select', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
   }),
   pgPolicy('Admins can insert bonus leave grants', { 
     as: 'permissive', 
     for: 'insert', 
-    to: ['public'] 
+    to: ['public'],
+    withCheck: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
   }),
   pgPolicy('Admins can update bonus leave grants', { 
     as: 'permissive', 
     for: 'update', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`,
+    withCheck: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
   }),
   pgPolicy('Admins can delete bonus leave grants', { 
     as: 'permissive', 
     for: 'delete', 
-    to: ['public'] 
+    to: ['public'],
+    using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
   }),
   check('bonus_leave_grants_year_check', sql`(year >= 2020) AND (year <= 2030)`),
   check('bonus_leave_grants_days_granted_check', sql`days_granted > 0`),
