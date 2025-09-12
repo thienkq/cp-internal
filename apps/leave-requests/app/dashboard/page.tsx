@@ -10,6 +10,9 @@ import {
 } from '@/lib/anniversary-utils';
 import { calculateLeaveBalance } from '@/lib/leave-quota-utils';
 import { DashboardProvider } from '@/components/member/dashboard/context';
+import { getDb } from '@/db';
+import { users, leaveRequests, leaveTypes } from '@/db/schema';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
 
 // TODO: Dashboard Performance !
 // Based on: https://blog.logrocket.com/fix-nextjs-app-slow-performance/
@@ -24,7 +27,8 @@ import { DashboardProvider } from '@/components/member/dashboard/context';
 
 // 🚀 OPTIMIZED PARALLEL DATA FETCHING
 async function getDashboardData() {
-  const { user, supabase } = await getCurrentUser();
+  const { user } = await getCurrentUser();
+  const db = getDb();
 
   const userId = user?.id as string;
 
@@ -32,44 +36,70 @@ async function getDashboardData() {
 
   // 🎯 PARALLEL EXECUTION: Only 2 queries needed
   const [userData, displayLeaveRequests] = await Promise.all([
-    // Query 1: Essential user data (fast)
-    supabase
-      .from('users')
-      .select('id, full_name, email, date_of_birth, start_date')
-      .eq('id', userId)
-      .single(),
+    db
+      .select({
+        id: users.id,
+        full_name: users.full_name,
+        email: users.email,
+        date_of_birth: users.date_of_birth,
+        start_date: users.start_date,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .then((result) => {
+        const user = result?.[0];
 
-    // Query 2: Leave requests with joins for display in lists only show the last 10 requests
-    supabase
-      .from('leave_requests')
-      .select(
-        `
-        id,
-        user_id,
-        leave_type_id,
-        start_date,
-        end_date,
-        status,
-        is_half_day,
-        half_day_type,
-        message,
-        created_at,
-        updated_at,
-        leave_type:leave_types(name, description),
-        approved_by:users!leave_requests_approved_by_id_fkey(full_name)
-      `
+        return user || null;
+      })
+      .catch((error) => {
+        console.error('Error fetching user data:', error);
+        return null;
+      }),
+    db
+      .select({
+        id: leaveRequests.id,
+          user_id: leaveRequests.user_id,
+        leave_type_id: leaveRequests.leave_type_id,
+        start_date: leaveRequests.start_date,
+        end_date: leaveRequests.end_date,
+        status: leaveRequests.status,
+        is_half_day: leaveRequests.is_half_day,
+        half_day_type: leaveRequests.half_day_type,
+        message: leaveRequests.message,
+        created_at: leaveRequests.created_at,
+        updated_at: leaveRequests.updated_at,
+        leave_type: {
+          name: leaveTypes.name,
+          description: leaveTypes.description,
+        },
+        approved_by: {
+          full_name: users.full_name,
+        },
+      })
+      .from(leaveRequests)
+      .leftJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
+      .leftJoin(users, eq(leaveRequests.approved_by_id, users.id))
+      .where(
+        and(
+          eq(leaveRequests.user_id, userId),
+          gte(leaveRequests.start_date, `${currentYear}-01-01`),
+          lte(leaveRequests.start_date, `${currentYear}-12-31`)
+        )
       )
-      .eq('user_id', userId)
-      .gte('start_date', `${currentYear}-01-01`)
-      .lte('start_date', `${currentYear}-12-31`)
-      .order('created_at', { ascending: false })
-      .limit(10),
+      .orderBy(desc(leaveRequests.created_at))
+      .limit(10)
+      .then((result) => result)
+      .catch((error) => {
+        console.error('Error fetching leave requests:', error);
+        return [];
+      }),
   ]);
 
   return {
     user: user as User,
-    userData: userData.data,
-    displayLeaveRequests: displayLeaveRequests.data || [],
+    userData,
+    displayLeaveRequests: displayLeaveRequests || [],
   };
 }
 

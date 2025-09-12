@@ -11,10 +11,10 @@ export type DashboardContextType = {
   userName: string;
   userData: {
     id: string;
-    full_name: string;
-    email: string;
-    date_of_birth: string;
-    start_date: string;
+    full_name?: string | null;
+    email?: string | null;
+    date_of_birth?: string | null;
+    start_date?: string | null;
   };
   displayLeaveRequests: any;
   leaveBalance: LeaveBalance;
@@ -33,10 +33,10 @@ export const DashboardProvider: React.FC<{
   userName: string;
   userData: {
     id: string;
-    full_name: string;
-    email: string;
-    date_of_birth: string;
-    start_date: string;
+    full_name?: string | null;
+    email?: string | null;
+    date_of_birth?: string | null;
+    start_date?: string | null;
   };
   displayLeaveRequests: any;
   leaveBalance: LeaveBalance;
