@@ -28,10 +28,10 @@ const fetchLeaveRequestData = async () => {
   ]);
 
   const users = (usersData || [])
-    .filter((u) => u.full_name !== null || u.email !== null)
+    .filter((u) => !!u.email)
     .map((u) => ({
       ...u,
-      full_name: u.full_name as string,
+      full_name: (u.full_name as string) || u.email as string,
       email: u.email as string,
     }));
 

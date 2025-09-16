@@ -13,9 +13,10 @@ interface DatePickerProps {
   onChange?: (value: string) => void;
   id?: string;
   error?: string;
+  min?: string;
 }
 
-export function DatePicker({ label, value, onChange, id, error }: DatePickerProps) {
+export function DatePicker({ label, value, onChange, id, error, min }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   return (
     <div className="flex flex-col gap-3">
@@ -40,6 +41,7 @@ export function DatePicker({ label, value, onChange, id, error }: DatePickerProp
             mode="single"
             selected={value ? new Date(value) : undefined}
             captionLayout="dropdown"
+            disabled={min ? (date) => date < new Date(min) : undefined}
             onSelect={date => {
               onChange?.(date ? format(date, "yyyy-MM-dd") : "");
               setOpen(false);

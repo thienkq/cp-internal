@@ -47,7 +47,13 @@ import { Calendar, FileText, Users, Info, X, Plus } from 'lucide-react';
 
 import { ProjectMultiSelect } from '@/components/leave/project-multi-select';
 import { UserMultiSelect } from '@/components/leave/user-multi-select';
-import { LeaveType, ProjectForm, UserForm, LeaveRequestEditMode } from '@/types/leave-request';
+import { DatePicker } from '@/components/users/date-picker';
+import {
+  LeaveType,
+  ProjectForm,
+  UserForm,
+  LeaveRequestEditMode,
+} from '@/types/leave-request';
 
 interface LeaveRequestFormProps {
   leaveTypes: LeaveType[];
@@ -197,10 +203,12 @@ export function LeaveRequestForm({
         <Alert>
           <Info className='h-4 w-4' />
           <AlertDescription>
-            Fields marked with{' '}
-            <span className='text-red-500 font-semibold'>*</span> are required.
-            Please ensure all required information is provided before
-            submitting.
+            <span>
+              Fields marked with{' '}
+              <span className='text-red-500 font-semibold'>*</span> are
+              required. Please ensure all required information is provided
+              before submitting.
+            </span>
           </AlertDescription>
         </Alert>
 
@@ -292,15 +300,15 @@ export function LeaveRequestForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Half Day Period</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value ?? ''}
-                        >
-                          <FormControl>
-                            <SelectTrigger className='w-full'>
-                              <SelectValue placeholder='Select period' />
-                            </SelectTrigger>
-                          </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value ?? ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger className='w-full'>
+                            <SelectValue placeholder='Select period' />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
                           <SelectItem value='morning'>Morning</SelectItem>
                           <SelectItem value='afternoon'>Afternoon</SelectItem>
@@ -322,9 +330,10 @@ export function LeaveRequestForm({
                       Start Date <span className='text-red-500'>*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        type='date'
-                        {...field}
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        id='start_date'
                         min={
                           new Date(Date.now() + 24 * 60 * 60 * 1000)
                             .toISOString()
@@ -347,10 +356,10 @@ export function LeaveRequestForm({
                         End Date <span className='text-red-500'>*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type='date'
-                          {...field}
+                        <DatePicker
                           value={field.value ?? ''}
+                          onChange={field.onChange}
+                          id='end_date'
                           min={
                             form.watch('start_date') ||
                             new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -608,7 +617,11 @@ export function LeaveRequestForm({
 
         {/* Submit Buttons */}
         <div className='flex gap-3'>
-          <Button type='button' variant='outline' className='flex-1 cursor-pointer'>
+          <Button
+            type='button'
+            variant='outline'
+            className='flex-1 cursor-pointer'
+          >
             Cancel
           </Button>
           <Button

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { format, isAfter, parseISO } from "date-fns"
 
 // Shared validation schema for leave requests
 // This ensures client and server validation are identical
@@ -21,25 +22,19 @@ export const leaveRequestSchema = z.object({
 }).refine((data) => {
   // Start date must be in the future (greater than today)
   const today = new Date()
-  today.setHours(0, 0, 0, 0) // Reset time to start of day
-  const startDate = new Date(data.start_date)
+  const startDate = parseISO(data.start_date)
   
-  if (startDate <= today) {
-    return false
-  }
-  return true
+  return isAfter(startDate, today)
 }, {
   message: "Start date must be after today",
   path: ["start_date"]
 }).refine((data) => {
   // End date must be after start date (for full day requests)
   if (!data.is_half_day && data.end_date) {
-    const startDate = new Date(data.start_date)
-    const endDate = new Date(data.end_date)
+    const startDate = parseISO(data.start_date)
+    const endDate = parseISO(data.end_date)
     
-    if (endDate < startDate) {
-      return false
-    }
+    return isAfter(endDate, startDate) || format(endDate, 'yyyy-MM-dd') === format(startDate, 'yyyy-MM-dd')
   }
   return true
 }, {
