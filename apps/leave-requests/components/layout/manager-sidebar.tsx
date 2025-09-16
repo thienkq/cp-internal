@@ -46,11 +46,11 @@ export function ManagerSidebar({ ...props }: React.ComponentProps<typeof Sidebar
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <CheckSquare className="h-4 w-4" />
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <h2 className="text-lg font-semibold">Manager Panel</h2>
+            <h2 className="text-lg font-semibold text-foreground">Manager Panel</h2>
           </div>
         </div>
       </SidebarHeader>

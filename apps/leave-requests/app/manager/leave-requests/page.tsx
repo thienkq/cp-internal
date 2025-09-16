@@ -87,7 +87,7 @@ export default async function ManagerLeaveRequestsPage({ searchParams }: PagePro
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Team Leave Requests</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             Manage leave requests for your team members for {selectedYear}
           </p>
         </div>
@@ -102,7 +102,7 @@ export default async function ManagerLeaveRequestsPage({ searchParams }: PagePro
               <Card 
                 key={filter.label}
                 className={`cursor-pointer transition-colors ${
-                  isActive ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                  isActive ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
                 }`}
               >
                 <a href={`/manager/leave-requests?status=${filter.value}&year=${selectedYear}`}>
@@ -111,7 +111,7 @@ export default async function ManagerLeaveRequestsPage({ searchParams }: PagePro
                     <IconComponent className={`h-4 w-4 ${
                       filter.label === 'Pending' ? 'text-orange-600' :
                       filter.label === 'Approved' ? 'text-green-600' :
-                      filter.label === 'Rejected' ? 'text-red-600' : 'text-blue-600'
+                      filter.label === 'Rejected' ? 'text-destructive' : 'text-primary'
                     }`} />
                   </CardHeader>
                   <CardContent>

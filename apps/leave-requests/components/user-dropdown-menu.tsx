@@ -1,12 +1,13 @@
 "use client"
-import { User, Settings, LogOut, Shield } from "lucide-react"
+import { User, Settings, LogOut, Shield, Monitor, Sun, Moon, Check } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@workspace/ui/components/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from "@workspace/ui/components/dropdown-menu"
 import { useRouter } from "next/navigation"
 import { createBrowserClient, type User as SupabaseUser } from "@workspace/supabase"
 import { useCallback } from "react"
 import { getUserInitials, getUserDisplayName } from "@/lib/utils"
+import { useTheme } from "next-themes"
 
 interface UserDropdownMenuProps {
   user?: SupabaseUser | null
@@ -17,6 +18,7 @@ interface UserDropdownMenuProps {
 
 export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
 
   const handleSignOut = useCallback(async () => {
     try {
@@ -31,6 +33,12 @@ export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
 
   const userInitials = getUserInitials(user)
   const displayName = getUserDisplayName(user)
+
+  const themeOptions = [
+    { value: 'system', label: 'System', icon: Monitor },
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+  ]
 
   return (
     <DropdownMenu>
@@ -48,10 +56,32 @@ export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
           <User className="w-4 h-4 mr-2" />
           {displayName}
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="w-4 h-4 mr-2" />
-          Settings
-        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Settings className="w-4 h-4 mr-2" />
+            Theme
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {themeOptions.map((option) => {
+              const Icon = option.icon
+              return (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setTheme(option.value)}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <Icon className="w-4 h-4 mr-2" />
+                    {option.label}
+                  </div>
+                  {theme === option.value && (
+                    <Check className="w-4 h-4" />
+                  )}
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         {(userProfile?.role === 'admin' || userProfile?.role === 'manager') && (
           <>
             <DropdownMenuSeparator />

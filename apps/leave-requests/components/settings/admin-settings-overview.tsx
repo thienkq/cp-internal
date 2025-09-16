@@ -97,11 +97,11 @@ export function AdminSettingsOverview() {
   }
 
   return (
-    <div className="flex-1 p-6 bg-gray-50">
+    <div className="flex-1 p-6 bg-muted/30">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Configure your leave management system</p>
+        <h1 className="text-2xl font-semibold text-foreground mb-2">Settings</h1>
+        <p className="text-muted-foreground">Configure your leave management system</p>
       </div>
 
       {/* Settings Cards Grid */}
@@ -111,10 +111,10 @@ export function AdminSettingsOverview() {
           return (
             <Card
               key={card.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-md border-gray-200 ${
+              className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
                 card.disabled
-                  ? "opacity-50 cursor-not-allowed bg-gray-50"
-                  : "hover:border-gray-300 bg-white hover:bg-gray-50"
+                  ? "opacity-50 cursor-not-allowed bg-muted/50"
+                  : "hover:border-border/50 bg-background hover:bg-muted/50"
               }`}
               onClick={() => handleCardClick(card)}
             >
@@ -127,11 +127,11 @@ export function AdminSettingsOverview() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{card.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{card.description}</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{card.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
                     {card.disabled && (
                       <div className="mt-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                           Coming Soon
                         </span>
                       </div>
@@ -146,28 +146,28 @@ export function AdminSettingsOverview() {
 
       {/* Quick Stats */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-white">
+        <Card className="bg-background">
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-1">4</div>
-            <div className="text-sm text-gray-600">Active Leave Types</div>
+            <div className="text-2xl font-bold text-foreground mb-1">4</div>
+            <div className="text-sm text-muted-foreground">Active Leave Types</div>
           </CardContent>
         </Card>
-        <Card className="bg-white">
+        <Card className="bg-background">
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-1">12</div>
-            <div className="text-sm text-gray-600">Base Annual Quota</div>
+            <div className="text-2xl font-bold text-foreground mb-1">12</div>
+            <div className="text-sm text-muted-foreground">Base Annual Quota</div>
           </CardContent>
         </Card>
-        <Card className="bg-white">
+        <Card className="bg-background">
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-1">Jan 31</div>
-            <div className="text-sm text-gray-600">Carryover Expiry</div>
+            <div className="text-2xl font-bold text-foreground mb-1">Jan 31</div>
+            <div className="text-sm text-muted-foreground">Carryover Expiry</div>
           </CardContent>
         </Card>
-        <Card className="bg-white">
+        <Card className="bg-background">
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-1">5</div>
-            <div className="text-sm text-gray-600">Working Days/Week</div>
+            <div className="text-2xl font-bold text-foreground mb-1">5</div>
+            <div className="text-sm text-muted-foreground">Working Days/Week</div>
           </CardContent>
         </Card>
       </div>

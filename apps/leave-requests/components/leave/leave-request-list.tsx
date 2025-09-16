@@ -53,7 +53,7 @@ function getLeaveImpactIndicator(status: string) {
     );
   } else if (status === "canceled") {
     return (
-      <div className="flex items-center gap-1 text-gray-500">
+      <div className="flex items-center gap-1 text-muted-foreground">
         <Minus className="h-3 w-3" />
         <span className="text-xs font-medium">Not counted</span>
       </div>
@@ -88,15 +88,15 @@ export function LeaveRequestList({
 
   // Helper function to render request items
   const renderRequestItem = (request: LeaveRequest) => (
-    <div key={request.id} className="p-4 hover:bg-gray-50 transition-colors">
+    <div key={request.id} className="p-4 hover:bg-muted/50 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-3 flex-wrap">
             {showUserColumn && request.user && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
                 <span className="font-medium">{request.user.full_name}</span>
-                <span className="text-gray-400">({request.user.email})</span>
+                <span className="text-muted-foreground/70">({request.user.email})</span>
               </div>
             )}
             
@@ -105,12 +105,12 @@ export function LeaveRequestList({
           </div>
 
           <div className="flex items-center gap-4 text-sm flex-wrap">
-            <div className="flex items-center gap-1 text-gray-600">
+            <div className="flex items-center gap-1 text-muted-foreground">
               <Calendar className="h-4 w-4" />
               {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
             </div>
             
-            <div className="flex items-center gap-1 text-gray-600">
+            <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="h-4 w-4" />
               {getDurationText(request.start_date, request.end_date, request.is_half_day)}
             </div>
@@ -123,40 +123,40 @@ export function LeaveRequestList({
           </div>
 
           {request.message && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <span className="font-medium">Reason:</span> {request.message}
             </div>
           )}
 
           {request.projects && request.projects.length > 0 && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <span className="font-medium">Projects:</span>{" "}
               {request.projects.map((p) => p.name).join(", ")}
             </div>
           )}
 
           {request.emergency_contact && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <span className="font-medium">Emergency Contact:</span> {request.emergency_contact}
             </div>
           )}
 
           {request.current_manager && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <span className="font-medium">Manager:</span> {request.current_manager.full_name}
-              <span className="text-gray-400 ml-1">({request.current_manager.email})</span>
+              <span className="text-muted-foreground/70 ml-1">({request.current_manager.email})</span>
             </div>
           )}
 
           {request.backup_person && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <span className="font-medium">Backup Person:</span> {request.backup_person.full_name}
-              <span className="text-gray-400 ml-1">({request.backup_person.email})</span>
+              <span className="text-muted-foreground/70 ml-1">({request.backup_person.email})</span>
             </div>
           )}
 
           {request.external_notifications && request.external_notifications.length > 0 && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <span className="font-medium">External Notifications:</span>
               <div className="ml-4 flex flex-wrap gap-1 mt-1">
                 {request.external_notifications.map((email, index) => (
@@ -168,7 +168,7 @@ export function LeaveRequestList({
             </div>
           )}
 
-          <div className="text-xs text-gray-400 mt-2">
+          <div className="text-xs text-muted-foreground/70 mt-2">
             <span className="font-medium">Created:</span> {new Date(request.created_at).toLocaleString()}
             {request.updated_at !== request.created_at && (
               <span className="ml-3">
@@ -181,7 +181,7 @@ export function LeaveRequestList({
             <div className="text-sm text-green-600">
               <span className="font-medium">Approved by:</span> {request.approved_by.full_name}
               {request.approved_at && (
-                <span className="text-gray-500 ml-2">
+                <span className="text-muted-foreground ml-2">
                   on {new Date(request.approved_at).toLocaleString()}
                 </span>
               )}
@@ -189,20 +189,20 @@ export function LeaveRequestList({
           )}
 
           {request.status === "rejected" && request.approval_notes && (
-            <div className="text-sm text-red-600">
+            <div className="text-sm text-destructive">
               <span className="font-medium">Rejection reason:</span> {request.approval_notes}
             </div>
           )}
 
           {request.status === "canceled" && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {request.cancel_reason && (
                 <>
                   <span className="font-medium">Cancel reason:</span> {request.cancel_reason}
                 </>
               )}
               {request.canceled_at && (
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-xs text-muted-foreground/70 mt-1">
                   <span className="font-medium">Canceled at:</span> {new Date(request.canceled_at).toLocaleString()}
                 </div>
               )}
@@ -242,8 +242,8 @@ export function LeaveRequestList({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
             <p>No leave requests found</p>
           </div>
         </CardContent>
@@ -277,12 +277,12 @@ export function LeaveRequestList({
           
           <TabsContent value="counted" className="mt-0">
             <div className="px-4 pb-2 pt-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
               </div>
             </div>
             {countedRequests.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                 <p>No approved or pending leave requests</p>
               </div>
             ) : (
@@ -294,14 +294,14 @@ export function LeaveRequestList({
           
           <TabsContent value="not-counted" className="mt-0">
             <div className="px-4 pb-2 pt-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                 <XCircle className="h-4 w-4" />
                 <span>These requests do not affect your leave balance</span>
               </div>
             </div>
             {notCountedRequests.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <XCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <XCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                 <p>No rejected or cancelled leave requests</p>
               </div>
             ) : (

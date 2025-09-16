@@ -33,9 +33,9 @@ const DashboardPageClient = () => {
 
         {/* ⚠️ Start Date Reminder Banner */}
         {!userData.start_date && (
-          <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
+          <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4'>
             <div className='flex items-center gap-2'>
-              <div className='text-yellow-600'>
+              <div className='text-yellow-600 dark:text-yellow-400'>
                 <svg
                   className='w-5 h-5'
                   fill='currentColor'
@@ -48,13 +48,13 @@ const DashboardPageClient = () => {
                   />
                 </svg>
               </div>
-              <div className='text-yellow-800'>
+              <div className='text-yellow-800 dark:text-yellow-200'>
                 <p className='font-medium'>Start Date Not Set</p>
                 <p className='text-sm'>
                   Your leave balance is currently set to the default rate.
                   <Link
                     href='/dashboard/profile'
-                    className='text-yellow-700 underline ml-1 hover:text-yellow-800'
+                    className='text-primary underline ml-1 hover:text-primary/80'
                   >
                     Set your start date
                   </Link>{' '}
@@ -75,7 +75,7 @@ const DashboardPageClient = () => {
       </Suspense>
 
       {/* 📋 Leave Requests Section - Data already loaded from parallel fetch show the last 10 requests*/}
-      <LeaveRequestsSection leaveRequests={displayLeaveRequests as any} />
+      <LeaveRequestsSection leaveRequests={displayLeaveRequests} />
     </>
   );
 };

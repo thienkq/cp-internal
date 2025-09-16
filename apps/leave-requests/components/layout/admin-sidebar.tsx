@@ -70,8 +70,8 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-gray-900">CoderPush</span>
-            <span className="text-sm text-gray-600 -mt-1">Admin</span>
+            <span className="font-bold text-lg text-foreground">CoderPush</span>
+            <span className="text-sm text-muted-foreground -mt-1">Admin</span>
           </div>
         </div>
       </SidebarHeader>

@@ -34,7 +34,7 @@ export default async function AdminLeaveRequestsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Leave Requests Management</h1>
-            <p className="text-gray-600">Manage and approve leave requests from all users</p>
+            <p className="text-muted-foreground">Manage and approve leave requests from all users</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
@@ -52,23 +52,23 @@ export default async function AdminLeaveRequestsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="p-6 text-center">
             <div className="text-3xl font-bold text-purple-600">{getStatusCount("pending")}</div>
-            <div className="text-sm text-gray-500">Pending</div>
-            <div className="text-xs text-gray-400 mt-1">Awaiting approval</div>
+            <div className="text-sm text-muted-foreground">Pending</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">Awaiting approval</div>
           </Card>
           <Card className="p-6 text-center">
             <div className="text-3xl font-bold text-green-600">{getStatusCount("approved")}</div>
-            <div className="text-sm text-gray-500">Approved</div>
-            <div className="text-xs text-gray-400 mt-1">This period</div>
+            <div className="text-sm text-muted-foreground">Approved</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">This period</div>
           </Card>
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-red-600">{getStatusCount("rejected")}</div>
-            <div className="text-sm text-gray-500">Rejected</div>
-            <div className="text-xs text-gray-400 mt-1">This period</div>
+            <div className="text-3xl font-bold text-destructive">{getStatusCount("rejected")}</div>
+            <div className="text-sm text-muted-foreground">Rejected</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">This period</div>
           </Card>
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-gray-600">{getStatusCount("canceled")}</div>
-            <div className="text-sm text-gray-500">Canceled</div>
-            <div className="text-xs text-gray-400 mt-1">This period</div>
+            <div className="text-3xl font-bold text-muted-foreground">{getStatusCount("canceled")}</div>
+            <div className="text-sm text-muted-foreground">Canceled</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">This period</div>
           </Card>
         </div>
 
