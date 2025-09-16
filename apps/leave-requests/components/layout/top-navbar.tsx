@@ -38,10 +38,10 @@ export function TopNavbar({ user, pageTitle = "CoderPush Leaves" }: TopNavbarPro
     fetchUserProfile()
   }, [user?.id])
   return (
-    <header className="border-b bg-white px-6 py-3">
+    <header className="border-b bg-background px-6 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">{pageTitle}</span>
+          <span className="text-sm text-muted-foreground">{pageTitle}</span>
         </div>
 
         <div className="flex items-center gap-3">

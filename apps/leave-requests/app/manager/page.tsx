@@ -58,7 +58,7 @@ export default async function ManagerDashboardPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold">Manager Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {managerName}! Manage your team's leave requests.</p>
+          <p className="text-muted-foreground mt-2">Welcome back, {managerName}! Manage your team's leave requests.</p>
         </div>
 
         {/* Statistics Cards */}
@@ -70,7 +70,7 @@ export default async function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingRequests.length}</div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Requests awaiting your approval
               </p>
             </CardContent>
@@ -83,7 +83,7 @@ export default async function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{approvedRequests.length}</div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Requests you've approved
               </p>
             </CardContent>
@@ -92,11 +92,11 @@ export default async function ManagerDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-              <Users className="h-4 w-4 text-blue-600" />
+              <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{teamMembers.length}</div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 People reporting to you
               </p>
             </CardContent>
@@ -109,7 +109,7 @@ export default async function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{teamRequests?.length || 0}</div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 All team leave requests
               </p>
             </CardContent>
@@ -143,7 +143,7 @@ export default async function ManagerDashboardPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Recent Team Requests</h2>
             <div className="flex items-center gap-2">
-              <a href="/manager/leave-requests" className="text-blue-600 text-sm hover:underline">
+              <a href="/manager/leave-requests" className="text-primary text-sm hover:underline">
                 View All Requests
               </a>
             </div>

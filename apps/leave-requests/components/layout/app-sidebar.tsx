@@ -61,12 +61,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-gray-900">CoderPush</span>
-            <span className="text-sm text-gray-600 -mt-1">Leaves</span>
+            <span className="font-bold text-lg text-foreground">CoderPush</span>
+            <span className="text-sm text-muted-foreground -mt-1">Leaves</span>
           </div>
         </div>
         <Button
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-sm"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-sm"
           onClick={handleAddNewClick}
         >
           <Plus className="w-4 h-4 mr-2" />

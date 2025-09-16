@@ -86,7 +86,7 @@ export default async function ManagerTeamPage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">My Team</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             Manage and view information about your team members
           </p>
         </div>
@@ -100,7 +100,7 @@ export default async function ManagerTeamPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{teamMembers.length}</div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 People reporting to you
               </p>
             </CardContent>
@@ -115,7 +115,7 @@ export default async function ManagerTeamPage() {
               <div className="text-2xl font-bold">
                 {teamMembers.reduce((sum, member) => sum + member.pendingRequests, 0)}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Pending leave requests
               </p>
             </CardContent>
@@ -130,7 +130,7 @@ export default async function ManagerTeamPage() {
               <div className="text-2xl font-bold">
                 {teamMembers.reduce((sum, member) => sum + member.approvedRequests, 0)}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Total approved requests
               </p>
             </CardContent>
@@ -148,9 +148,9 @@ export default async function ManagerTeamPage() {
           <CardContent>
             {teamMembers.length === 0 ? (
               <div className="text-center py-8">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No team members found</h3>
-                <p className="text-gray-600">
+                <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No team members found</h3>
+                <p className="text-muted-foreground">
                   No leave requests have been assigned to you as a manager yet.
                 </p>
               </div>
@@ -159,19 +159,19 @@ export default async function ManagerTeamPage() {
                 {teamMembers.map((member) => (
                   <div 
                     key={member.id} 
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-blue-100 text-blue-700">
+                        <AvatarFallback className="bg-primary/10 text-primary">
                           {getInitials(member.full_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="font-medium">{member.full_name}</h3>
-                        <p className="text-sm text-gray-600">{member.email}</p>
+                        <p className="text-sm text-muted-foreground">{member.email}</p>
                         {member.recentRequestDate && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground/70">
                             Last request: {new Date(member.recentRequestDate).toLocaleDateString()}
                           </p>
                         )}

@@ -13,11 +13,11 @@ export function LeaveBalanceSection() {
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4'>
       {/* Total Quota */}
       <Card className='p-6 text-center relative'>
-        <div className='text-3xl font-bold text-blue-600'>
+        <div className='text-3xl font-bold text-primary'>
           {leaveBalance?.totalQuota}
         </div>
-        <div className='text-sm text-gray-500'>Total Quota</div>
-        <div className='text-gray-400 mt-1'>
+        <div className='text-sm text-muted-foreground'>Total Quota</div>
+        <div className='text-muted-foreground/70 mt-1'>
           {leaveBalance?.isOnboardingYear
             ? 'Onboarding Year'
             : `Year ${leaveBalance?.employmentYear}`}
@@ -41,24 +41,24 @@ export function LeaveBalanceSection() {
             <div className='text-3xl font-bold text-purple-600'>
               {bonusLeave?.total_granted || 0}
             </div>
-            <div className='text-sm text-gray-500 '>Bonus Leave</div>
+            <div className='text-sm text-muted-foreground'>Bonus Leave</div>
           </>
         ) : (
           <>
-            <div className='text-3xl font-bold text-gray-400'>0</div>
-            <div className='text-sm text-gray-500'>Bonus Leave</div>
-            <div className='text-gray-400 mt-1'>None granted this year</div>
+            <div className='text-3xl font-bold text-muted-foreground/70'>0</div>
+            <div className='text-sm text-muted-foreground'>Bonus Leave</div>
+            <div className='text-muted-foreground/70 mt-1'>None granted this year</div>
           </>
         )}
       </Card>
 
       {/* Used + Pending Days */}
       <Card className='p-6 text-center'>
-        <div className='text-3xl font-bold text-red-600'>
+        <div className='text-3xl font-bold text-destructive'>
           {(leaveBalance?.usedDays || 0) + (leaveBalance?.pendingDays || 0)}
         </div>
-        <div className='text-sm text-gray-500'>Committed</div>
-        <div className='text-gray-400 mt-1'>
+        <div className='text-sm text-muted-foreground'>Committed</div>
+        <div className='text-muted-foreground/70 mt-1'>
           {leaveBalance?.usedDays || 0} approved +{' '}
           {leaveBalance?.pendingDays || 0} pending
         </div>
@@ -69,8 +69,8 @@ export function LeaveBalanceSection() {
         <div className='text-3xl font-bold text-green-600'>
           {leaveBalance?.remainingDays || 0}
         </div>
-        <div className='text-sm text-gray-500'>Available</div>
-        <div className='text-gray-400 mt-1'>Free to request</div>
+        <div className='text-sm text-muted-foreground'>Available</div>
+        <div className='text-muted-foreground/70 mt-1'>Free to request</div>
       </Card>
     </div>
   );

@@ -50,7 +50,7 @@ export default function AdminUserListPage() {
     return (
       <PageContainer>
         <h1 className="text-2xl font-bold mb-4">Users</h1>
-        <div className="text-red-600">Error loading users: {error}</div>
+        <div className="text-destructive">Error loading users: {error}</div>
       </PageContainer>
     );
   }

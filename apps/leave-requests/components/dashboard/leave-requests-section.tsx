@@ -11,7 +11,7 @@ export function LeaveRequestsSection({ leaveRequests }: LeaveRequestsSectionProp
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">My Leave Requests</h2>
         <div className="flex items-center gap-2">
-          <a href="/dashboard/leave/new" className="text-blue-600 text-sm hover:underline">New Request</a>
+          <a href="/dashboard/leave/new" className="text-primary text-sm hover:underline">New Request</a>
         </div>
       </div>
       

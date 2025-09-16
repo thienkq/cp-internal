@@ -59,7 +59,7 @@ export default async function AdminPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-4">Welcome, Admin!</h1>
-          <p className="text-gray-600">This is the admin dashboard. Here you can manage users, view reports, and configure settings.</p>
+          <p className="text-muted-foreground">This is the admin dashboard. Here you can manage users, view reports, and configure settings.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -75,8 +75,8 @@ export default async function AdminPage() {
             </CardHeader>
             <CardContent>
               {anniversaries.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                   <p>No anniversaries this month</p>
                 </div>
               ) : (
@@ -84,13 +84,13 @@ export default async function AdminPage() {
                   {anniversaries.map((anniversary) => (
                     <div 
                       key={anniversary.user_id} 
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                     >
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {anniversary.full_name}
                         </div>
-                        <div className="text-sm text-gray-600 flex items-center gap-1">
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(anniversary.anniversary_date)}
                           <span className="mx-1">•</span>
@@ -119,8 +119,8 @@ export default async function AdminPage() {
             </CardHeader>
             <CardContent>
               {birthdays.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                   <p>No birthdays this month</p>
                 </div>
               ) : (
@@ -128,13 +128,13 @@ export default async function AdminPage() {
                   {birthdays.map((birthday) => (
                     <div 
                       key={birthday.user_id} 
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                     >
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {birthday.full_name}
                         </div>
-                        <div className="text-sm text-gray-600 flex items-center gap-1">
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(birthday.birthday_date)}
                           <span className="mx-1">•</span>
@@ -163,9 +163,9 @@ export default async function AdminPage() {
         {pendingRequests.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
-              <p className="text-gray-500">All leave requests have been processed.</p>
+              <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No Pending Requests</h3>
+              <p className="text-muted-foreground">All leave requests have been processed.</p>
             </CardContent>
           </Card>
         )}
