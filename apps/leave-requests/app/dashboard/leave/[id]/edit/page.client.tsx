@@ -2,6 +2,7 @@
 
 import { PageContainer } from '@workspace/ui/components/page-container';
 import { LeaveRequestForm } from '@/components/leave/leave-request-form';
+import { LeaveType, ProjectForm, UserForm } from '@/types/leave-request';
 
 export default function EditLeaveRequestPageClient({
   leaveTypes,
@@ -9,24 +10,9 @@ export default function EditLeaveRequestPageClient({
   users,
   leaveRequest,
 }: {
-  leaveTypes: Array<{
-    id: number;
-    name: string;
-    description?: string | null;
-    is_paid: boolean;
-    supports_half_day: boolean;
-    supports_carryover: boolean;
-    quota: number | null;
-  }>;
-  projects: Array<{
-    id: string;
-    name: string;
-  }>;
-  users: Array<{
-    id: string;
-    full_name: string;
-    email: string;
-  }>;
+  leaveTypes: LeaveType[];
+  projects: ProjectForm[];
+  users: UserForm[];
   leaveRequest: Record<string, unknown>;
 }) {
   return (

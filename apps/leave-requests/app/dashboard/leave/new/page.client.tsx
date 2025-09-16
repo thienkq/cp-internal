@@ -2,30 +2,16 @@
 
 import { LeaveRequestForm } from '@/components/leave/leave-request-form';
 import { PageContainer } from '@workspace/ui/components/page-container';
+import { UserForm, LeaveType, ProjectForm } from '@/types/leave-request';
 
 export default function NewLeaveRequestPageClient({
   leaveTypes,
   projects,
   users,
 }: {
-  leaveTypes: Array<{
-    id: number;
-    name: string;
-    description?: string | null;
-    is_paid: boolean;
-    supports_half_day: boolean;
-    supports_carryover: boolean;
-    quota: number | null;
-  }>;
-  projects: Array<{
-    id: string;
-    name: string;
-  }>;
-  users: Array<{
-    id: string;
-    full_name: string;
-    email: string;
-  }>;
+  leaveTypes: LeaveType[];
+  projects: ProjectForm[];
+  users: UserForm[];
 }) {
   return (
     <PageContainer>
