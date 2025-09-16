@@ -13,11 +13,38 @@ export const leaveRequestSchema = z.object({
   projects: z.array(z.object({
     id: z.string().nullable(),
     name: z.string()
-  })),
-  current_manager_id: z.string().nullable(),
+  })).min(1, "Please select at least one project"),
+  current_manager_id: z.string().min(1, "Please select a manager for approval"),
   backup_id: z.string().nullable(),
   internal_notifications: z.array(z.string()),
   external_notifications: z.array(z.string())
+}).refine((data) => {
+  // Start date must be in the future (greater than today)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // Reset time to start of day
+  const startDate = new Date(data.start_date)
+  
+  if (startDate <= today) {
+    return false
+  }
+  return true
+}, {
+  message: "Start date must be after today",
+  path: ["start_date"]
+}).refine((data) => {
+  // End date must be after start date (for full day requests)
+  if (!data.is_half_day && data.end_date) {
+    const startDate = new Date(data.start_date)
+    const endDate = new Date(data.end_date)
+    
+    if (endDate < startDate) {
+      return false
+    }
+  }
+  return true
+}, {
+  message: "End date must be on or after start date",
+  path: ["end_date"]
 }).refine((data) => {
   if (!data.is_half_day && !data.end_date) {
     return false
