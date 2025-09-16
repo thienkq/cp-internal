@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -26,7 +25,6 @@ export function PendingLeaveRequestsTable({
   leaveRequests,
   onActionComplete,
 }: PendingLeaveRequestsTableProps) {
-  const [requests, setRequests] = useState(leaveRequests);
 
   const handleActionComplete = () => {
     // Remove the request from local state after action
@@ -48,8 +46,8 @@ export function PendingLeaveRequestsTable({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
             <p>No pending leave requests found</p>
           </div>
         </CardContent>
@@ -85,15 +83,15 @@ export function PendingLeaveRequestsTable({
             </TableHeader>
             <TableBody>
               {leaveRequests.map((request) => (
-                <TableRow key={request.id} className="hover:bg-gray-50">
+                <TableRow key={request.id} className="hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
+                      <User className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {request.user?.full_name || 'Unknown User'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           {request.user?.email || 'No email'}
                         </div>
                       </div>
@@ -106,21 +104,25 @@ export function PendingLeaveRequestsTable({
                         {request.leave_type.name}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400 text-sm">No type</span>
+                      <span className="text-muted-foreground text-sm">No type</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">
+                        {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
+                      </span>
                     </div>
                   </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      {getDurationText(request.start_date, request.end_date, request.is_half_day)}
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">
+                        {getDurationText(request.start_date, request.end_date, request.is_half_day)}
+                      </span>
                     </div>
                   </TableCell>
                   
@@ -134,24 +136,24 @@ export function PendingLeaveRequestsTable({
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">No projects</span>
+                      <span className="text-muted-foreground text-sm">No projects</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
                     {request.message ? (
                       <div className="max-w-[180px]">
-                        <p className="text-sm text-gray-700 truncate" title={request.message}>
+                        <p className="text-sm text-foreground truncate" title={request.message}>
                           {request.message}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">No reason</span>
+                      <span className="text-muted-foreground text-sm">No reason</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-foreground">
                       {new Date(request.created_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
