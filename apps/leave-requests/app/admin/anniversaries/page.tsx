@@ -1,5 +1,3 @@
-import { getCurrentUser } from "@workspace/supabase";
-import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
@@ -7,11 +5,6 @@ import { Calendar, Trophy, Users } from "lucide-react";
 import { getThisMonthAnniversaries } from "@/lib/anniversary-utils";
 
 export default async function AnniversariesPage() {
-  const { user, supabase } = await getCurrentUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
 
   // Get this month's anniversaries
   const anniversaries = await getThisMonthAnniversaries();

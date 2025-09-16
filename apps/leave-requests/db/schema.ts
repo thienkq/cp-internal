@@ -260,7 +260,7 @@ export const leaveRequests = pgTable('leave_requests', {
   emergency_contact: text('emergency_contact'),
   status: text().notNull(),
   approval_notes: text('approval_notes'),
-  cancelReason: text('cancel_reason'),
+  cancel_reason: text('cancel_reason'),
   approved_by_id: uuid('approved_by_id'),
   approved_at: timestamp('approved_at', { withTimezone: true, mode: 'string' }),
   canceled_at: timestamp('canceled_at', { withTimezone: true, mode: 'string' }),
