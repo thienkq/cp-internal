@@ -1,35 +1,15 @@
-import { LeaveRequestForm } from '@/components/leave/leave-request-form';
-import { requireAuth } from '@workspace/supabase';
-import { PageContainer } from '@workspace/ui/components/page-container';
+import { getLeaveRequestServerProps } from '@/lib/get-leave-request-server-props';
+import NewLeaveRequestPageClient from './page.client';
 
 export default async function NewLeaveRequestPage() {
-  const { supabase } = await requireAuth();
-
-  // Fetch required data for the form
-  const [leaveTypesResult, projectsResult, usersResult] = await Promise.all([
-    supabase.from('leave_types').select('*').order('name'),
-    supabase.from('projects').select('id, name').order('name'),
-    supabase.from('users').select('id, full_name, email').order('full_name'),
-  ]);
-
-  const leaveTypes = leaveTypesResult.data || [];
-  const projects = projectsResult.data || [];
-  const users = usersResult.data || [];
+  // Use the cached function to fetch required data
+  const { leaveTypes, projects, users } = await getLeaveRequestServerProps();
 
   return (
-    <PageContainer>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold tracking-tight'>New Leave Request</h1>
-        <p className='text-muted-foreground'>
-          Submit a new leave request for approval
-        </p>
-      </div>
-
-      <LeaveRequestForm
-        leaveTypes={leaveTypes}
-        projects={projects}
-        users={users}
-      />
-    </PageContainer>
+    <NewLeaveRequestPageClient
+      leaveTypes={leaveTypes}
+      projects={projects}
+      users={users}
+    />
   );
 }

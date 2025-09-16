@@ -1,64 +1,72 @@
-"use server"
+'use server';
 
-import { createServerClient } from "@workspace/supabase"
-import { revalidatePath } from 'next/cache'
+import { createServerClient } from '@workspace/supabase';
+import { revalidatePath } from 'next/cache';
 import { sendEmail } from '@/lib/email';
-import { generateLeaveRequestInfoTemplate, generateLeaveRequestActionTemplate } from '@/lib/email-templates';
-import { 
-  processLeaveRequestFormData, 
+import {
+  generateLeaveRequestInfoTemplate,
+  generateLeaveRequestActionTemplate,
+} from '@/lib/email-templates';
+import {
+  processLeaveRequestFormData,
   prepareLeaveRequestForInsert,
   enrichLeaveRequestWithEmailData,
   extractReferenceData,
   type LeaveRequestInsert,
   type LeaveRequestFormData,
-  type LeaveRequestWithEmailData
-} from "@/lib/leave-request-form-utils"
+  type LeaveRequestWithEmailData,
+} from '@/lib/leave-request-form-utils';
 import { calculateWorkingDays, formatWorkingDays } from '@/lib/utils';
-import type { User } from "@workspace/supabase";
+import { getDb } from '@/db';
+import { leaveRequests } from '@/db/schema';
 
-type SubmitLeaveRequestResult = 
-  | { success: true;}
-  | { success: false; error: string }
-
-
+type SubmitLeaveRequestResult =
+  | { success: true }
+  | { success: false; error: string };
 
 /**
  * Gets the authenticated user and handles authentication errors
  */
-async function getAuthenticatedUser(supabase: any) {
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
+async function getAuthenticatedUser() {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
   if (userError || !user) {
-    throw new Error("User not authenticated")
+    throw new Error('User not authenticated');
   }
-  return user
+  return user;
 }
 
 /**
  * Inserts the leave request into the database and returns the created record ID
  */
-async function insertLeaveRequest(supabase: any, leaveRequest: LeaveRequestInsert): Promise<string> {
-  const { data, error } = await supabase
-    .from('leave_requests')
-    .insert([leaveRequest])
-    .select('id')
-    .single()
+async function insertLeaveRequest(
+  leaveRequest: LeaveRequestInsert
+): Promise<string> {
+  const db = getDb();
 
-  if (error) {
-    throw error
+  const [result] = await db
+    .insert(leaveRequests)
+    .values(leaveRequest)
+    .returning({ id: leaveRequests.id });
+
+  if (!result) {
+    throw new Error('Failed to create leave request');
   }
 
-  return data.id
+  return result.id;
 }
-
-
 
 async function sendLeaveRequestNotification(
   enrichedLeaveRequest: LeaveRequestWithEmailData,
   validatedData: LeaveRequestFormData
 ) {
   try {
-    const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    
+    const dashboardUrl =
+      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
     // Calculate working days
     const workingDays = calculateWorkingDays(
       enrichedLeaveRequest.start_date,
@@ -66,7 +74,7 @@ async function sendLeaveRequestNotification(
       enrichedLeaveRequest.is_half_day
     );
     const formattedDays = formatWorkingDays(workingDays);
-    
+
     // Base email data - no database queries needed!
     const baseEmailData = {
       requesterName: enrichedLeaveRequest.requester_name,
@@ -89,24 +97,28 @@ async function sendLeaveRequestNotification(
 
     // Prepare recipient groups
     const hrEmails = process.env.HR_EMAIL ? [process.env.HR_EMAIL] : [];
-    const managerEmails = enrichedLeaveRequest.manager_email ? [enrichedLeaveRequest.manager_email] : [];
+    const managerEmails = enrichedLeaveRequest.manager_email
+      ? [enrichedLeaveRequest.manager_email]
+      : [];
     const informationalEmails = [];
-    
+
     // Add requester to informational emails
     if (enrichedLeaveRequest.requester_email) {
       informationalEmails.push(enrichedLeaveRequest.requester_email);
     }
-    
+
     // Add backup person to informational emails
     if (enrichedLeaveRequest.backup_email) {
       informationalEmails.push(enrichedLeaveRequest.backup_email);
     }
-    
+
     // Add internal notification emails from the enriched data
     if (enrichedLeaveRequest.internal_notification_emails) {
-      informationalEmails.push(...enrichedLeaveRequest.internal_notification_emails);
+      informationalEmails.push(
+        ...enrichedLeaveRequest.internal_notification_emails
+      );
     }
-    
+
     // Add external notification emails
     if (validatedData.external_notifications) {
       informationalEmails.push(...validatedData.external_notifications);
@@ -120,9 +132,10 @@ async function sendLeaveRequestNotification(
         leaveRequestId: enrichedLeaveRequest.id, // Use the actual leave request ID
         dashboardUrl,
       };
-      
-      const actionHtmlBody = generateLeaveRequestActionTemplate(actionEmailData);
-      
+
+      const actionHtmlBody =
+        generateLeaveRequestActionTemplate(actionEmailData);
+
       await sendEmail({
         to: [...new Set(actionableRecipients)], // Remove duplicates
         subject: `Leave Request ${enrichedLeaveRequest.requester_name} - Action Required `,
@@ -131,10 +144,12 @@ async function sendLeaveRequestNotification(
     }
 
     // Send informational emails to requester, backup, and other notifications
-    const uniqueInformationalEmails = [...new Set(informationalEmails.filter(email => email))];
+    const uniqueInformationalEmails = [
+      ...new Set(informationalEmails.filter((email) => email)),
+    ];
     if (uniqueInformationalEmails.length > 0) {
       const infoHtmlBody = generateLeaveRequestInfoTemplate(baseEmailData);
-      
+
       await sendEmail({
         to: uniqueInformationalEmails,
         subject: `Leave Request: ${enrichedLeaveRequest.requester_name}`,
@@ -147,22 +162,22 @@ async function sendLeaveRequestNotification(
   }
 }
 
-export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeaveRequestResult> {
+export async function submitLeaveRequest(
+  formData: FormData
+): Promise<SubmitLeaveRequestResult> {
   try {
-    const supabase = await createServerClient()
-    
     // Process and validate form data
-    const validatedData = processLeaveRequestFormData(formData)
-    
+    const validatedData = processLeaveRequestFormData(formData);
+
     // Extract reference data from form
-    const { leaveTypes, users } = extractReferenceData(formData)
-    
+    const { leaveTypes, users } = extractReferenceData(formData);
+
     // Get authenticated user
-    const user = await getAuthenticatedUser(supabase)
-    
+    const user = await getAuthenticatedUser();
+
     // Prepare leave request for database insertion
-    const leaveRequest = prepareLeaveRequestForInsert(validatedData, user.id)
-    
+    const leaveRequest = prepareLeaveRequestForInsert(validatedData, user.id);
+
     // Create enriched leave request with email data (no DB queries needed!)
     const enrichedLeaveRequest = enrichLeaveRequestWithEmailData(
       validatedData,
@@ -171,36 +186,40 @@ export async function submitLeaveRequest(formData: FormData): Promise<SubmitLeav
       users,
       user.user_metadata?.full_name || user.email || 'Unknown User',
       user.email || ''
-    )
-    
+    );
+
     // Insert into database and get the created ID
-    const createdLeaveRequestId = await insertLeaveRequest(supabase, leaveRequest)
-    
+    const createdLeaveRequestId = await insertLeaveRequest(leaveRequest);
+
     // Add the actual leave request ID to the enriched data
     const enrichedLeaveRequestWithId = {
       ...enrichedLeaveRequest,
-      id: createdLeaveRequestId
-    }
-    
+      id: createdLeaveRequestId,
+    };
+
     // Send email notification
     // TODO: Refactor to background job to send email
     // - Can retry if failed
     // - Can get leave request data from database instead of form data
     // - Better performance (non-blocking)
     // - Can queue multiple notifications
-    await sendLeaveRequestNotification(enrichedLeaveRequestWithId, validatedData);
+    await sendLeaveRequestNotification(
+      enrichedLeaveRequestWithId,
+      validatedData
+    );
 
     // Invalidate the cache for all paths that display leave request data
-    revalidatePath('/dashboard')
-    revalidatePath('/dashboard/leave-requests')
-    
-    return { success: true as const }
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/leave-requests');
+
+    return { success: true as const };
   } catch (error) {
-    console.error('Error submitting leave request:', error)
-    
-    return { 
-      success: false as const, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred'
-    }
+    console.error('Error submitting leave request:', error);
+
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : 'An unexpected error occurred',
+    };
   }
-} 
+}

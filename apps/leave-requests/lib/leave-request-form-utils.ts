@@ -98,7 +98,7 @@ export function parseFormData(rawData: RawFormData): LeaveRequestFormData {
     message: rawData.message as string,
     emergency_contact: rawData.emergency_contact as string || null,
     projects: rawData.projects ? JSON.parse(rawData.projects as string) : [],
-    current_manager_id: rawData.current_manager_id as string || null,
+    current_manager_id: rawData.current_manager_id as string,
     backup_id: rawData.backup_id as string || null,
     internal_notifications: rawData.internal_notifications ? JSON.parse(rawData.internal_notifications as string) : [],
     external_notifications: rawData.external_notifications ? JSON.parse(rawData.external_notifications as string) : []
