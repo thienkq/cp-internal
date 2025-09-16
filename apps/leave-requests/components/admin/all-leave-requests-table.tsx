@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { 
@@ -29,7 +28,6 @@ export function AllLeaveRequestsTable({
   showActions = false,
   onActionComplete,
 }: AllLeaveRequestsTableProps) {
-  const [requests, setRequests] = useState(leaveRequests);
 
   const handleActionComplete = () => {
     if (onActionComplete) {
@@ -103,7 +101,7 @@ export function AllLeaveRequestsTable({
             </TableHeader>
             <TableBody>
               {leaveRequests.map((request) => (
-                <TableRow key={request.id} className="hover:bg-gray-50">
+                <TableRow key={request.id} className="hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(request.status)}
@@ -113,12 +111,12 @@ export function AllLeaveRequestsTable({
                   
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
+                      <User className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {request.user?.full_name || 'Unknown User'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           {request.user?.email || 'No email'}
                         </div>
                       </div>
@@ -131,21 +129,25 @@ export function AllLeaveRequestsTable({
                         {request.leave_type.name}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400 text-sm">No type</span>
+                      <span className="text-muted-foreground text-sm">No type</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">
+                        {formatDateRange(request.start_date, request.end_date, request.is_half_day, request.half_day_type)}
+                      </span>
                     </div>
                   </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      {getDurationText(request.start_date, request.end_date, request.is_half_day)}
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">
+                        {getDurationText(request.start_date, request.end_date, request.is_half_day)}
+                      </span>
                     </div>
                   </TableCell>
                   
@@ -159,24 +161,24 @@ export function AllLeaveRequestsTable({
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">No projects</span>
+                      <span className="text-muted-foreground text-sm">No projects</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
                     {request.message ? (
                       <div className="max-w-[180px]">
-                        <p className="text-sm text-gray-700 truncate" title={request.message}>
+                        <p className="text-sm text-foreground truncate" title={request.message}>
                           {request.message}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">No reason</span>
+                      <span className="text-muted-foreground text-sm">No reason</span>
                     )}
                   </TableCell>
                   
                   <TableCell>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-foreground">
                       {new Date(request.created_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -196,7 +198,7 @@ export function AllLeaveRequestsTable({
                           })}
                         </div>
                         {request.approved_by && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             by {request.approved_by.full_name}
                           </div>
                         )}
@@ -205,7 +207,7 @@ export function AllLeaveRequestsTable({
                       <div className="text-sm text-red-600">
                         <div className="font-medium">Rejected</div>
                         {request.approval_notes && (
-                          <div className="text-xs text-gray-500 truncate" title={request.approval_notes}>
+                          <div className="text-xs text-muted-foreground truncate" title={request.approval_notes}>
                             {request.approval_notes}
                           </div>
                         )}
@@ -214,13 +216,13 @@ export function AllLeaveRequestsTable({
                       <div className="text-sm text-gray-600">
                         <div className="font-medium">Canceled</div>
                         {request.cancel_reason && (
-                          <div className="text-xs text-gray-500 truncate" title={request.cancel_reason}>
+                          <div className="text-xs text-muted-foreground truncate" title={request.cancel_reason}>
                             {request.cancel_reason}
                           </div>
                         )}
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">-</span>
+                      <span className="text-muted-foreground text-sm">-</span>
                     )}
                   </TableCell>
                   
