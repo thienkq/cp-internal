@@ -48,7 +48,7 @@ export default async function EditLeaveRequestPage({
       emergency_contact: leaveRequests.emergency_contact,
       status: leaveRequests.status,
       approval_notes: leaveRequests.approval_notes,
-      cancelReason: leaveRequests.cancelReason,
+      cancel_reason: leaveRequests.cancel_reason,
       approved_by_id: leaveRequests.approved_by_id,
       approved_at: leaveRequests.approved_at,
       canceled_at: leaveRequests.canceled_at,

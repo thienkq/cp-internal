@@ -181,7 +181,7 @@ export function LeaveRequestActions({
       case 'reject':
         return 'Reject';
       case 'cancel':
-        return 'Cancel';
+        return 'Confirm Cancellation';
       default:
         return '';
     }
@@ -224,7 +224,7 @@ export function LeaveRequestActions({
               onClick={() => setIsDialogOpen(false)}
               disabled={isLoading}
             >
-              Cancel
+              Close
             </Button>
             <Button
               className='cursor-pointer'
