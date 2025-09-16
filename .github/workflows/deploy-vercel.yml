@@ -48,7 +48,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN_PROD }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod --confirm --force'
+          vercel-args: '--prod --confirm --force --scope ${{ secrets.VERCEL_ORG_ID }}'
           # working-directory: apps/leave-requests
 
   preview:
