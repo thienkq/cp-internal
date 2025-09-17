@@ -327,7 +327,7 @@ export function LeaveRequestForm({
                 render={({ field }) => (
                   <FormItem className='min-h-[80px]'>
                     <FormLabel className='text-sm font-medium'>
-                      First day of leave request{' '}
+                      First day of leave{' '}
                       <span className='text-red-500'>*</span>
                     </FormLabel>
                     <FormControl>
