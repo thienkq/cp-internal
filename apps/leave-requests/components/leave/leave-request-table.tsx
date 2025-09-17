@@ -4,7 +4,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@workspace/ui/components/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
-import { Calendar, Clock, FileText, User, Eye } from "lucide-react";
+import { Calendar, FileText, User, Eye } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { getStatusBadge, formatDateRange, getDurationText, formatDate } from "@/lib/leave-request-display-utils";
 import { UserLeaveRequestActions } from "@/components/leave/user-leave-request-actions";
@@ -40,9 +40,9 @@ export function LeaveRequestTable({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-gray-500">
-            <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium text-gray-900 mb-2">No Leave Requests</p>
+          <div className="text-center py-12 text-muted-foreground">
+            <Calendar className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-lg font-medium text-foreground mb-2">No Leave Requests</p>
             <p>{emptyMessage}</p>
           </div>
         </CardContent>
@@ -65,7 +65,7 @@ export function LeaveRequestTable({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
+              <TableRow className="bg-muted">
                 {showUserColumn && (
                   <TableHead className="font-semibold">Employee</TableHead>
                 )}
@@ -82,19 +82,19 @@ export function LeaveRequestTable({
             </TableHeader>
             <TableBody>
               {leaveRequests.map((request) => (
-                <TableRow key={request.id} className="hover:bg-gray-50">
+                <TableRow key={request.id} className="hover:bg-muted/50">
                   {showUserColumn && (
                     <TableCell>
                       {request.user ? (
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
+                          <User className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <div className="font-medium">{request.user.full_name}</div>
-                            <div className="text-xs text-gray-500">{request.user.email}</div>
+                            <div className="text-xs text-muted-foreground">{request.user.email}</div>
                           </div>
                         </div>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                   )}
@@ -105,7 +105,7 @@ export function LeaveRequestTable({
                         {request.leave_type.name}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   
@@ -121,7 +121,7 @@ export function LeaveRequestTable({
                     <div className="space-y-1">
                       {getStatusBadge(request.status)}
                       {request.status === "approved" && request.approved_by && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           by {request.approved_by.full_name}
                         </div>
                       )}
@@ -131,34 +131,34 @@ export function LeaveRequestTable({
                   <TableCell className="max-w-xs">
                     <div className="space-y-1">
                       {request.message ? (
-                        <div className="text-sm text-gray-600 truncate" title={request.message}>
+                        <div className="text-sm text-foreground truncate" title={request.message}>
                           {request.message}
                         </div>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                       
                       {request.projects && request.projects.length > 0 && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           Projects: {request.projects.map((p) => p.name).join(", ")}
                         </div>
                       )}
                       
                       {request.status === "rejected" && request.approval_notes && (
-                        <div className="text-xs text-red-600">
+                        <div className="text-xs text-destructive">
                           Reason: {request.approval_notes}
                         </div>
                       )}
                       
                       {request.status === "canceled" && request.cancel_reason && (
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-muted-foreground">
                           Canceled: {request.cancel_reason}
                         </div>
                       )}
                     </div>
                   </TableCell>
                   
-                                      <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-muted-foreground">
                       {formatDate(request.created_at || request.start_date)}
                     </TableCell>
                   

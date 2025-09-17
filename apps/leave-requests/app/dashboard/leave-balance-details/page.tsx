@@ -19,9 +19,9 @@ export default async function LeaveBalanceDetailsPage() {
           </Button>
         </Link>
         <div>
-          <h1 className='text-2xl font-bold'>Leave Balance Details</h1>
+          <h1 className='text-2xl font-bold'>Time Off Balance Details</h1>
           <p className='text-muted-foreground'>
-            Complete analysis of your leave entitlement and tenure calculations
+            Complete breakdown of your time off allowance and how it's calculated based on your tenure
           </p>
         </div>
       </div>

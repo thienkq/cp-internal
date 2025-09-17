@@ -3,9 +3,9 @@
 import { useState } from "react";
 import type { Address } from "@/types";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@workspace/ui/components/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@workspace/ui/components/dialog";
 import AddressForm from "./address-form";
 import { createBrowserClient } from "@workspace/supabase";
 import { toast } from "sonner";
@@ -131,8 +131,8 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">My Addresses</h3>
-          <p className="text-sm text-gray-600">Manage your saved addresses</p>
+          <h3 className="text-lg font-semibold text-foreground">My Addresses</h3>
+          <p className="text-sm text-muted-foreground">Manage your saved addresses</p>
         </div>
         <Button 
           onClick={handleAdd} 
@@ -154,9 +154,9 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
 
       {/* Error State */}
       {error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/30 bg-destructive/10">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-red-600">
+            <div className="flex items-center gap-2 text-destructive">
               <MapPin className="h-4 w-4" />
               <span className="font-medium">{error}</span>
             </div>
@@ -166,11 +166,11 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
 
       {/* Empty State */}
       {!loading && !fetching && addresses.length === 0 && !error && (
-        <Card className="border-gray-200 bg-gray-50">
+        <Card className="border-border bg-muted">
           <CardContent className="p-8 text-center">
-            <MapPin className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h4 className="text-lg font-semibold text-gray-700 mb-2">No addresses found</h4>
-            <p className="text-gray-500 mb-4">Add your first address to get started!</p>
+            <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h4 className="text-lg font-semibold text-foreground mb-2">No addresses found</h4>
+            <p className="text-muted-foreground mb-4">Add your first address to get started!</p>
             <Button onClick={handleAdd} variant="outline">
               <Plus className="h-4 w-4 mr-2" />
               Add Your First Address
@@ -186,7 +186,7 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
           const IconComponent = typeInfo.icon;
           
           return (
-            <Card key={addr.id} className={`shadow-sm border-l-4 ${addr.is_primary ? 'border-l-yellow-500 bg-yellow-50/30' : 'border-l-gray-300'} hover:shadow-md transition-shadow duration-200`}>
+            <Card key={addr.id} className={`shadow-sm border-l-4 ${addr.is_primary ? 'border-l-yellow-500 bg-yellow-50/30 dark:bg-yellow-900/10' : 'border-l-border'} hover:shadow-md transition-shadow duration-200`}>
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   {/* Address Info */}
@@ -213,12 +213,12 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
 
                     {/* Address Details */}
                     <div className="space-y-1">
-                      <div className="font-medium text-gray-900">{addr.address_line}</div>
-                      <div className="text-gray-600">
+                        <div className="font-medium text-foreground">{addr.address_line}</div>
+                        <div className="text-muted-foreground">
                         {[addr.city, addr.state, addr.postal_code].filter(Boolean).join(", ")}
                       </div>
                       {addr.country && (
-                        <div className="text-gray-500">{addr.country}</div>
+                        <div className="text-muted-foreground">{addr.country}</div>
                       )}
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
                         variant="outline" 
                         onClick={() => handleSetDefault(addr.id)} 
                         disabled={loading || fetching}
-                        className="flex items-center gap-1 hover:bg-yellow-50 hover:border-yellow-300"
+                        className="flex items-center gap-1 hover:bg-muted hover:border-border"
                       >
                         <Crown className="h-3 w-3" />
                         Set Primary
@@ -262,7 +262,7 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
                             setDeleteDialogOpen(true);
                           }}
                           disabled={loading || fetching}
-                          className="flex items-center gap-1 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                          className="flex items-center gap-1 hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive"
                         >
                           <Trash2 className="h-3 w-3" />
                           Delete
@@ -280,7 +280,7 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
                           <AlertDialogAction 
                             onClick={handleDelete} 
                             disabled={loading} 
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-destructive hover:bg-destructive/90"
                           >
                             {loading ? "Deleting..." : "Delete"}
                           </AlertDialogAction>

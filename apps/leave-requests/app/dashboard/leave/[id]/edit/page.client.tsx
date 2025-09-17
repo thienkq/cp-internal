@@ -19,9 +19,9 @@ export default function EditLeaveRequestPageClient({
     <PageContainer>
       <div className='mx-auto'>
         <div className='mb-6'>
-          <h1 className='text-2xl font-bold'>Edit Leave Request</h1>
+          <h1 className='text-2xl font-bold'>Edit Time Off Request</h1>
           <p className='text-gray-600 mt-2'>
-            Make changes to your pending leave request. All relevant parties
+            Make changes to your pending time off request. Your manager and backup person
             will be notified of the changes.
           </p>
         </div>

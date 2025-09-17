@@ -99,7 +99,7 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h3 className="text-xl font-bold text-gray-900">
+        <h3 className="text-xl font-bold text-foreground">
           {address ? "Edit Address" : "Add New Address"}
         </h3>
         <Badge variant="blue" className="px-3 py-1">
@@ -110,8 +110,8 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Address Details Section */}
         <Card className="shadow-sm border-l-4 border-l-orange-500">
-          <CardHeader className="bg-orange-50/50">
-            <CardTitle className="flex items-center gap-2 text-orange-800">
+          <CardHeader className="bg-muted">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <MapPin className="h-5 w-5" />
               Address Details
             </CardTitle>
@@ -120,54 +120,54 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
             <div className="grid grid-cols-1 gap-6">
               {/* Address Line */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <MapPin className="h-4 w-4 text-orange-500" />
                   Address *
                 </Label>
                 <Input 
                   {...register("address_line", { required: "Address is required" })} 
-                  className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                  className="border-border focus:border-orange-500 focus:ring-orange-500"
                   placeholder="123 Main Street, Apt 4B"
                 />
                 {errors.address_line && (
-                  <div className="text-red-600 text-sm font-medium">{errors.address_line.message}</div>
+                  <div className="text-destructive text-sm font-medium">{errors.address_line.message}</div>
                 )}
               </div>
 
               {/* City, State, Postal Code */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Building className="h-4 w-4 text-blue-500" />
                     City
                   </Label>
                   <Input 
                     {...register("city")} 
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="border-border focus:border-blue-500 focus:ring-blue-500"
                     placeholder="New York"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <MapPin className="h-4 w-4 text-green-500" />
                     State
                   </Label>
                   <Input 
                     {...register("state")} 
-                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    className="border-border focus:border-green-500 focus:ring-green-500"
                     placeholder="NY"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Mail className="h-4 w-4 text-purple-500" />
                     Postal Code
                   </Label>
                   <Input 
                     {...register("postal_code")} 
-                    className="border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                    className="border-border focus:border-purple-500 focus:ring-purple-500"
                     placeholder="10001"
                   />
                 </div>
@@ -175,13 +175,13 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
 
               {/* Country */}
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Globe className="h-4 w-4 text-teal-500" />
                   Country
                 </Label>
                 <Input 
                   {...register("country")} 
-                  className="border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                  className="border-border focus:border-teal-500 focus:ring-teal-500"
                   placeholder="United States"
                 />
               </div>
@@ -189,12 +189,12 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
               {/* Type and Primary */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Home className="h-4 w-4 text-indigo-500" />
                     Address Type
                   </Label>
                   <Select value={watch("type")} onValueChange={val => setValue("type", val)}>
-                    <SelectTrigger className="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                    <SelectTrigger className="w-full border-border focus:border-indigo-500 focus:ring-indigo-500">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -214,7 +214,7 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Star className="h-4 w-4 text-yellow-500" />
                     Primary Address
                   </Label>
@@ -223,9 +223,9 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
                       id="is_primary"
                       checked={watch("is_primary")}
                       onCheckedChange={(checked) => setValue("is_primary", !!checked)}
-                      className="border-gray-300 data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+                      className="border-border data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
                     />
-                    <Label htmlFor="is_primary" className="text-sm text-gray-600">
+                    <Label htmlFor="is_primary" className="text-sm text-muted-foreground">
                       Set as primary address
                     </Label>
                   </div>
@@ -242,7 +242,7 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
             variant="outline" 
             onClick={onCancel} 
             disabled={isSubmitting}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 border-border text-foreground hover:bg-muted"
           >
             Cancel
           </Button>

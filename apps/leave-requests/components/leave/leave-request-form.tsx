@@ -327,7 +327,8 @@ export function LeaveRequestForm({
                 render={({ field }) => (
                   <FormItem className='min-h-[80px]'>
                     <FormLabel className='text-sm font-medium'>
-                      Start Date <span className='text-red-500'>*</span>
+                      First day of leave{' '}
+                      <span className='text-red-500'>*</span>
                     </FormLabel>
                     <FormControl>
                       <DatePicker
@@ -353,7 +354,8 @@ export function LeaveRequestForm({
                   render={({ field }) => (
                     <FormItem className='min-h-[80px]'>
                       <FormLabel className='text-sm font-medium'>
-                        End Date <span className='text-red-500'>*</span>
+                        Last day of leave{' '}
+                        <span className='text-red-500'>*</span>
                       </FormLabel>
                       <FormControl>
                         <DatePicker

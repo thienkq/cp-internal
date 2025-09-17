@@ -71,8 +71,8 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">My Leave Requests</h1>
-            <p className="text-gray-600">View and track all your leave requests for {selectedYear}</p>
+            <h1 className="text-3xl font-bold text-foreground">My Time Off Requests</h1>
+            <p className="text-muted-foreground">View and track all your time off requests for {selectedYear}</p>
           </div>
           <div className="flex items-center gap-2">
             <LeaveRequestYearFilter selectedYear={selectedYear} />
@@ -86,37 +86,37 @@ export default async function UserLeaveRequestsPage({ searchParams }: PageProps)
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-purple-600">{getStatusCount("pending")}</div>
-            <div className="text-sm text-gray-500">Pending</div>
-            <div className="text-xs text-gray-400 mt-1">Awaiting approval</div>
+            <div className="text-3xl font-bold text-primary">{getStatusCount("pending")}</div>
+            <div className="text-sm text-muted-foreground">Pending</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">Waiting for manager approval</div>
           </Card>
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-green-600">{getStatusCount("approved")}</div>
-            <div className="text-sm text-gray-500">Approved</div>
-            <div className="text-xs text-gray-400 mt-1">This year</div>
+            <div className="text-3xl font-bold text-foreground">{getStatusCount("approved")}</div>
+            <div className="text-sm text-muted-foreground">Approved</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">This year</div>
           </Card>
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-red-600">{getStatusCount("rejected")}</div>
-            <div className="text-sm text-gray-500">Rejected</div>
-            <div className="text-xs text-gray-400 mt-1">This year</div>
+            <div className="text-3xl font-bold text-destructive">{getStatusCount("rejected")}</div>
+            <div className="text-sm text-muted-foreground">Rejected</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">This year</div>
           </Card>
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">{getTotalDays()}</div>
-            <div className="text-sm text-gray-500">Quota Days Used</div>
-            <div className="text-xs text-gray-400 mt-1">Paid leave only</div>
+            <div className="text-3xl font-bold text-primary">{getTotalDays()}</div>
+            <div className="text-sm text-muted-foreground">Days Used This Year</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">Paid time off only</div>
           </Card>
         </div>
 
         {/* All Requests for the Year - Table View */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">All Requests for {selectedYear}</h2>
+          <h2 className="text-xl font-semibold text-foreground">All Time Off Requests for {selectedYear}</h2>
           <LeaveRequestTable
             leaveRequests={leaveRequests || []}
-            title={`${selectedYear} Leave History`}
+            title={`${selectedYear} Time Off History`}
             showUserColumn={false}
             showActions={false}
             showUserActions={true}
-            emptyMessage={`You haven't submitted any leave requests for ${selectedYear} yet.`}
+            emptyMessage={`You haven't submitted any time off requests for ${selectedYear} yet.`}
           />
         </div>
 

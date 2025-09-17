@@ -20,20 +20,20 @@ const DashboardPageClient = () => {
       {/* 🚀 IMMEDIATE: User Greeting + Pending Badge */}
       <div className='space-y-4'>
         <div className='flex items-center justify-between'>
-          <h1 className='text-2xl font-bold'>Welcome back, {userName}!</h1>
+          <h1 className='text-2xl font-bold text-foreground'>Welcome back, {userName}!</h1>
           <div className='flex items-center gap-4'>
             <Link
               href='/dashboard/leave-requests'
-              className='text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors'
+              className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
             >
-              View All Leave Requests →
+              See All My Time Off Requests →
             </Link>
           </div>
         </div>
 
         {/* ⚠️ Start Date Reminder Banner */}
         {!userData.start_date && (
-          <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4'>
+          <div className='bg-muted border border-border rounded-lg p-4 mb-4'>
             <div className='flex items-center gap-2'>
               <div className='text-yellow-600 dark:text-yellow-400'>
                 <svg
@@ -48,17 +48,17 @@ const DashboardPageClient = () => {
                   />
                 </svg>
               </div>
-              <div className='text-yellow-800 dark:text-yellow-200'>
-                <p className='font-medium'>Start Date Not Set</p>
-                <p className='text-sm'>
-                  Your leave balance is currently set to the default rate.
+              <div className='text-foreground'>
+                <p className='font-medium'>Missing Start Date</p>
+                <p className='text-sm text-muted-foreground'>
+                  Your time off balance is currently calculated using default settings.
                   <Link
                     href='/dashboard/profile'
                     className='text-primary underline ml-1 hover:text-primary/80'
                   >
-                    Set your start date
+                    Add your start date
                   </Link>{' '}
-                  to get the correct leave balance based on your tenure.
+                  to get the correct time off balance based on how long you&apos;ve been with the company.
                 </p>
               </div>
             </div>
@@ -74,7 +74,7 @@ const DashboardPageClient = () => {
         <LeaveBalanceSection />
       </Suspense>
 
-      {/* 📋 Leave Requests Section - Data already loaded from parallel fetch show the last 10 requests*/}
+      {/* 📋 Recent Time Off Requests Section - Data already loaded from parallel fetch show the last 10 requests*/}
       <LeaveRequestsSection leaveRequests={displayLeaveRequests} />
     </>
   );

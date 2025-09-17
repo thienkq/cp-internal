@@ -111,7 +111,7 @@ export default async function DashboardPage() {
   if (!userData) {
     return (
       <PageContainer>
-        <div className='text-red-600'>Failed to load user data.</div>
+        <div className='text-destructive'>Failed to load user data.</div>
       </PageContainer>
     );
   }

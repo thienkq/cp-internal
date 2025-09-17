@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createBrowserClient } from "@workspace/supabase";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -14,8 +14,7 @@ import {
   Search, 
   Users, 
   Crown,
-  Clock,
-  MapPin
+  
 } from "lucide-react";
 import UserAssignmentForm from "./user-assignment-form";
 import { useState as useReactState } from "react";
@@ -81,12 +80,12 @@ export default function MyAssignmentList({
   allProjects: { id: string; name: string }[];
 }) {
   const [assignments, setAssignments] = useState<any[]>(initialAssignments);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [addMode, setAddMode] = useState(false);
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>(allProjects);
+  const [projects] = useState<{ id: string; name: string }[]>(allProjects);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useReactState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useReactState(false);
@@ -162,9 +161,9 @@ export default function MyAssignmentList({
 
   if (loading) return <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>;
   if (error) return (
-    <Card className="border-red-200 bg-red-50">
+    <Card className="border-destructive/30 bg-destructive/10">
       <CardContent className="p-6">
-        <div className="flex items-center gap-2 text-red-600">
+        <div className="flex items-center gap-2 text-destructive">
           <Briefcase className="h-5 w-5" />
           <span className="font-medium">{error}</span>
         </div>
@@ -177,8 +176,8 @@ export default function MyAssignmentList({
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Project Assignments</h1>
-          <p className="text-gray-600 mt-1">Manage your current and past project assignments</p>
+          <h1 className="text-3xl font-bold text-foreground">My Project Assignments</h1>
+          <p className="text-muted-foreground mt-1">Manage your current and past project assignments</p>
         </div>
         <Button
           onClick={() => {
@@ -196,7 +195,7 @@ export default function MyAssignmentList({
       <Card>
         <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search projects..."
               value={search}
@@ -209,9 +208,9 @@ export default function MyAssignmentList({
 
       {/* Add Form */}
       {addMode && !editId && (
-        <Card className="border-blue-200 bg-blue-50/50">
+        <Card className="border-border bg-muted/50">
           <CardHeader>
-            <CardTitle className="text-blue-900">Add New Assignment</CardTitle>
+            <CardTitle className="text-foreground">Add New Assignment</CardTitle>
           </CardHeader>
           <CardContent>
             <UserAssignmentForm
@@ -226,15 +225,15 @@ export default function MyAssignmentList({
 
       {/* Empty State */}
       {filteredAssignments.length === 0 && !addMode ? (
-        <Card className="border-gray-200 bg-gray-50">
+        <Card className="border-border bg-muted">
           <CardContent className="p-12 text-center">
-            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-              <Briefcase className="h-12 w-12 text-gray-400" />
+            <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+              <Briefcase className="h-12 w-12 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               {search ? "No assignments found" : "No project assignments yet"}
             </h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {search 
                 ? `No assignments match "${search}". Try a different search term.`
                 : "You haven't been assigned to any projects yet. Add your first assignment to get started!"
@@ -282,21 +281,21 @@ export default function MyAssignmentList({
                 </CardContent>
               </Card>
             ) : (
-              <Card key={a.id} className="shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-blue-500">
+              <Card key={a.id} className="shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary">
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                     {/* Main Content */}
                     <div className="flex-1 space-y-4">
                       {/* Project Header */}
                       <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-lg bg-blue-100">
-                          <Briefcase className="h-6 w-6 text-blue-600" />
+                        <div className="p-3 rounded-lg bg-muted">
+                          <Briefcase className="h-6 w-6 text-primary" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm text-gray-500 mb-1">Project</p>
-                              <h3 className="text-xl font-bold text-gray-900">{a.project?.name}</h3>
+                              <p className="text-sm text-muted-foreground mb-1">Project</p>
+                              <h3 className="text-xl font-bold text-foreground">{a.project?.name}</h3>
                             </div>
                           </div>
                           
@@ -309,11 +308,11 @@ export default function MyAssignmentList({
                             <Badge 
                               variant={a.status === 'active' ? 'default' : 'secondary'}
                               className={a.status === 'active' 
-                                ? 'bg-green-100 text-green-800 border-green-200' 
-                                : 'bg-gray-100 text-gray-600 border-gray-200'
+                                ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-900' 
+                                : 'bg-muted text-muted-foreground border-border'
                               }
                             >
-                              <div className={`w-2 h-2 rounded-full mr-2 ${a.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                              <div className={`w-2 h-2 rounded-full mr-2 ${a.status === 'active' ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                               {a.status === 'active' ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
@@ -323,24 +322,24 @@ export default function MyAssignmentList({
                       {/* Assignment Details */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-purple-100">
+                          <div className="p-2 rounded-lg bg-muted">
                             <Users className="h-4 w-4 text-purple-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">Position</p>
-                            <p className="font-medium text-gray-900 capitalize">
+                            <p className="text-sm text-muted-foreground">Position</p>
+                            <p className="font-medium text-foreground capitalize">
                               {assignmentRoleOptions.find(o => o.value === a.role)?.label || a.role}
                             </p>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-orange-100">
+                          <div className="p-2 rounded-lg bg-muted">
                             <Calendar className="h-4 w-4 text-orange-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">Duration</p>
-                            <p className="font-medium text-gray-900">
+                            <p className="text-sm text-muted-foreground">Duration</p>
+                            <p className="font-medium text-foreground">
                               {a.start_date} → {a.end_date || 'Present'}
                             </p>
                           </div>
@@ -354,7 +353,7 @@ export default function MyAssignmentList({
                         size="sm" 
                         variant="outline" 
                         onClick={() => { setEditId(a.id); setAddMode(false); }}
-                        className="flex items-center gap-1 hover:bg-blue-50 hover:border-blue-300"
+                        className="flex items-center gap-1 hover:bg-muted hover:border-border"
                       >
                         <Edit className="h-3 w-3" />
                         Edit
@@ -369,7 +368,7 @@ export default function MyAssignmentList({
                             variant="outline"
                             onClick={() => setDeleteId(a.id)}
                             disabled={deleteLoading}
-                            className="flex items-center gap-1 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                            className="flex items-center gap-1 hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive"
                           >
                             <Trash2 className="h-3 w-3" />
                             Delete
