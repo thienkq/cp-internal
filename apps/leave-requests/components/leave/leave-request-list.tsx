@@ -48,14 +48,14 @@ function getLeaveImpactIndicator(status: string) {
     return (
       <div className="flex items-center gap-1 text-red-500">
         <XCircle className="h-3 w-3" />
-        <span className="text-xs font-medium">Not counted</span>
+        <span className="text-xs font-medium">Excluded Requests</span>
       </div>
     );
   } else if (status === "canceled") {
     return (
       <div className="flex items-center gap-1 text-muted-foreground">
         <Minus className="h-3 w-3" />
-        <span className="text-xs font-medium">Not counted</span>
+        <span className="text-xs font-medium">Excluded Requests</span>
       </div>
     );
   }
@@ -271,7 +271,7 @@ export function LeaveRequestList({
             </TabsTrigger>
             <TabsTrigger value="not-counted" className="flex items-center gap-2">
               <XCircle className="h-4 w-4" />
-              Not Counted ({notCountedRequests.length})
+              Total Excluded Requests ({notCountedRequests.length})
             </TabsTrigger>
           </TabsList>
           

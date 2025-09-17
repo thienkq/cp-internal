@@ -3,7 +3,7 @@
 import type * as React from "react"
 import { Home, Users, Calendar, CheckSquare } from "lucide-react"
 import { usePathname } from "next/navigation"
-
+import Link from "next/link"
 import {
   Sidebar,
   SidebarContent,
@@ -64,10 +64,10 @@ export function ManagerSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                     asChild 
                     isActive={pathname === item.url}
                   >
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

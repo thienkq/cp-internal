@@ -16,6 +16,7 @@ import {
   SidebarRail,
 } from "@workspace/ui/components/sidebar"
 import { Button } from "@workspace/ui/components/button"
+import Link from "next/link"
 
 const navigationItems = [
   {
@@ -66,7 +67,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </div>
         <Button
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-sm"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-sm cursor-pointer"
           onClick={handleAddNewClick}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -80,10 +81,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <a href={item.url} className="flex items-center gap-3">
+                    <Link href={item.url} className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
