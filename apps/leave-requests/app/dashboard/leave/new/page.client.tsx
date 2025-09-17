@@ -16,9 +16,9 @@ export default function NewLeaveRequestPageClient({
   return (
     <PageContainer>
       <div className='mb-6'>
-        <h1 className='text-2xl font-bold tracking-tight'>New Leave Request</h1>
+        <h1 className='text-2xl font-bold tracking-tight'>Request Time Off</h1>
         <p className='text-muted-foreground'>
-          Submit a new leave request for approval
+          Submit a new time off request for manager approval
         </p>
       </div>
 

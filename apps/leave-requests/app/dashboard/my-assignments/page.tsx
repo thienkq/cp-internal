@@ -24,7 +24,7 @@ export default async function MyAssignmentsPage() {
   if (assignmentsError || projectsError) {
     return (
       <PageContainer>
-        <div className='text-red-600'>
+        <div className='text-destructive'>
           Failed to load data. Please try again later.
         </div>
       </PageContainer>
