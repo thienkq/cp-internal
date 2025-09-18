@@ -1,11 +1,20 @@
 import { PageContainer } from '@workspace/ui/components/page-container';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import { Badge } from '@workspace/ui/components/badge';
 import { LeaveTypeTabs } from '@/components/leave/leave-type-tabs';
 import { Button } from '@workspace/ui/components/button';
 import { getCurrentUser } from '@workspace/supabase';
 import { getDb } from '@/db';
-import { leaveRequests, leaveTypes, users } from '@/db/schema';
+import {
+  leaveRequests,
+  leaveTypes as leaveTypesTable,
+  users,
+} from '@/db/schema';
 import { eq, gte, lte, desc, and } from 'drizzle-orm';
 import { calculateWorkingDays } from '@/lib/utils';
 // Removed direct table usage; tables are rendered inside tabs component
@@ -23,6 +32,8 @@ import {
 import { LeaveRequestYearFilter } from '@/components/leave/leave-request-year-filter';
 import { calculateLeaveBalance } from '@/lib/leave-quota-utils';
 import { getUserBonusLeaveSummary } from '@/lib/bonus-leave-utils';
+import { LeaveRequest } from '@/types';
+import { LeaveType } from '@/types/leave-request';
 
 interface PageProps {
   searchParams: Promise<{
@@ -46,12 +57,16 @@ export default async function UserLeaveRequestsPage({
     : currentYear;
 
   // Fetch user's leave requests for the selected year
-  const startOfYear = new Date(selectedYear, 0, 1).toISOString().split('T')[0] as string;
-  const endOfYear = new Date(selectedYear, 11, 31).toISOString().split('T')[0] as string;
+  const startOfYear = new Date(selectedYear, 0, 1)
+    .toISOString()
+    .split('T')[0] as string;
+  const endOfYear = new Date(selectedYear, 11, 31)
+    .toISOString()
+    .split('T')[0] as string;
 
   const db = getDb();
-  
-  const leaveRequestsData = await db
+
+  const leaveRequestsData = (await db
     .select({
       id: leaveRequests.id,
       user_id: leaveRequests.user_id,
@@ -76,16 +91,19 @@ export default async function UserLeaveRequestsPage({
       created_at: leaveRequests.created_at,
       updated_at: leaveRequests.updated_at,
       leave_type: {
-        name: leaveTypes.name,
-        description: leaveTypes.description,
-        is_paid: leaveTypes.is_paid,
+        name: leaveTypesTable.name,
+        description: leaveTypesTable.description,
+        is_paid: leaveTypesTable.is_paid,
       },
       approved_by: {
         full_name: users.full_name,
       },
     })
     .from(leaveRequests)
-    .leftJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
+    .leftJoin(
+      leaveTypesTable,
+      eq(leaveRequests.leave_type_id, leaveTypesTable.id)
+    )
     .leftJoin(users, eq(leaveRequests.approved_by_id, users.id))
     .where(
       and(
@@ -94,59 +112,24 @@ export default async function UserLeaveRequestsPage({
         lte(leaveRequests.start_date, endOfYear)
       )
     )
-    .orderBy(desc(leaveRequests.start_date));
+    .orderBy(desc(leaveRequests.start_date))) as LeaveRequest[];
 
-  // Type for the leave request data
-  type LeaveRequestData = {
-    id: string;
-    user_id: string;
-    leave_type_id: number;
-    projects: unknown;
-    internal_notifications: string[] | null;
-    external_notifications: string[] | null;
-    current_manager_id: string | null;
-    backup_id: string | null;
-    start_date: string;
-    end_date: string | null;
-    is_half_day: boolean;
-    half_day_type: string | null;
-    message: string | null;
-    emergency_contact: string | null;
-    status: string;
-    approval_notes: string | null;
-    cancel_reason: string | null;
-    approved_by_id: string | null;
-    approved_at: string | null;
-    canceled_at: string | null;
-    created_at: string;
-    updated_at: string;
-    leave_type: {
-      name: string | null;
-      description: string | null;
-      is_paid: boolean | null;
-    } | null;
-    approved_by: {
-      full_name: string | null;
-    } | null;
-  };
+  const listLeaveTypes = (await db
+    .select()
+    .from(leaveTypesTable)) as LeaveType[];
 
   // Helper functions for stats
   const getStatusCount = (status: string) => {
-    return leaveRequestsData?.filter((req: LeaveRequestData) => req.status === status).length || 0;
+    return (
+      leaveRequestsData?.filter((req: LeaveRequest) => req.status === status)
+        .length || 0
+    );
   };
 
-  type RequestLike = {
-    start_date: string;
-    end_date?: string | null;
-    is_half_day?: boolean | null;
-    status?: string;
-    leave_type?: { is_paid?: boolean | null; name?: string | null } | null;
-  };
-
-  const getRequestDays = (req: RequestLike) => {
+  const getRequestDays = (req: LeaveRequest) => {
     return calculateWorkingDays(
-      req.start_date, 
-      req.end_date || null, 
+      req.start_date,
+      req.end_date || null,
       req.is_half_day || false
     );
   };
@@ -154,7 +137,7 @@ export default async function UserLeaveRequestsPage({
   const getTotalDays = () => {
     if (!leaveRequestsData) return 0;
 
-    return leaveRequestsData.reduce((total: number, req: LeaveRequestData) => {
+    return leaveRequestsData.reduce((total: number, req: LeaveRequest) => {
       // Only count paid leave types against quota (exclude unpaid leave)
       if (req.status === 'approved' && req.leave_type?.is_paid) {
         return total + getRequestDays(req);
@@ -167,45 +150,74 @@ export default async function UserLeaveRequestsPage({
   const leaveBalance = await calculateLeaveBalance(userId, selectedYear);
   const bonusSummary = await getUserBonusLeaveSummary(userId, selectedYear);
 
+  const unpaidUsedDays = (leaveRequestsData || []).reduce(
+    (total: number, req: LeaveRequest) => {
+      if (
+        req.status === 'approved' &&
+        req.leave_type &&
+        req.leave_type.is_paid === false
+      ) {
+        return total + getRequestDays(req);
+      }
+      return total;
+    },
+    0
+  );
 
-  const unpaidUsedDays = (leaveRequestsData || []).reduce((total: number, req: LeaveRequestData) => {
-    if (
-      req.status === 'approved' &&
-      req.leave_type &&
-      req.leave_type.is_paid === false
-    ) {
-      return total + getRequestDays(req);
-    }
-    return total;
-  }, 0);
+  const getRequestDaysSafe = (req: LeaveRequest) => getRequestDays(req);
 
-  // Leave type specific helpers
-  type LeaveTypeName = 'Annual Leave' | 'Emergency Leave' | 'Wedding Leave' | 'Unpaid Leave';
-
-  const getRequestDaysSafe = (req: RequestLike) => getRequestDays(req);
-
-  const filterByType = (typeName: LeaveTypeName) => {
-    return (leaveRequestsData || []).filter((req: LeaveRequestData) => req.leave_type && req.leave_type.name === typeName);
+  const filterByType = (leaveType: LeaveType) => {
+    return (leaveRequestsData || []).filter(
+      (req: LeaveRequest) => req.leave_type_id === leaveType.id
+    );
   };
 
-  const getTypeStats = (typeName: LeaveTypeName) => {
-    const items = filterByType(typeName);
-    const pending = items.filter((r: LeaveRequestData) => r.status === 'pending');
-    const approved = items.filter((r: LeaveRequestData) => r.status === 'approved');
-    const rejected = items.filter((r: LeaveRequestData) => r.status === 'rejected');
+  const getTypeStats = (leaveType: LeaveType) => {
+    const items = filterByType(leaveType);
 
-    const approvedDays = approved.reduce((sum: number, r: LeaveRequestData) => sum + getRequestDaysSafe(r), 0);
-    const pendingDays = pending.reduce((sum: number, r: LeaveRequestData) => sum + getRequestDaysSafe(r), 0);
+    // using reduce
+    const filterByStatus = items.reduce<{
+      pending: LeaveRequest[];
+      approved: LeaveRequest[];
+      rejected: LeaveRequest[];
+    }>(
+      (obj, r) => {
+        if (r.status === 'pending') {
+          obj.pending.push(r);
+        } else if (r.status === 'approved') {
+          obj.approved.push(r);
+        } else if (r.status === 'rejected') {
+          obj.rejected.push(r);
+        }
+
+        return obj;
+      },
+      { pending: [], approved: [], rejected: [] }
+    );
+
+    const approvedDays = filterByStatus.approved.reduce(
+      (sum: number, r: LeaveRequest) => sum + getRequestDaysSafe(r),
+      0
+    );
+    const pendingDays = filterByStatus.pending.reduce(
+      (sum: number, r: LeaveRequest) => sum + getRequestDaysSafe(r),
+      0
+    );
 
     return {
       total: items.length,
-      pendingCount: pending.length,
-      approvedCount: approved.length,
-      rejectedCount: rejected.length,
+      pendingCount: filterByStatus.pending.length,
+      approvedCount: filterByStatus.approved.length,
+      rejectedCount: filterByStatus.rejected.length,
       approvedDays,
       pendingDays,
     };
   };
+
+  const leaveRequestsByType = listLeaveTypes.map((lt) => ({
+    leaveType: lt,
+    leaveRequests: filterByType(lt),
+  }));
 
   return (
     <PageContainer>
@@ -232,7 +244,9 @@ export default async function UserLeaveRequestsPage({
         <div className='space-y-6'>
           <div className='flex items-center justify-between'>
             <div>
-              <h2 className='text-2xl font-bold text-foreground'>Leave Balance</h2>
+              <h2 className='text-2xl font-bold text-foreground'>
+                Leave Balance
+              </h2>
               <p className='text-muted-foreground'>
                 Your time off overview for {selectedYear}
               </p>
@@ -247,11 +261,13 @@ export default async function UserLeaveRequestsPage({
                   <div className='p-2 bg-primary/10 rounded-lg'>
                     <Layers className='w-5 h-5 text-primary' />
                   </div>
-                  <Badge 
+                  <Badge
                     variant={leaveBalance?.isOnboardingYear ? 'yellow' : 'blue'}
                     className='text-xs'
                   >
-                    {leaveBalance?.isOnboardingYear ? 'Prorated' : `Year ${leaveBalance?.employmentYear}`}
+                    {leaveBalance?.isOnboardingYear
+                      ? 'Prorated'
+                      : `Year ${leaveBalance?.employmentYear}`}
                   </Badge>
                 </div>
                 <CardTitle className='text-3xl font-bold text-primary'>
@@ -301,7 +317,8 @@ export default async function UserLeaveRequestsPage({
                   </div>
                 </div>
                 <CardTitle className='text-3xl font-bold text-orange-600'>
-                  {(leaveBalance?.usedDays ?? 0) + (leaveBalance?.pendingDays ?? 0)}
+                  {(leaveBalance?.usedDays ?? 0) +
+                    (leaveBalance?.pendingDays ?? 0)}
                 </CardTitle>
                 <p className='text-sm text-muted-foreground'>Days Committed</p>
               </CardHeader>
@@ -321,7 +338,7 @@ export default async function UserLeaveRequestsPage({
                   <div className='p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg'>
                     <Gift className='w-5 h-5 text-purple-600' />
                   </div>
-                  <Badge 
+                  <Badge
                     variant={bonusSummary?.total_granted ? 'green' : 'outline'}
                     className='text-xs'
                   >
@@ -335,8 +352,8 @@ export default async function UserLeaveRequestsPage({
               </CardHeader>
               <CardContent className='pt-0'>
                 <div className='text-xs text-muted-foreground'>
-                  {bonusSummary?.total_granted 
-                    ? 'Additional days granted' 
+                  {bonusSummary?.total_granted
+                    ? 'Additional days granted'
                     : 'No bonus leave this year'}
                 </div>
               </CardContent>
@@ -355,16 +372,32 @@ export default async function UserLeaveRequestsPage({
                   <div className='flex justify-between text-sm'>
                     <span className='text-muted-foreground'>Days Used</span>
                     <span className='font-medium'>
-                      {leaveBalance?.totalQuota ? 
-                        (((leaveBalance?.usedDays ?? 0) + (leaveBalance?.pendingDays ?? 0)) / leaveBalance.totalQuota * 100).toFixed(1) : 0}%
+                      {leaveBalance?.totalQuota
+                        ? (
+                            (((leaveBalance?.usedDays ?? 0) +
+                              (leaveBalance?.pendingDays ?? 0)) /
+                              leaveBalance.totalQuota) *
+                            100
+                          ).toFixed(1)
+                        : 0}
+                      %
                     </span>
                   </div>
                   <div className='w-full bg-muted rounded-full h-2'>
-                    <div 
+                    <div
                       className='bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all duration-300'
-                      style={{ 
-                        width: `${leaveBalance?.totalQuota ? 
-                          Math.min(((leaveBalance?.usedDays ?? 0) + (leaveBalance?.pendingDays ?? 0)) / leaveBalance.totalQuota * 100, 100) : 0}%` 
+                      style={{
+                        width: `${
+                          leaveBalance?.totalQuota
+                            ? Math.min(
+                                (((leaveBalance?.usedDays ?? 0) +
+                                  (leaveBalance?.pendingDays ?? 0)) /
+                                  leaveBalance.totalQuota) *
+                                  100,
+                                100
+                              )
+                            : 0
+                        }%`,
                       }}
                     />
                   </div>
@@ -373,20 +406,36 @@ export default async function UserLeaveRequestsPage({
                 {/* Breakdown */}
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-4 pt-2'>
                   <div className='text-center'>
-                    <div className='text-lg font-semibold text-green-600'>{leaveBalance?.availableDays ?? 0}</div>
-                    <div className='text-sm font-medium text-muted-foreground'>Available</div>
+                    <div className='text-lg font-semibold text-green-600'>
+                      {leaveBalance?.availableDays ?? 0}
+                    </div>
+                    <div className='text-sm font-medium text-muted-foreground'>
+                      Available
+                    </div>
                   </div>
                   <div className='text-center'>
-                    <div className='text-lg font-semibold text-blue-600'>{leaveBalance?.usedDays ?? 0}</div>
-                    <div className='text-sm font-medium text-muted-foreground'>Approved</div>
+                    <div className='text-lg font-semibold text-blue-600'>
+                      {leaveBalance?.usedDays ?? 0}
+                    </div>
+                    <div className='text-sm font-medium text-muted-foreground'>
+                      Approved
+                    </div>
                   </div>
                   <div className='text-center'>
-                    <div className='text-lg font-semibold text-orange-600'>{leaveBalance?.pendingDays ?? 0}</div>
-                    <div className='text-sm font-medium text-muted-foreground'>Pending</div>
+                    <div className='text-lg font-semibold text-orange-600'>
+                      {leaveBalance?.pendingDays ?? 0}
+                    </div>
+                    <div className='text-sm font-medium text-muted-foreground'>
+                      Pending
+                    </div>
                   </div>
                   <div className='text-center'>
-                    <div className='text-lg font-semibold text-purple-600'>{unpaidUsedDays}</div>
-                    <div className='text-sm font-medium text-muted-foreground'>Unpaid</div>
+                    <div className='text-lg font-semibold text-purple-600'>
+                      {unpaidUsedDays}
+                    </div>
+                    <div className='text-sm font-medium text-muted-foreground'>
+                      Unpaid
+                    </div>
                   </div>
                 </div>
               </div>
@@ -398,7 +447,9 @@ export default async function UserLeaveRequestsPage({
         <div className='space-y-6'>
           <div className='flex items-center justify-between'>
             <div>
-              <h2 className='text-2xl font-bold text-foreground'>Request Statistics</h2>
+              <h2 className='text-2xl font-bold text-foreground'>
+                Request Statistics
+              </h2>
               <p className='text-muted-foreground'>
                 Summary of your leave requests for {selectedYear}
               </p>
@@ -446,9 +497,7 @@ export default async function UserLeaveRequestsPage({
                 <p className='text-sm text-muted-foreground'>Approved</p>
               </CardHeader>
               <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  This year
-                </div>
+                <div className='text-xs text-muted-foreground'>This year</div>
               </CardContent>
             </Card>
 
@@ -469,9 +518,7 @@ export default async function UserLeaveRequestsPage({
                 <p className='text-sm text-muted-foreground'>Rejected</p>
               </CardHeader>
               <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  This year
-                </div>
+                <div className='text-xs text-muted-foreground'>This year</div>
               </CardContent>
             </Card>
 
@@ -512,7 +559,9 @@ export default async function UserLeaveRequestsPage({
                 <CardTitle className='text-3xl font-bold text-gray-600'>
                   {unpaidUsedDays}
                 </CardTitle>
-                <p className='text-sm text-muted-foreground'>Unpaid Days Used</p>
+                <p className='text-sm text-muted-foreground'>
+                  Unpaid Days Used
+                </p>
               </CardHeader>
               <CardContent className='pt-0'>
                 <div className='text-xs text-muted-foreground'>
@@ -525,38 +574,58 @@ export default async function UserLeaveRequestsPage({
 
         {/* By Leave Type */}
         <div className='space-y-4'>
-          <h2 className='text-xl font-semibold text-foreground'>By Leave Type</h2>
+          <h2 className='text-xl font-semibold text-foreground'>
+            By Leave Type
+          </h2>
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6'>
-            {(['Annual Leave','Emergency Leave','Wedding Leave','Unpaid Leave'] as const).map((lt) => {
+            {listLeaveTypes.map((lt) => {
               const s = getTypeStats(lt);
-              const isUnpaid = lt === 'Unpaid Leave';
+              const isUnpaid = !lt.is_paid;
               return (
-                <Card key={lt} className='p-5 md:p-6'>
+                <Card key={lt.id} className='p-5 md:p-6'>
                   <div className='space-y-2'>
                     <div className='flex items-center justify-between'>
-                      <div className='text-base font-semibold'>{lt}</div>
-                      <div className='text-xs text-muted-foreground'>{isUnpaid ? 'Unpaid' : 'Paid'}</div>
+                      <div className='text-base font-semibold'>{lt.name}</div>
+                      <div className='text-xs text-muted-foreground'>
+                        {isUnpaid ? 'Unpaid' : 'Paid'}
+                      </div>
                     </div>
                     <div className='grid grid-cols-2 gap-3 text-sm'>
                       <div>
                         <div className='text-muted-foreground'>Approved</div>
-                        <div className={`${isUnpaid ? 'text-foreground' : 'text-emerald-600'} text-xl font-bold`}>
+                        <div
+                          className={`${isUnpaid ? 'text-foreground' : 'text-emerald-600'} text-xl font-bold`}
+                        >
                           {s.approvedCount}
                         </div>
-                        <div className='text-xs text-muted-foreground/70'>Requests</div>
+                        <div className='text-xs text-muted-foreground/70'>
+                          Requests
+                        </div>
                       </div>
                       <div>
                         <div className='text-muted-foreground'>Pending</div>
-                        <div className='text-primary text-xl font-bold'>{s.pendingCount}</div>
-                        <div className='text-xs text-muted-foreground/70'>Requests</div>
+                        <div className='text-primary text-xl font-bold'>
+                          {s.pendingCount}
+                        </div>
+                        <div className='text-xs text-muted-foreground/70'>
+                          Requests
+                        </div>
                       </div>
                       <div>
-                        <div className='text-muted-foreground'>Approved Days</div>
-                        <div className='text-foreground text-xl font-bold'>{s.approvedDays}</div>
+                        <div className='text-muted-foreground'>
+                          Approved Days
+                        </div>
+                        <div className='text-foreground text-xl font-bold'>
+                          {s.approvedDays}
+                        </div>
                       </div>
                       <div>
-                        <div className='text-muted-foreground'>Pending Days</div>
-                        <div className='text-foreground text-xl font-bold'>{s.pendingDays}</div>
+                        <div className='text-muted-foreground'>
+                          Pending Days
+                        </div>
+                        <div className='text-foreground text-xl font-bold'>
+                          {s.pendingDays}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -574,11 +643,8 @@ export default async function UserLeaveRequestsPage({
           <LeaveTypeTabs
             selectedTab={resolvedSearchParams.tab || 'all'}
             selectedYear={selectedYear}
-            all={(leaveRequestsData || []) as any}
-            annual={filterByType('Annual Leave') as any}
-            emergency={filterByType('Emergency Leave') as any}
-            wedding={filterByType('Wedding Leave') as any}
-            unpaid={filterByType('Unpaid Leave') as any}
+            all={leaveRequestsData || []}
+            leaveRequestsByType={leaveRequestsByType}
           />
         </div>
       </div>
