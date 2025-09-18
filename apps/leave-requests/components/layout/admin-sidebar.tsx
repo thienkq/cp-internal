@@ -3,7 +3,7 @@
 import type * as React from "react"
 import { Home, Users, Settings, BarChart3, Calendar, BriefcaseBusiness, Trophy, Gift } from "lucide-react"
 import { usePathname } from "next/navigation"
-
+import Link from "next/link"
 import {
   Sidebar,
   SidebarContent,
@@ -82,10 +82,10 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
               {adminNavigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <a href={item.url} className="flex items-center gap-3">
+                    <Link href={item.url} className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

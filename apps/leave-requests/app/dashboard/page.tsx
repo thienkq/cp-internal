@@ -13,6 +13,7 @@ import { DashboardProvider } from '@/components/member/dashboard/context';
 import { getDb } from '@/db';
 import { users, leaveRequests, leaveTypes } from '@/db/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { calculateWorkingDays } from '@/lib/utils';
 
 // TODO: Dashboard Performance !
 // Based on: https://blog.logrocket.com/fix-nextjs-app-slow-performance/
@@ -72,6 +73,7 @@ async function getDashboardData() {
         leave_type: {
           name: leaveTypes.name,
           description: leaveTypes.description,
+          is_paid: leaveTypes.is_paid,
         },
         approved_by: {
           full_name: users.full_name,
@@ -127,6 +129,17 @@ export default async function DashboardPage() {
     ? await getAnniversaryInfo(userData.start_date, user.id)
     : null;
 
+    const unpaidUsedDays = (displayLeaveRequests || []).reduce((total: number, req) => {
+      if (
+        req.status === 'approved' &&
+        req.leave_type &&
+        req.leave_type.is_paid === false
+      ) {
+        return total + calculateWorkingDays(req.start_date, req.end_date || null, req.is_half_day || false);
+      }
+      return total;
+    }, 0);
+
   return (
     <PageContainer>
       {/* 🎯 SUSPENSE: Shows skeleton while parallel data loads */}
@@ -140,6 +153,7 @@ export default async function DashboardPage() {
           bonusLeave={bonusLeave}
           isAnniversary={isAnniversary}
           anniversaryInfo={anniversaryInfo}
+          unpaidUsedDays={unpaidUsedDays}
         >
           <DashboardPageClient />
         </DashboardProvider>

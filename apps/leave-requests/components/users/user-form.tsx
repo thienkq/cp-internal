@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@workspace/ui/components/avatar";
 import { createBrowserClient } from "@workspace/supabase";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +15,8 @@ import { UserSelect } from "./user-select";
 import { toast } from "sonner";
 import { genderOptions, roleOptions } from "./user-constants";
 import { userSchema, getUserFormDefaults, normalizeUserFormData, UserFormValues } from "./user-form.utils";
-import { User as UserIcon, Briefcase, Phone, Mail, Calendar } from "lucide-react";
+import { User as UserIcon, Briefcase, Phone, Mail, Calendar, Edit3, UserPlus } from "lucide-react";
+import { getUserInitials, getUserDisplayName } from "@/lib/utils";
 
 type UserFormProps = {
   initialData: User | null;
@@ -56,23 +58,69 @@ export default function UserForm({ initialData, pageTitle, canEditWorkInfo = fal
     toast.success("User saved successfully!");
   };
 
+  // Get user avatar and display info
+  const userInitials = initialData ? getUserInitials({ 
+    user_metadata: { full_name: initialData.full_name },
+    email: initialData.email 
+  } as unknown as Parameters<typeof getUserInitials>[0]) : "U";
+  const displayName = initialData ? getUserDisplayName({ 
+    user_metadata: { full_name: initialData.full_name },
+    email: initialData.email 
+  } as unknown as Parameters<typeof getUserDisplayName>[0]) : "New User";
+
   return (
-    <div className="mx-auto space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">{pageTitle}</h2>
-        <Badge variant="blue" className="px-3 py-1">
-          {initialData ? "Edit Profile" : "New User"}
-        </Badge>
+    <div className="mx-auto space-y-8">
+      {/* Enhanced Header with Avatar */}
+      <div className="text-center space-y-6">
+        <div className="flex flex-col items-center space-y-4">
+          {/* User Avatar */}
+          <div className="relative">
+            <Avatar className="w-24 h-24 ring-4 ring-primary/20 shadow-lg">
+              <AvatarImage 
+                src="" 
+                alt={displayName}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-2xl font-semibold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {/* Edit indicator */}
+            <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg">
+              {initialData ? (
+                <Edit3 className="w-3 h-3" />
+              ) : (
+                <UserPlus className="w-3 h-3" />
+              )}
+            </div>
+          </div>
+          
+          {/* Title and Badge */}
+          <div className="space-y-3">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              {pageTitle}
+            </h1>
+            <Badge 
+              variant="blue" 
+              className="px-4 py-2 text-sm font-medium shadow-sm"
+            >
+              {initialData ? "Edit Profile" : "Create New User"}
+            </Badge>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal Info Section */}
-        <Card className="shadow-sm border-l-4 border-l-primary">
-          <CardHeader className="bg-muted">
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <UserIcon className="h-5 w-5" />
-              Personal Information
+        <Card className="shadow-lg border-l-4 border-l-primary hover:shadow-xl transition-shadow duration-200 pt-0 overflow-hidden">
+          <CardHeader className="!pt-[14px] !pb-[10px] bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-b border-primary/10">
+            <CardTitle className="flex items-center gap-3 text-foreground text-xl font-semibold">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <UserIcon className="h-6 w-6 text-primary" />
+              </div>
+              <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                Personal Information
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -169,11 +217,15 @@ export default function UserForm({ initialData, pageTitle, canEditWorkInfo = fal
         </Card>
 
         {/* Work Info Section */}
-        <Card className="shadow-sm border-l-4 border-l-green-500">
-          <CardHeader className="bg-muted">
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Briefcase className="h-5 w-5" />
-              Work Information
+        <Card className="shadow-lg border-l-4 border-l-green-500 hover:shadow-xl transition-shadow duration-200 pt-0 overflow-hidden">
+          <CardHeader className="!pt-[14px] !pb-[10px] bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-b border-green-500/10">
+            <CardTitle className="flex items-center gap-3 text-foreground text-xl font-semibold">
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <Briefcase className="h-6 w-6 text-green-600" />
+              </div>
+              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Work Information
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -267,19 +319,31 @@ export default function UserForm({ initialData, pageTitle, canEditWorkInfo = fal
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-6">
           <Button 
             type="submit" 
             disabled={isSubmitting} 
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+            className="cursor-pointer px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:opacity-70"
           >
             {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Saving...
+              <span className="flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-base">Saving Changes...</span>
               </span>
             ) : (
-              "Save Changes"
+              <span className="flex items-center gap-2 text-base">
+                {initialData ? (
+                  <>
+                    <Edit3 className="w-5 h-5" />
+                    Update Profile
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-5 h-5" />
+                    Create User
+                  </>
+                )}
+              </span>
             )}
           </Button>
         </div>

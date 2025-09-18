@@ -21,6 +21,7 @@ export type DashboardContextType = {
   bonusLeave: BonusLeaveSummary | null;
   isAnniversary: boolean;
   anniversaryInfo: AnniversaryInfo | null;
+  unpaidUsedDays: number;
 };
 const DashboardContext = createContext<DashboardContextType | undefined>(
   undefined
@@ -43,6 +44,7 @@ export const DashboardProvider: React.FC<{
   bonusLeave: BonusLeaveSummary | null;
   isAnniversary: boolean;
   anniversaryInfo: AnniversaryInfo | null;
+  unpaidUsedDays: number;
 }> = ({
   children,
   user,
@@ -53,6 +55,7 @@ export const DashboardProvider: React.FC<{
   bonusLeave,
   isAnniversary,
   anniversaryInfo,
+  unpaidUsedDays,
 }) => {
   // Context value
   const contextValue: DashboardContextType = {
@@ -64,6 +67,7 @@ export const DashboardProvider: React.FC<{
     bonusLeave,
     isAnniversary,
     anniversaryInfo,
+    unpaidUsedDays,
   };
 
   return (

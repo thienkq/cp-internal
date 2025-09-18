@@ -1,4 +1,11 @@
 import { type User } from "@workspace/supabase"
+import { 
+  eachDayOfInterval, 
+  isWeekend, 
+  parseISO, 
+  startOfDay,
+  endOfDay 
+} from "date-fns"
 
 /**
  * Get user initials from email or name
@@ -111,23 +118,45 @@ export function calculateWorkingDays(startDate: string, endDate?: string | null,
     return 0.5;
   }
   
-  const start = new Date(startDate);
-  const end = new Date(endDate || startDate);
-  
-  // Count only weekdays (exclude weekends)
-  let workDays = 0;
-  const currentDate = new Date(start);
-  
-  while (currentDate <= end) {
-    const dayOfWeek = currentDate.getDay();
-    // Sunday = 0, Saturday = 6, so exclude both
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      workDays++;
-    }
-    currentDate.setDate(currentDate.getDate() + 1);
+  // Handle single day requests
+  if (!endDate || startDate === endDate) {
+    const date = parseISO(startDate);
+    return isWeekend(date) ? 0 : 1;
   }
   
-  return workDays;
+  try {
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    
+    // Ensure we're working with the start of day for accurate comparison
+    const startOfStart = startOfDay(start);
+    const endOfEnd = endOfDay(end);
+    
+    // Get all days in the interval
+    const days = eachDayOfInterval({ start: startOfStart, end: endOfEnd });
+    
+    // Filter out weekends and count working days
+    const workingDays = days.filter(day => !isWeekend(day));
+    
+    return workingDays.length;
+  } catch (error) {
+    console.error('Error calculating working days:', error);
+    // Fallback to simple calculation if date-fns fails
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    let workDays = 0;
+    const currentDate = new Date(start);
+    
+    while (currentDate <= end) {
+      const dayOfWeek = currentDate.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        workDays++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return workDays;
+  }
 }
 
 /**

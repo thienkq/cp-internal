@@ -79,6 +79,7 @@ export interface LeaveRequest {
   leave_type?: {
     name: string;
     description?: string;
+    is_paid?: boolean;
   };
   approved_by?: {
     full_name: string;
