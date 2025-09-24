@@ -1,10 +1,11 @@
 "use client";
 
+import { useCallback, useMemo, useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@workspace/ui/components/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
-import { Calendar, FileText, User, Eye } from "lucide-react";
+import { Calendar, FileText, User, Eye, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { getStatusBadge, formatDateRange, getDurationText, formatDate } from "@/lib/leave-request-display-utils";
 import { UserLeaveRequestActions } from "@/components/leave/user-leave-request-actions";
@@ -29,6 +30,67 @@ export function LeaveRequestTable({
   isManagerView = false,
   emptyMessage = "No leave requests found"
 }: LeaveRequestTableProps) {
+
+  type SortKey = "dates" | "duration" | "submitted";
+  const [sortKey, setSortKey] = useState<SortKey>("submitted");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  function handleSort(nextKey: SortKey) {
+    if (sortKey === nextKey) {
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(nextKey);
+      setSortDirection("asc");
+    }
+  }
+
+  const toTime = useCallback((value?: string | null): number => {
+    return value ? new Date(value).getTime() : 0;
+  }, []);
+
+  const computeDurationDays = useCallback((request: LeaveRequest): number => {
+    if (request.is_half_day) return 0.5;
+    const start = toTime(request.start_date);
+    const end = toTime(request.end_date ?? request.start_date);
+    if (!start || !end) return 0;
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const diff = Math.max(0, Math.round((end - start) / msPerDay)) + 1;
+    return diff;
+  }, [toTime]);
+
+  const sortedLeaveRequests = useMemo(() => {
+    const arrayCopy = [...leaveRequests];
+    const directionFactor = sortDirection === "asc" ? 1 : -1;
+    arrayCopy.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "dates") {
+        cmp = toTime(a.start_date) - toTime(b.start_date);
+      } else if (sortKey === "duration") {
+        cmp = computeDurationDays(a) - computeDurationDays(b);
+      } else if (sortKey === "submitted") {
+        const aSubmitted = toTime(a.created_at ?? a.start_date);
+        const bSubmitted = toTime(b.created_at ?? b.start_date);
+        cmp = aSubmitted - bSubmitted;
+      }
+      if (cmp === 0) {
+        // Stable fallback: sort by id if available
+        const aId = typeof a.id === "string" ? a.id : String(a.id ?? "");
+        const bId = typeof b.id === "string" ? b.id : String(b.id ?? "");
+        cmp = aId.localeCompare(bId);
+      }
+      return cmp * directionFactor;
+    });
+    return arrayCopy;
+  }, [leaveRequests, sortKey, sortDirection, computeDurationDays, toTime]);
+
+  function SortIcon({ column }: { column: SortKey }) {
+    if (sortKey !== column) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === "asc" ? (
+      <ChevronUp className="h-4 w-4" />
+    ) : (
+      <ChevronDown className="h-4 w-4" />
+    );
+  }
 
   if (leaveRequests.length === 0) {
     return (
@@ -70,18 +132,33 @@ export function LeaveRequestTable({
                   <TableHead className="font-semibold">Employee</TableHead>
                 )}
                 <TableHead className="font-semibold">Leave Type</TableHead>
-                <TableHead className="font-semibold">Dates</TableHead>
-                <TableHead className="font-semibold">Duration</TableHead>
+                <TableHead className="font-semibold">
+                  <button onClick={() => handleSort("dates")} className="flex items-center gap-1">
+                    Dates
+                    <SortIcon column="dates" />
+                  </button>
+                </TableHead>
+                <TableHead className="font-semibold">
+                  <button onClick={() => handleSort("duration")} className="flex items-center gap-1">
+                    Duration
+                    <SortIcon column="duration" />
+                  </button>
+                </TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Reason</TableHead>
-                <TableHead className="font-semibold">Submitted</TableHead>
+                <TableHead className="font-semibold">
+                  <button onClick={() => handleSort("submitted")} className="flex items-center gap-1">
+                    Submitted
+                    <SortIcon column="submitted" />
+                  </button>
+                </TableHead>
                 {(showActions || showUserActions) && (
                   <TableHead className="font-semibold">Actions</TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leaveRequests.map((request) => (
+              {sortedLeaveRequests.map((request) => (
                 <TableRow key={request.id} className="hover:bg-muted/50">
                   {showUserColumn && (
                     <TableCell>
