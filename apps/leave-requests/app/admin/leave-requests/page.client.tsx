@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { AllLeaveRequestsTable } from '@/components/admin/all-leave-requests-table';
 import { Button } from '@workspace/ui/components/button';
@@ -32,7 +32,7 @@ const AdminLeaveRequestsPageClient = ({
     return Math.max(days, 0);
   };
 
-  const totals = (() => {
+  const totals = useMemo(() => {
     const total = allLeaveRequests?.length || 0;
     const paidApprovedDays = (allLeaveRequests || []).reduce((sum, r) => {
       if (r.status === 'approved' && r.leave_type?.is_paid) {
@@ -61,7 +61,7 @@ const AdminLeaveRequestsPageClient = ({
     // const avgApprovalDays = avgApprovalMs ? Math.max(0.1, +(avgApprovalMs / (1000 * 60 * 60 * 24)).toFixed(1)) : 0;
 
     return { total, paidApprovedDays, unpaidApprovedDays };
-  })();
+  }, [allLeaveRequests]);
 
   const getTypeStats = () => {
     const byType = new Map<number, { name: string; isPaid?: boolean; counts: { pending: number; approved: number; rejected: number; canceled: number }; approvedDays: number; pendingDays: number }>();
