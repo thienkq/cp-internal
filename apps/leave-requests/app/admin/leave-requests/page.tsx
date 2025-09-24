@@ -48,6 +48,7 @@ export default async function AdminLeaveRequestsPage() {
       leave_type: {
         name: leaveTypes.name,
         description: leaveTypes.description,
+        is_paid: leaveTypes.is_paid,
       },
       // Approved by user information
       approved_by: {
