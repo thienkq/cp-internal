@@ -1,13 +1,14 @@
-import { NextRequest } from 'next/server';
 import { getDb } from '@/db';
 import { companySettings, leaveRequests, leaveTypes, users } from '@/db/schema';
 import { and, desc, eq, gte, lte } from 'drizzle-orm';
 import { getCurrentUser } from '@workspace/supabase';
 import { getAdminUser } from '@/lib/user-db-utils';
+import { NextRequest } from 'next/server';
+import { calculateWorkingDays } from '@/lib/utils';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   // Authentication: ensure the caller is an authenticated admin
   const { user } = await getCurrentUser();
@@ -27,8 +28,7 @@ export async function GET(
   const year = yearParam ? parseInt(yearParam) : new Date().getFullYear();
   const startOfYear = `${year}-01-01`;
   const endOfYear = `${year}-12-31`;
-
-  const userId = params.userId;
+  const { userId } = await params;
 
   const [userRecord] = await db
     .select({
@@ -68,8 +68,6 @@ export async function GET(
       )
     )
     .orderBy(desc(leaveRequests.start_date));
-
-  const { calculateWorkingDays } = await import('@/lib/utils');
 
   let paidUsedDays = 0;
   let unpaidUsedDays = 0;
