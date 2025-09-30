@@ -171,7 +171,7 @@ export function calculateWorkingDays(
  */
 export function formatWorkingDays(days: number): string {
   if (days === 0.5) {
-    return '0.5 days';
+    return '0.5 day';
   }
   return `${days} ${days === 1 ? 'day' : 'days'}`;
 }

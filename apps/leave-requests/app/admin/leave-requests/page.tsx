@@ -83,7 +83,12 @@ export default async function AdminLeaveRequestsPage({
 
   // Fetch all active users
   const allUsers = await db
-    .select({ id: users.id, full_name: users.full_name, email: users.email })
+    .select({
+      id: users.id,
+      full_name: users.full_name,
+      email: users.email,
+      start_date: users.start_date,
+    })
     .from(users);
 
   // Fetch approved, paid leave requests within the selected year for all users
@@ -161,6 +166,7 @@ export default async function AdminLeaveRequestsPage({
       id: u.id,
       full_name: u.full_name,
       email: u.email,
+      start_date: u.start_date,
       paid_used_days: paid,
       unpaid_used_days: unpaid,
       used_days: paid + unpaid,
