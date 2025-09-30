@@ -1,90 +1,66 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
-import { AllLeaveRequestsTable } from '@/components/admin/all-leave-requests-table';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import { Button } from '@workspace/ui/components/button';
-import { Filter, Download, Layers, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Filter,
+  Download,
+  Layers,
+  Clock,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 import { LeaveRequest } from '@/types';
+import { LeaveTypeTabs } from '@/components/admin/leave-type-tabs';
+import { LeaveType } from '@/types/leave-request';
+import { calculateWorkingDays, getStatusCount } from '@/lib/utils';
 
 const AdminLeaveRequestsPageClient = ({
   allLeaveRequests,
+  leaveRequestsByType,
+  defaultTab,
+  selectedYear,
 }: {
   allLeaveRequests: LeaveRequest[];
+  leaveRequestsByType: {
+    leaveType: LeaveType;
+    leaveRequests: LeaveRequest[];
+  }[];
+  defaultTab: string;
+  selectedYear: number;
 }) => {
-  const getStatusCount = (status: string) => {
-    return allLeaveRequests?.filter((req) => req.status === status).length || 0;
-  };
-
-  const parseDate = (d?: string | null) => (d ? new Date(d) : undefined);
-
-  const calculateWorkingDays = (start: string, end?: string | null, isHalfDay?: boolean) => {
-    const startDate = new Date(start);
-    const endDate = new Date(end || start);
-    let days = 0;
-    const current = new Date(startDate);
-    while (current <= endDate) {
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) days += 1;
-      current.setDate(current.getDate() + 1);
-    }
-    if (isHalfDay) days -= 0.5;
-    return Math.max(days, 0);
-  };
 
   const totals = useMemo(() => {
     const total = allLeaveRequests?.length || 0;
     const paidApprovedDays = (allLeaveRequests || []).reduce((sum, r) => {
       if (r.status === 'approved' && r.leave_type?.is_paid) {
-        return sum + calculateWorkingDays(r.start_date, r.end_date, r.is_half_day);
+        return (
+          sum + calculateWorkingDays(r.start_date, r.end_date, r.is_half_day)
+        );
       }
       return sum;
     }, 0);
     const unpaidApprovedDays = (allLeaveRequests || []).reduce((sum, r) => {
-      if (r.status === 'approved' && r.leave_type && r.leave_type.is_paid === false) {
-        return sum + calculateWorkingDays(r.start_date, r.end_date, r.is_half_day);
+      if (
+        r.status === 'approved' &&
+        r.leave_type &&
+        r.leave_type.is_paid === false
+      ) {
+        return (
+          sum + calculateWorkingDays(r.start_date, r.end_date, r.is_half_day)
+        );
       }
       return sum;
     }, 0);
 
-    const approvalDurations: number[] = (allLeaveRequests || [])
-      .filter((r) => r.status === 'approved' && r.approved_at)
-      .map((r) => {
-        const created = parseDate(r.created_at)?.getTime() || 0;
-        const approved = parseDate(r.approved_at || undefined)?.getTime() || 0;
-        return approved > created ? approved - created : 0;
-      })
-      .filter((ms) => ms > 0);
-    const avgApprovalMs = approvalDurations.length
-      ? Math.round(approvalDurations.reduce((a, b) => a + b, 0) / approvalDurations.length)
-      : 0;
-    // const avgApprovalDays = avgApprovalMs ? Math.max(0.1, +(avgApprovalMs / (1000 * 60 * 60 * 24)).toFixed(1)) : 0;
-
     return { total, paidApprovedDays, unpaidApprovedDays };
   }, [allLeaveRequests]);
-
-  const getTypeStats = () => {
-    const byType = new Map<number, { name: string; isPaid?: boolean; counts: { pending: number; approved: number; rejected: number; canceled: number }; approvedDays: number; pendingDays: number }>();
-    for (const r of allLeaveRequests || []) {
-      const key = r.leave_type_id;
-      const entry = byType.get(key) || {
-        name: r.leave_type?.name || `Type ${key}`,
-        isPaid: r.leave_type?.is_paid,
-        counts: { pending: 0, approved: 0, rejected: 0, canceled: 0 },
-        approvedDays: 0,
-        pendingDays: 0,
-      };
-      const statusKey: keyof typeof entry.counts = r.status;
-      entry.counts[statusKey] = entry.counts[statusKey] + 1;
-      if (r.status === 'approved') {
-        entry.approvedDays += calculateWorkingDays(r.start_date, r.end_date, r.is_half_day);
-      } else if (r.status === 'pending') {
-        entry.pendingDays += calculateWorkingDays(r.start_date, r.end_date, r.is_half_day);
-      }
-      byType.set(key, entry);
-    }
-    return Array.from(byType.values());
-  };
 
   return (
     <div className='space-y-6'>
@@ -130,7 +106,7 @@ const AdminLeaveRequestsPageClient = ({
               </div>
             </div>
             <CardTitle className='text-3xl font-bold text-orange-600'>
-              {getStatusCount('pending')}
+              {getStatusCount(allLeaveRequests, 'pending')}
             </CardTitle>
             <p className='text-sm text-muted-foreground'>Pending</p>
           </CardHeader>
@@ -143,7 +119,7 @@ const AdminLeaveRequestsPageClient = ({
               </div>
             </div>
             <CardTitle className='text-3xl font-bold text-green-600'>
-              {getStatusCount('approved')}
+              {getStatusCount(allLeaveRequests, 'approved')}
             </CardTitle>
             <p className='text-sm text-muted-foreground'>Approved</p>
           </CardHeader>
@@ -156,7 +132,7 @@ const AdminLeaveRequestsPageClient = ({
               </div>
             </div>
             <CardTitle className='text-3xl font-bold text-red-600'>
-              {getStatusCount('rejected')}
+              {getStatusCount(allLeaveRequests, 'rejected')}
             </CardTitle>
             <p className='text-sm text-muted-foreground'>Rejected</p>
           </CardHeader>
@@ -188,7 +164,7 @@ const AdminLeaveRequestsPageClient = ({
             </div>
             <div className='text-center'>
               <div className='text-lg font-semibold text-orange-600'>
-                {getStatusCount('pending')}
+                {getStatusCount(allLeaveRequests, 'pending')}
               </div>
               <div className='text-sm font-medium text-muted-foreground'>
                 Pending Requests
@@ -206,59 +182,19 @@ const AdminLeaveRequestsPageClient = ({
         </CardContent>
       </Card>
 
-      {/* By Leave Type */}
-      <div className='space-y-4'>
-        <h2 className='text-xl font-semibold'>By Leave Type</h2>
-        <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6'>
-          {getTypeStats().map((t) => (
-            <Card key={t.name} className='p-5 md:p-6'>
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between'>
-                  <div className='text-base font-semibold'>{t.name}</div>
-                  <div className='text-xs text-muted-foreground'>
-                    {t.isPaid === false ? 'Unpaid' : 'Paid'}
-                  </div>
-                </div>
-                <div className='grid grid-cols-2 gap-3 text-sm'>
-                  <div>
-                    <div className='text-muted-foreground'>Approved</div>
-                    <div className='text-emerald-600 text-xl font-bold'>
-                      {t.counts.approved}
-                    </div>
-                    <div className='text-xs text-muted-foreground/70'>Requests</div>
-                  </div>
-                  <div>
-                    <div className='text-muted-foreground'>Pending</div>
-                    <div className='text-primary text-xl font-bold'>
-                      {t.counts.pending}
-                    </div>
-                    <div className='text-xs text-muted-foreground/70'>Requests</div>
-                  </div>
-                  <div>
-                    <div className='text-muted-foreground'>Approved Days</div>
-                    <div className='text-foreground text-xl font-bold'>
-                      {t.approvedDays}
-                    </div>
-                  </div>
-                  <div>
-                    <div className='text-muted-foreground'>Pending Days</div>
-                    <div className='text-foreground text-xl font-bold'>
-                      {t.pendingDays}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-
       {/* All Leave Requests */}
-      <AllLeaveRequestsTable
-        leaveRequests={allLeaveRequests || []}
-        title='All Leave Requests'
-        showActions={true}
-      />
+      {/* All Requests for the Year - Tabbed View by Leave Type */}
+      <div className='space-y-4'>
+        <h2 className='text-xl font-semibold text-foreground'>
+          Requests by Leave Type
+        </h2>
+        <LeaveTypeTabs
+          selectedTab={defaultTab || 'all'}
+          selectedYear={selectedYear}
+          all={allLeaveRequests || []}
+          leaveRequestsByType={leaveRequestsByType}
+        />
+      </div>
     </div>
   );
 };
