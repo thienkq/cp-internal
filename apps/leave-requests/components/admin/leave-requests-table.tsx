@@ -21,7 +21,6 @@ interface LeaveRequestsTableProps {
   title: string;
   showActions?: boolean;
   onActionComplete?: () => void;
-  showUserActions?: boolean;
   emptyMessage?: string;
 }
 
@@ -30,7 +29,6 @@ export function LeaveRequestsTable({
   title,
   showActions = false,
   onActionComplete,
-  showUserActions = false,
   emptyMessage = "No leave requests found"
 }: LeaveRequestsTableProps) {
 

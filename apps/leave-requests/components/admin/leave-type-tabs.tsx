@@ -60,7 +60,6 @@ export function LeaveTypeTabs({
           leaveRequests={all}
           title={`${selectedYear} Time Off History`}
           showActions={true}
-          showUserActions={true}
           emptyMessage={`You haven't submitted any time off requests for ${selectedYear} yet.`}
         />
       </TabsContent>
@@ -74,7 +73,6 @@ export function LeaveTypeTabs({
             leaveRequests={lt.leaveRequests}
             title={lt.leaveType.name}
             showActions={true}
-            showUserActions={true}
             emptyMessage={`No ${lt.leaveType.name} leave requests found.`}
           />
         </TabsContent>
