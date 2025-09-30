@@ -1,11 +1,12 @@
-import { type User } from "@workspace/supabase"
-import { 
-  eachDayOfInterval, 
-  isWeekend, 
-  parseISO, 
+import { LeaveRequest } from '@/types';
+import { type User } from '@workspace/supabase';
+import {
+  eachDayOfInterval,
+  isWeekend,
+  parseISO,
   startOfDay,
-  endOfDay 
-} from "date-fns"
+  endOfDay,
+} from 'date-fns';
 
 /**
  * Get user initials from email or name
@@ -14,24 +15,24 @@ import {
  * @returns string - User initials (e.g., "JD" for "John Doe")
  */
 export function getUserInitials(user: User | null | undefined): string {
-  if (!user) return "U"
+  if (!user) return 'U';
 
   // Try to get initials from user's name first (Google login)
   if (user.user_metadata?.full_name) {
-    return getInitialsFromName(user.user_metadata.full_name)
+    return getInitialsFromName(user.user_metadata.full_name);
   }
 
   // Try to get initials from user's name (if available)
   if (user.user_metadata?.name) {
-    return getInitialsFromName(user.user_metadata.name)
+    return getInitialsFromName(user.user_metadata.name);
   }
 
   // Fallback to email initials
   if (user.email) {
-    return getInitialsFromEmail(user.email)
+    return getInitialsFromEmail(user.email);
   }
 
-  return "U"
+  return 'U';
 }
 
 /**
@@ -40,20 +41,20 @@ export function getUserInitials(user: User | null | undefined): string {
  * @returns string - Initials (e.g., "JD")
  */
 function getInitialsFromName(name: string): string {
-  const nameParts = name.trim().split(/\s+/)
-  
+  const nameParts = name.trim().split(/\s+/);
+
   if (nameParts.length === 1) {
     // Single name, take first 2 characters
-    return nameParts[0]?.substring(0, 2).toUpperCase() || "U"
+    return nameParts[0]?.substring(0, 2).toUpperCase() || 'U';
   }
-  
+
   // Multiple names, take first letter of each
   const initials = nameParts
     .slice(0, 2) // Take first 2 names max
-    .map(part => part.charAt(0).toUpperCase())
-    .join('')
-  
-  return initials || "U"
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
+  return initials || 'U';
 }
 
 /**
@@ -62,25 +63,25 @@ function getInitialsFromName(name: string): string {
  * @returns string - Initials (e.g., "JD")
  */
 function getInitialsFromEmail(email: string): string {
-  const username = email.split('@')[0]
-  
-  if (!username) return "U"
-  
+  const username = email.split('@')[0];
+
+  if (!username) return 'U';
+
   // Handle email formats like "john.doe" or "john_doe"
-  const nameParts = username.split(/[._-]/)
-  
+  const nameParts = username.split(/[._-]/);
+
   if (nameParts.length === 1) {
     // Single part, take first 2 characters
-    return username.substring(0, 2).toUpperCase()
+    return username.substring(0, 2).toUpperCase();
   }
-  
+
   // Multiple parts, take first letter of each
   const initials = nameParts
     .slice(0, 2) // Take first 2 parts max
-    .map(part => part.charAt(0).toUpperCase())
-    .join('')
-  
-  return initials || "U"
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
+  return initials || 'U';
 }
 
 /**
@@ -89,20 +90,20 @@ function getInitialsFromEmail(email: string): string {
  * @returns string - Display name
  */
 export function getUserDisplayName(user: User | null | undefined): string {
-  if (!user) return "User"
+  if (!user) return 'User';
 
   // Try to get full name first
   if (user.user_metadata?.full_name) {
-    return user.user_metadata.full_name
+    return user.user_metadata.full_name;
   }
 
   // Try to get name
   if (user.user_metadata?.name) {
-    return user.user_metadata.name
+    return user.user_metadata.name;
   }
 
   // Fallback to email
-  return user.email || "User"
+  return user.email || 'User';
 }
 
 /**
@@ -113,31 +114,35 @@ export function getUserDisplayName(user: User | null | undefined): string {
  * @param isHalfDay - Whether this is a half-day request
  * @returns number - Working days as a decimal (0.5 for half-day, whole numbers for full days)
  */
-export function calculateWorkingDays(startDate: string, endDate?: string | null, isHalfDay: boolean = false): number {
+export function calculateWorkingDays(
+  startDate: string,
+  endDate?: string | null,
+  isHalfDay: boolean = false
+): number {
   if (isHalfDay) {
     return 0.5;
   }
-  
+
   // Handle single day requests
   if (!endDate || startDate === endDate) {
     const date = parseISO(startDate);
     return isWeekend(date) ? 0 : 1;
   }
-  
+
   try {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
-    
+
     // Ensure we're working with the start of day for accurate comparison
     const startOfStart = startOfDay(start);
     const endOfEnd = endOfDay(end);
-    
+
     // Get all days in the interval
     const days = eachDayOfInterval({ start: startOfStart, end: endOfEnd });
-    
+
     // Filter out weekends and count working days
-    const workingDays = days.filter(day => !isWeekend(day));
-    
+    const workingDays = days.filter((day) => !isWeekend(day));
+
     return workingDays.length;
   } catch (error) {
     console.error('Error calculating working days:', error);
@@ -146,7 +151,7 @@ export function calculateWorkingDays(startDate: string, endDate?: string | null,
     const end = new Date(endDate);
     let workDays = 0;
     const currentDate = new Date(start);
-    
+
     while (currentDate <= end) {
       const dayOfWeek = currentDate.getDay();
       if (dayOfWeek !== 0 && dayOfWeek !== 6) {
@@ -154,7 +159,7 @@ export function calculateWorkingDays(startDate: string, endDate?: string | null,
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     return workDays;
   }
 }
@@ -166,25 +171,32 @@ export function calculateWorkingDays(startDate: string, endDate?: string | null,
  */
 export function formatWorkingDays(days: number): string {
   if (days === 0.5) {
-    return "0.5 days";
+    return '0.5 days';
   }
-  return `${days} ${days === 1 ? "day" : "days"}`;
+  return `${days} ${days === 1 ? 'day' : 'days'}`;
 }
 
 // Card styling utilities for homepage
-export const cardColors = ["green", "blue", "purple"];
+export const cardColors = ['green', 'blue', 'purple'];
 
 export function getCardStyle(color: string) {
   const commonStyles =
-    "text-white border-b-8 hover:brightness-105 transition-all duration-200 ease-in-out";
+    'text-white border-b-8 hover:brightness-105 transition-all duration-200 ease-in-out';
   switch (color) {
-    case "green":
+    case 'green':
       return `bg-duo-green border-[var(--duo-green-dark)] ${commonStyles}`;
-    case "blue":
+    case 'blue':
       return `bg-duo-blue border-[var(--duo-blue-dark)] ${commonStyles}`;
-    case "purple":
+    case 'purple':
       return `bg-duo-purple border-[var(--duo-purple-dark)] ${commonStyles}`;
     default:
       return commonStyles;
   }
-} 
+}
+
+export const getStatusCount = (
+  allLeaveRequests: LeaveRequest[],
+  status: string
+) => {
+  return allLeaveRequests?.filter((req) => req.status === status).length || 0;
+};

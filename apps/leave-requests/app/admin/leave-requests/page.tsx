@@ -5,8 +5,13 @@ import { leaveRequests, users, leaveTypes } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { LeaveRequest } from '@/types';
+import { LeaveType } from '@/types/leave-request';
 
-export default async function AdminLeaveRequestsPage() {
+export default async function AdminLeaveRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string; tab?: string }>;
+}) {
   const db = getDb();
 
   // Create aliases for the users table to avoid conflicts
@@ -64,9 +69,33 @@ export default async function AdminLeaveRequestsPage() {
   // Cast the result to match the expected LeaveRequest type
   const typedLeaveRequests = allLeaveRequests as LeaveRequest[];
 
+  const listLeaveTypes = (await db.select().from(leaveTypes)) as LeaveType[];
+
+  const currentYear = new Date().getFullYear();
+  const resolvedSearchParams = await searchParams;
+  const selectedYear = resolvedSearchParams.year
+    ? parseInt(resolvedSearchParams.year)
+    : currentYear;
+
+  const filterByType = (leaveType: LeaveType) => {
+    return (allLeaveRequests || []).filter(
+      (req: any) => req.leave_type_id === leaveType.id
+    );
+  };
+
+  const leaveRequestsByType = listLeaveTypes.map((lt) => ({
+    leaveType: lt,
+    leaveRequests: filterByType(lt) as LeaveRequest[],
+  }));
+
   return (
     <PageContainer>
-      <AdminLeaveRequestsPageClient allLeaveRequests={typedLeaveRequests} />
+      <AdminLeaveRequestsPageClient
+        allLeaveRequests={typedLeaveRequests}
+        defaultTab={resolvedSearchParams.tab || 'all'}
+        selectedYear={selectedYear}
+        leaveRequestsByType={leaveRequestsByType}
+      />
     </PageContainer>
   );
 }

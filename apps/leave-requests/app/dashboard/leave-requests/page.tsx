@@ -164,55 +164,12 @@ export default async function UserLeaveRequestsPage({
     0
   );
 
-  const getRequestDaysSafe = (req: LeaveRequest) => getRequestDays(req);
-
   const filterByType = (leaveType: LeaveType) => {
     return (leaveRequestsData || []).filter(
       (req: LeaveRequest) => req.leave_type_id === leaveType.id
     );
   };
 
-  const getTypeStats = (leaveType: LeaveType) => {
-    const items = filterByType(leaveType);
-
-    // using reduce
-    const filterByStatus = items.reduce<{
-      pending: LeaveRequest[];
-      approved: LeaveRequest[];
-      rejected: LeaveRequest[];
-    }>(
-      (obj, r) => {
-        if (r.status === 'pending') {
-          obj.pending.push(r);
-        } else if (r.status === 'approved') {
-          obj.approved.push(r);
-        } else if (r.status === 'rejected') {
-          obj.rejected.push(r);
-        }
-
-        return obj;
-      },
-      { pending: [], approved: [], rejected: [] }
-    );
-
-    const approvedDays = filterByStatus.approved.reduce(
-      (sum: number, r: LeaveRequest) => sum + getRequestDaysSafe(r),
-      0
-    );
-    const pendingDays = filterByStatus.pending.reduce(
-      (sum: number, r: LeaveRequest) => sum + getRequestDaysSafe(r),
-      0
-    );
-
-    return {
-      total: items.length,
-      pendingCount: filterByStatus.pending.length,
-      approvedCount: filterByStatus.approved.length,
-      rejectedCount: filterByStatus.rejected.length,
-      approvedDays,
-      pendingDays,
-    };
-  };
 
   const leaveRequestsByType = listLeaveTypes.map((lt) => ({
     leaveType: lt,
@@ -569,69 +526,6 @@ export default async function UserLeaveRequestsPage({
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-
-        {/* By Leave Type */}
-        <div className='space-y-4'>
-          <h2 className='text-xl font-semibold text-foreground'>
-            By Leave Type
-          </h2>
-          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6'>
-            {listLeaveTypes.map((lt) => {
-              const s = getTypeStats(lt);
-              const isUnpaid = !lt.is_paid;
-              return (
-                <Card key={lt.id} className='p-5 md:p-6'>
-                  <div className='space-y-2'>
-                    <div className='flex items-center justify-between'>
-                      <div className='text-base font-semibold'>{lt.name}</div>
-                      <div className='text-xs text-muted-foreground'>
-                        {isUnpaid ? 'Unpaid' : 'Paid'}
-                      </div>
-                    </div>
-                    <div className='grid grid-cols-2 gap-3 text-sm'>
-                      <div>
-                        <div className='text-muted-foreground'>Approved</div>
-                        <div
-                          className={`${isUnpaid ? 'text-foreground' : 'text-emerald-600'} text-xl font-bold`}
-                        >
-                          {s.approvedCount}
-                        </div>
-                        <div className='text-xs text-muted-foreground/70'>
-                          Requests
-                        </div>
-                      </div>
-                      <div>
-                        <div className='text-muted-foreground'>Pending</div>
-                        <div className='text-primary text-xl font-bold'>
-                          {s.pendingCount}
-                        </div>
-                        <div className='text-xs text-muted-foreground/70'>
-                          Requests
-                        </div>
-                      </div>
-                      <div>
-                        <div className='text-muted-foreground'>
-                          Approved Days
-                        </div>
-                        <div className='text-foreground text-xl font-bold'>
-                          {s.approvedDays}
-                        </div>
-                      </div>
-                      <div>
-                        <div className='text-muted-foreground'>
-                          Pending Days
-                        </div>
-                        <div className='text-foreground text-xl font-bold'>
-                          {s.pendingDays}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
           </div>
         </div>
 
