@@ -188,7 +188,7 @@ export function LeaveRequestActions({
   };
 
   return (
-    <div className='flex items-center gap-2'>
+    <div className='flex items-center gap-2 flex-wrap justify-center'>
       {getActionButton('approve')}
       {getActionButton('reject')}
       {getActionButton('cancel')}

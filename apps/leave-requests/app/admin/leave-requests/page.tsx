@@ -1,24 +1,71 @@
+/**
+ * Admin Leave Requests Page
+ * 
+ * This page displays all leave requests for administrative review and management.
+ * It provides functionality to:
+ * - View all leave requests with user and leave type details
+ * - Filter requests by year and leave type
+ * - Calculate and display leave usage statistics per user
+ * - Group requests by leave type for better organization
+ * 
+ * The page is structured with:
+ * - Data fetching functions for better separation of concerns
+ * - Type-safe interfaces for all data structures
+ * - Parallel data fetching for improved performance
+ * - Clear business logic separation
+ */
+
 import { PageContainer } from '@workspace/ui/components/page-container';
 import AdminLeaveRequestsPageClient from './page.client';
 import { getDb } from '@/db';
 import { leaveRequests, users, leaveTypes } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gte, lte } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { LeaveRequest } from '@/types';
 import { LeaveType } from '@/types/leave-request';
+import { calculateWorkingDays } from '@/lib/utils';
 
-export default async function AdminLeaveRequestsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ year?: string; tab?: string }>;
-}) {
+// Types for better type safety
+interface UserWithUsage {
+  id: string;
+  full_name: string;
+  email: string;
+  start_date: string;
+  paid_used_days: number;
+  unpaid_used_days: number;
+  used_days: number;
+}
+
+interface LeaveRequestWithDetails extends LeaveRequest {
+  user: {
+    full_name: string;
+    email: string;
+  };
+  leave_type: {
+    name: string;
+    description: string;
+    is_paid: boolean;
+  };
+  approved_by: {
+    full_name: string;
+  };
+}
+
+interface LeaveRequestsByType {
+  leaveType: LeaveType;
+  leaveRequests: LeaveRequest[];
+}
+
+/**
+ * Fetches all leave requests with user and leave type information
+ */
+async function fetchAllLeaveRequests(): Promise<LeaveRequestWithDetails[]> {
   const db = getDb();
-
+  
   // Create aliases for the users table to avoid conflicts
   const requesterUser = alias(users, 'requester_user');
   const approverUser = alias(users, 'approver_user');
 
-  // Fetch all leave requests with user and leave type information using Drizzle ORM
   const allLeaveRequests = await db
     .select({
       // All leave request fields
@@ -66,35 +113,193 @@ export default async function AdminLeaveRequestsPage({
     .leftJoin(approverUser, eq(leaveRequests.approved_by_id, approverUser.id))
     .orderBy(desc(leaveRequests.created_at));
 
-  // Cast the result to match the expected LeaveRequest type
-  const typedLeaveRequests = allLeaveRequests as LeaveRequest[];
+  return allLeaveRequests as LeaveRequestWithDetails[];
+}
 
-  const listLeaveTypes = (await db.select().from(leaveTypes)) as LeaveType[];
+/**
+ * Fetches all leave types
+ */
+async function fetchLeaveTypes(): Promise<LeaveType[]> {
+  const db = getDb();
+  return await db.select().from(leaveTypes);
+}
 
-  const currentYear = new Date().getFullYear();
+/**
+ * Fetches all active users
+ */
+async function fetchAllUsers() {
+  const db = getDb();
+  return await db
+    .select({
+      id: users.id,
+      full_name: users.full_name,
+      email: users.email,
+      start_date: users.start_date,
+    })
+    .from(users);
+}
+
+/**
+ * Fetches approved leave requests within a date range, filtered by paid status
+ */
+async function fetchApprovedLeaveRequests(
+  startDate: string,
+  endDate: string,
+  isPaid: boolean
+) {
+  const db = getDb();
+  
+  return await db
+    .select({
+      user_id: leaveRequests.user_id,
+      start_date: leaveRequests.start_date,
+      end_date: leaveRequests.end_date,
+      is_half_day: leaveRequests.is_half_day,
+    })
+    .from(leaveRequests)
+    .leftJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
+    .where(
+      and(
+        eq(leaveRequests.status, 'approved'),
+        eq(leaveTypes.is_paid, isPaid),
+        gte(leaveRequests.start_date, startDate),
+        lte(leaveRequests.start_date, endDate)
+      )
+    );
+}
+
+/**
+ * Calculates working days usage for a list of leave requests
+ */
+function calculateUsageByUser(requests: Array<{
+  user_id: string;
+  start_date: string;
+  end_date: string | null;
+  is_half_day: boolean | null;
+}>): Map<string, number> {
+  const usageByUserId = new Map<string, number>();
+  
+  for (const request of requests) {
+    const days = calculateWorkingDays(
+      request.start_date,
+      request.end_date || null,
+      request.is_half_day || false
+    );
+    
+    usageByUserId.set(
+      request.user_id,
+      (usageByUserId.get(request.user_id) || 0) + days
+    );
+  }
+  
+  return usageByUserId;
+}
+
+/**
+ * Combines user data with their leave usage statistics
+ */
+function combineUsersWithUsage(
+  allUsers: Array<{ 
+    id: string; 
+    full_name: string | null; 
+    email: string | null; 
+    start_date: string | null 
+  }>,
+  paidUsage: Map<string, number>,
+  unpaidUsage: Map<string, number>
+): UserWithUsage[] {
+  return allUsers.map((user) => {
+    const paid = paidUsage.get(user.id) || 0;
+    const unpaid = unpaidUsage.get(user.id) || 0;
+    
+    return {
+      id: user.id,
+      full_name: user.full_name || '',
+      email: user.email || '',
+      start_date: user.start_date || '',
+      paid_used_days: paid,
+      unpaid_used_days: unpaid,
+      used_days: paid + unpaid,
+    };
+  });
+}
+
+/**
+ * Groups leave requests by leave type
+ */
+function groupLeaveRequestsByType(
+  allLeaveRequests: LeaveRequest[],
+  leaveTypes: LeaveType[]
+): LeaveRequestsByType[] {
+  const filterByType = (leaveType: LeaveType) => {
+    return allLeaveRequests.filter(
+      (request) => request.leave_type_id === leaveType.id
+    );
+  };
+
+  return leaveTypes.map((leaveType) => ({
+    leaveType,
+    leaveRequests: filterByType(leaveType),
+  }));
+}
+
+export default async function AdminLeaveRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string; tab?: string; userId?: string }>;
+}) {
+  // Parse search parameters
   const resolvedSearchParams = await searchParams;
+  const currentYear = new Date().getFullYear();
   const selectedYear = resolvedSearchParams.year
     ? parseInt(resolvedSearchParams.year)
     : currentYear;
 
-  const filterByType = (leaveType: LeaveType) => {
-    return (allLeaveRequests || []).filter(
-      (req: any) => req.leave_type_id === leaveType.id
-    );
-  };
+  // Define date range for the selected year
+  const startOfYear = `${selectedYear}-01-01`;
+  const endOfYear = `${selectedYear}-12-31`;
 
-  const leaveRequestsByType = listLeaveTypes.map((lt) => ({
-    leaveType: lt,
-    leaveRequests: filterByType(lt) as LeaveRequest[],
-  }));
+  // Fetch all required data in parallel for better performance
+  const [
+    allLeaveRequests,
+    leaveTypes,
+    allUsers,
+    approvedPaidRequests,
+    approvedUnpaidRequests,
+  ] = await Promise.all([
+    fetchAllLeaveRequests(),
+    fetchLeaveTypes(),
+    fetchAllUsers(),
+    fetchApprovedLeaveRequests(startOfYear, endOfYear, true), // paid
+    fetchApprovedLeaveRequests(startOfYear, endOfYear, false), // unpaid
+  ]);
+
+  // Calculate usage statistics
+  const paidUsageByUserId = calculateUsageByUser(approvedPaidRequests);
+  const unpaidUsageByUserId = calculateUsageByUser(approvedUnpaidRequests);
+
+  // Combine user data with usage statistics
+  const usersWithUsage = combineUsersWithUsage(
+    allUsers,
+    paidUsageByUserId,
+    unpaidUsageByUserId
+  );
+
+  // Group leave requests by type
+  const leaveRequestsByType = groupLeaveRequestsByType(
+    allLeaveRequests,
+    leaveTypes
+  );
 
   return (
     <PageContainer>
       <AdminLeaveRequestsPageClient
-        allLeaveRequests={typedLeaveRequests}
+        allLeaveRequests={allLeaveRequests}
         defaultTab={resolvedSearchParams.tab || 'all'}
         selectedYear={selectedYear}
         leaveRequestsByType={leaveRequestsByType}
+        usersWithUsage={usersWithUsage}
+        selectedUserId={resolvedSearchParams.userId}
       />
     </PageContainer>
   );
