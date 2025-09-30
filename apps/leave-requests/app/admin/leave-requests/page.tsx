@@ -2,7 +2,7 @@ import { PageContainer } from '@workspace/ui/components/page-container';
 import AdminLeaveRequestsPageClient from './page.client';
 import { getDb } from '@/db';
 import { leaveRequests, users, leaveTypes } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gte, lte } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { LeaveRequest } from '@/types';
 import { LeaveType } from '@/types/leave-request';
@@ -77,6 +77,96 @@ export default async function AdminLeaveRequestsPage({
     ? parseInt(resolvedSearchParams.year)
     : currentYear;
 
+  // Compute date range for selected year
+  const startOfYear = `${selectedYear}-01-01`;
+  const endOfYear = `${selectedYear}-12-31`;
+
+  // Fetch all active users
+  const allUsers = await db
+    .select({ id: users.id, full_name: users.full_name, email: users.email })
+    .from(users);
+
+  // Fetch approved, paid leave requests within the selected year for all users
+  const approvedPaidRequests = await db
+    .select({
+      user_id: leaveRequests.user_id,
+      start_date: leaveRequests.start_date,
+      end_date: leaveRequests.end_date,
+      is_half_day: leaveRequests.is_half_day,
+    })
+    .from(leaveRequests)
+    .leftJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
+    .where(
+      and(
+        eq(leaveRequests.status, 'approved'),
+        eq(leaveTypes.is_paid, true),
+        gte(leaveRequests.start_date, startOfYear),
+        lte(leaveRequests.start_date, endOfYear)
+      )
+    );
+
+  // Calculate working days per user (approved + paid/unpaid breakdown)
+  // Note: We do calculation in application layer for accuracy (half-days, weekends)
+  const { calculateWorkingDays } = await import('@/lib/utils');
+
+  // Paid requests already fetched; also fetch approved unpaid
+  const approvedUnpaidRequests = await db
+    .select({
+      user_id: leaveRequests.user_id,
+      start_date: leaveRequests.start_date,
+      end_date: leaveRequests.end_date,
+      is_half_day: leaveRequests.is_half_day,
+    })
+    .from(leaveRequests)
+    .leftJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
+    .where(
+      and(
+        eq(leaveRequests.status, 'approved'),
+        eq(leaveTypes.is_paid, false),
+        gte(leaveRequests.start_date, startOfYear),
+        lte(leaveRequests.start_date, endOfYear)
+      )
+    );
+
+  const paidUsageByUserId = new Map<string, number>();
+  for (const r of approvedPaidRequests) {
+    const days = calculateWorkingDays(
+      r.start_date,
+      r.end_date || null,
+      r.is_half_day || false
+    );
+    paidUsageByUserId.set(
+      r.user_id,
+      (paidUsageByUserId.get(r.user_id) || 0) + days
+    );
+  }
+
+  const unpaidUsageByUserId = new Map<string, number>();
+  for (const r of approvedUnpaidRequests) {
+    const days = calculateWorkingDays(
+      r.start_date,
+      r.end_date || null,
+      r.is_half_day || false
+    );
+    unpaidUsageByUserId.set(
+      r.user_id,
+      (unpaidUsageByUserId.get(r.user_id) || 0) + days
+    );
+  }
+
+  const usersWithUsage = allUsers.map((u) => {
+    const paid = paidUsageByUserId.get(u.id) || 0;
+    const unpaid = unpaidUsageByUserId.get(u.id) || 0;
+    return {
+      id: u.id,
+      full_name: u.full_name,
+      email: u.email,
+      paid_used_days: paid,
+      unpaid_used_days: unpaid,
+      used_days: paid + unpaid,
+    };
+  });
+
   const filterByType = (leaveType: LeaveType) => {
     return (allLeaveRequests || []).filter(
       (req: any) => req.leave_type_id === leaveType.id
@@ -95,6 +185,7 @@ export default async function AdminLeaveRequestsPage({
         defaultTab={resolvedSearchParams.tab || 'all'}
         selectedYear={selectedYear}
         leaveRequestsByType={leaveRequestsByType}
+        usersWithUsage={usersWithUsage}
       />
     </PageContainer>
   );
