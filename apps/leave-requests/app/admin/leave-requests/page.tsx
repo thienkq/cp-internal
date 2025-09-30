@@ -10,7 +10,7 @@ import { LeaveType } from '@/types/leave-request';
 export default async function AdminLeaveRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; tab?: string }>;
+  searchParams: Promise<{ year?: string; tab?: string; userId?: string }>;
 }) {
   const db = getDb();
 
@@ -192,6 +192,7 @@ export default async function AdminLeaveRequestsPage({
         selectedYear={selectedYear}
         leaveRequestsByType={leaveRequestsByType}
         usersWithUsage={usersWithUsage}
+        selectedUserId={resolvedSearchParams.userId}
       />
     </PageContainer>
   );

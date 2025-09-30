@@ -34,6 +34,7 @@ import {
   TableRow,
 } from '@workspace/ui/components/table';
 import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
 import {
   getStatusBadge,
   formatDateRange,
@@ -155,6 +156,7 @@ const ListUser = ({
 
   const [sortKey, setSortKey] = React.useState<SortKey>('total');
   const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   const handleSort = (nextKey: SortKey) => {
     if (sortKey === nextKey) {
@@ -165,8 +167,18 @@ const ListUser = ({
     }
   };
 
+  const filteredUsers = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return usersWithUsage || [];
+    return (usersWithUsage || []).filter((u) => {
+      const name = toStringSafe(u.full_name);
+      const email = toStringSafe(u.email);
+      return name.includes(query) || email.includes(query);
+    });
+  }, [usersWithUsage, searchQuery]);
+
   const sortedUsers = React.useMemo(() => {
-    const data = [...(usersWithUsage || [])];
+    const data = [...(filteredUsers || [])];
     const direction = sortDir === 'asc' ? 1 : -1;
 
     data.sort((a, b) => {
@@ -206,7 +218,7 @@ const ListUser = ({
       }
     });
     return data;
-  }, [usersWithUsage, sortKey, sortDir]);
+  }, [filteredUsers, sortKey, sortDir]);
 
   const formatStartDate = (value: string | null | undefined) =>
     value
@@ -250,6 +262,14 @@ const ListUser = ({
           <p className='text-sm text-muted-foreground'>
             Approved paid leave days used in {selectedYear}
           </p>
+          <div className='mt-3 max-w-sm'>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder='Search by name or email'
+              aria-label='Search users by name or email'
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className='overflow-x-auto'>

@@ -2,10 +2,8 @@
 
 import React, { useMemo } from 'react';
 import { Button } from '@workspace/ui/components/button';
-import {
-  Filter,
-  Download,
-} from 'lucide-react';
+import { Download } from 'lucide-react';
+import { Badge } from '@workspace/ui/components/badge';
 import { LeaveRequest } from '@/types';
 import { LeaveTypeTabs } from '@/components/admin/leave-type-tabs';
 import { LeaveType } from '@/types/leave-request';
@@ -18,8 +16,10 @@ import {
   TabsList,
   TabsTrigger,
 } from '@workspace/ui/components/tabs';
+import { useSearchParams } from 'next/navigation';
 import { UserUsage } from './types';
 import ListUser from './components/ListUser';
+import FilterDrawer from './components/FilterDrawer';
 
 const AdminLeaveRequestsPageClient = ({
   allLeaveRequests,
@@ -27,6 +27,7 @@ const AdminLeaveRequestsPageClient = ({
   defaultTab,
   selectedYear,
   usersWithUsage,
+  selectedUserId,
 }: {
   allLeaveRequests: LeaveRequest[];
   leaveRequestsByType: {
@@ -36,10 +37,68 @@ const AdminLeaveRequestsPageClient = ({
   defaultTab: string;
   selectedYear: number;
   usersWithUsage: UserUsage[];
+  selectedUserId?: string;
 }) => {
-  const totals = useMemo(() => {
-    const total = allLeaveRequests?.length || 0;
-    const paidApprovedDays = (allLeaveRequests || []).reduce((sum, r) => {
+  const searchParams = useSearchParams();
+
+  // Applied values are derived from URL (searchParams) with server-provided fallbacks
+  const appliedYear = React.useMemo(() => {
+    const y = searchParams?.get('year');
+    return y ? parseInt(y) : selectedYear;
+  }, [searchParams, selectedYear]);
+  const appliedEmployeeId = React.useMemo(() => {
+    return searchParams?.get('userId') || selectedUserId || '';
+  }, [searchParams, selectedUserId]);
+
+  const appliedEmployee = React.useMemo(() => {
+    if (!appliedEmployeeId) return null;
+    return usersWithUsage.find((u) => u.id === appliedEmployeeId) || null;
+  }, [usersWithUsage, appliedEmployeeId]);
+
+  // Keep original totals logic removed here since QuickStats/UsageOverview now use filtered data
+
+
+  // yearsOptions moved into FilterDrawer
+
+  const filteredUsersForTab = React.useMemo(() => {
+    if (!appliedEmployeeId) return usersWithUsage;
+    return usersWithUsage.filter((u) => u.id === appliedEmployeeId);
+  }, [usersWithUsage, appliedEmployeeId]);
+
+  // Filter leave requests based on year and employee
+  const filteredLeaveRequests = React.useMemo(() => {
+    let filtered = allLeaveRequests || [];
+    
+    // Filter by year
+    if (appliedYear) {
+      filtered = filtered.filter((req) => {
+        const reqYear = new Date(req.start_date).getFullYear();
+        return reqYear === appliedYear;
+      });
+    }
+    
+    // Filter by employee
+    if (appliedEmployeeId) {
+      filtered = filtered.filter((req) => req.user_id === appliedEmployeeId);
+    }
+    
+    return filtered;
+  }, [allLeaveRequests, appliedYear, appliedEmployeeId]);
+
+  // Filter leaveRequestsByType according to the same applied filters
+  const filteredLeaveRequestsByType = React.useMemo(() => {
+    return (leaveRequestsByType || []).map((entry) => ({
+      leaveType: entry.leaveType,
+      leaveRequests: (filteredLeaveRequests || []).filter(
+        (req) => req.leave_type_id === entry.leaveType.id
+      ),
+    }));
+  }, [leaveRequestsByType, filteredLeaveRequests]);
+
+  // Calculate totals for filtered data
+  const filteredTotals = useMemo(() => {
+    const total = filteredLeaveRequests?.length || 0;
+    const paidApprovedDays = (filteredLeaveRequests || []).reduce((sum, r) => {
       if (r.status === 'approved' && r.leave_type?.is_paid) {
         return (
           sum + calculateWorkingDays(r.start_date, r.end_date, r.is_half_day)
@@ -47,7 +106,7 @@ const AdminLeaveRequestsPageClient = ({
       }
       return sum;
     }, 0);
-    const unpaidApprovedDays = (allLeaveRequests || []).reduce((sum, r) => {
+    const unpaidApprovedDays = (filteredLeaveRequests || []).reduce((sum, r) => {
       if (
         r.status === 'approved' &&
         r.leave_type &&
@@ -61,7 +120,7 @@ const AdminLeaveRequestsPageClient = ({
     }, 0);
 
     return { total, paidApprovedDays, unpaidApprovedDays };
-  }, [allLeaveRequests]);
+  }, [filteredLeaveRequests]);
 
   return (
     <div className='space-y-6'>
@@ -71,12 +130,22 @@ const AdminLeaveRequestsPageClient = ({
           <p className='text-muted-foreground'>
             Manage and approve leave requests from all users
           </p>
+          <div className='mt-2 flex items-center gap-2 text-sm'>
+            <span className='text-muted-foreground'>Active filters:</span>
+            <Badge variant='secondary'>Year: {appliedYear}</Badge>
+            {appliedEmployee ? (
+              <Badge variant='secondary'>
+                Employee: {appliedEmployee.full_name || appliedEmployee.email}
+              </Badge>
+            ) : null}
+          </div>
         </div>
         <div className='flex items-center gap-2'>
-          <Button variant='outline' size='sm'>
-            <Filter className='h-4 w-4 mr-2' />
-            Filter
-          </Button>
+          <FilterDrawer
+            usersWithUsage={usersWithUsage}
+            selectedYear={selectedYear}
+            selectedUserId={selectedUserId}
+          />
           <Button variant='outline' size='sm'>
             <Download className='h-4 w-4 mr-2' />
             Export
@@ -85,10 +154,10 @@ const AdminLeaveRequestsPageClient = ({
       </div>
 
       {/* Quick Stats */}
-      <QuickStats allLeaveRequests={allLeaveRequests} totals={totals} />
+      <QuickStats allLeaveRequests={filteredLeaveRequests} totals={filteredTotals} />
 
       {/* Usage Overview */}
-      <UsageOverview allLeaveRequests={allLeaveRequests} totals={totals} />
+      <UsageOverview allLeaveRequests={filteredLeaveRequests} totals={filteredTotals} />
 
       {/* All Leave Requests */}
       {/* Top-level Tabs: Leave Types and Users */}
@@ -109,16 +178,16 @@ const AdminLeaveRequestsPageClient = ({
             </h2>
             <LeaveTypeTabs
               selectedTab={defaultTab || 'all'}
-              selectedYear={selectedYear}
-              all={allLeaveRequests || []}
-              leaveRequestsByType={leaveRequestsByType}
+              selectedYear={appliedYear}
+              all={filteredLeaveRequests || []}
+              leaveRequestsByType={filteredLeaveRequestsByType}
             />
           </TabsContent>
 
           <TabsContent value='users' className='space-y-4'>
             <ListUser
-              usersWithUsage={usersWithUsage}
-              selectedYear={selectedYear}
+              usersWithUsage={filteredUsersForTab}
+              selectedYear={appliedYear}
             />
           </TabsContent>
         </Tabs>

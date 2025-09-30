@@ -43,10 +43,10 @@ export function LeaveTypeTabs({
 
   return (
     <Tabs value={currentTab} onValueChange={onChangeTab} className='w-full'>
-      <TabsList className='grid w-full grid-cols-5'>
-        <TabsTrigger value='all' className='cursor-pointer'>All ({counts.all})</TabsTrigger>
+      <TabsList className='flex w-full gap-2 overflow-x-auto whitespace-nowrap'>
+        <TabsTrigger value='all' className='cursor-pointer shrink-0'>All ({counts.all})</TabsTrigger>
         {leaveRequestsByType.map((lt) => (
-          <TabsTrigger key={lt.leaveType.id} value={lt.leaveType.name} className='cursor-pointer'>
+          <TabsTrigger key={lt.leaveType.id} value={lt.leaveType.name} className='cursor-pointer shrink-0'>
             {lt.leaveType.name} ({lt.leaveRequests.length})
           </TabsTrigger>
         ))}
@@ -54,7 +54,7 @@ export function LeaveTypeTabs({
 
       <TabsContent
         value='all'
-        className='min-h-[320px] overflow-hidden data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-1 data-[state=active]:duration-300'
+        className='min-h-[320px] max-h-[70vh] overflow-x-hidden overflow-y-auto data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-1 data-[state=active]:duration-300'
       >
         <LeaveRequestsTable
           leaveRequests={all}
@@ -67,7 +67,7 @@ export function LeaveTypeTabs({
         <TabsContent
           key={lt.leaveType.id}
           value={lt.leaveType.name}
-          className='min-h-[320px] overflow-hidden data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-1 data-[state=active]:duration-300'
+          className='min-h-[320px] max-h-[70vh] overflow-x-hidden overflow-y-auto data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-1 data-[state=active]:duration-300'
         >
           <LeaveRequestsTable
             leaveRequests={lt.leaveRequests}
