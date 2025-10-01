@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history for proper Git metadata
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,15 +20,19 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
+      - name: Override Git author to Vercel owner
+        run: |
+          git config user.email "${{ secrets.VERCEL_OWNER_EMAIL }}"
+          git config user.name "Vercel Deploy Bot"
+          git commit --amend --reset-author --no-edit || true
+
       - name: Deploy to Vercel
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --force
+            vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
           else
-            vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --force
+            vercel --yes --token=${{ secrets.VERCEL_TOKEN }}
           fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          # Force ignore Git metadata checks
-          VERCEL_DEPLOY_HOOKS_BYPASS: 1
