@@ -50,6 +50,8 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: >-
             --prod --yes
+            -m githubCommitAuthorName="harley"
+            -m githubCommitAuthorEmail="vc@coderpush.com"
           vercel-version: '32.2.0'
           # working-directory: apps/leave-requests
 
