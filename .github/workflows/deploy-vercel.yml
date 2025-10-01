@@ -29,6 +29,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Override Git author to Vercel owner
+        run: |
+          git config user.email "${{ secrets.VERCEL_OWNER_EMAIL }}"
+          git config user.name "Vercel Deploy Bot"
+          git commit --amend --reset-author --no-edit || true
+
       - name: Set up PNPM
         uses: pnpm/action-setup@v3
         with:
