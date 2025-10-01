@@ -50,10 +50,6 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: >-
             --prod --yes
-            -m githubCommitSha=${{ github.sha }}
-            -m githubCommitAuthorName=${{ github.actor }}
-            -m githubCommitAuthorLogin=${{ github.actor }}
-            -m githubCommitRef=${{ github.ref_name }}
           vercel-version: '32.2.0'
           # working-directory: apps/leave-requests
 
