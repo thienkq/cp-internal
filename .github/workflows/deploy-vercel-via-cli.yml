@@ -12,13 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'pnpm'
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: pnpm add -g vercel@latest
 
       - name: Override Git author to Vercel owner
         run: |
