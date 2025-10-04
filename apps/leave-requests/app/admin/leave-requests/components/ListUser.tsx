@@ -372,104 +372,99 @@ const ListUser = ({
           {!loading && detail && (
             <div className='space-y-6'>
               {/* Usage Overview */}
-              <div className='space-y-2'>
+              <div className='space-y-3'>
                 <div className='text-lg font-medium'>Overview</div>
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-primary/10 rounded-lg'>
-                          <Layers className='w-5 h-5 text-primary' />
+                
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  {/* Leave Usage Summary */}
+                  <Card className='p-4 hover:shadow-md transition-shadow'>
+                    <div className='space-y-4'>
+                      <div className='flex items-center gap-2 mb-3'>
+                        <div className='p-1.5 bg-primary/10 rounded'>
+                          <Layers className='w-4 h-4 text-primary' />
+                        </div>
+                        <h3 className='font-medium text-sm'>Leave Usage</h3>
+                      </div>
+                      <div className='space-y-3'>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-primary rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Total Available Days</span>
+                          </div>
+                          <span className='text-sm font-semibold text-primary'>
+                            {detail.entitlement?.totalPaidDays ?? '-'}
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Paid Days Taken</span>
+                          </div>
+                          <span className='text-sm font-semibold text-green-600'>
+                            {detail.stats.paidUsedDays}
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-purple-500 rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Unpaid Days Taken</span>
+                          </div>
+                          <span className='text-sm font-semibold text-purple-600'>
+                            {detail.stats.unpaidUsedDays}
+                          </span>
                         </div>
                       </div>
-                      <CardTitle className='text-2xl font-bold text-primary'>
-                        {detail.entitlement?.totalPaidDays ?? '-'}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>
-                        Total Paid Days (Entitlement)
-                      </p>
-                    </CardHeader>
-                  </Card>
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-green-100 dark:bg-green-900/20 rounded-lg'>
-                          <DollarSign className='w-5 h-5 text-green-600' />
-                        </div>
-                      </div>
-                      <CardTitle className='text-2xl font-bold text-green-600'>
-                        {detail.stats.paidUsedDays}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>Paid Days</p>
-                    </CardHeader>
+                    </div>
                   </Card>
 
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg'>
-                          <CalendarDays className='w-5 h-5 text-purple-600' />
+                  {/* Request Status Summary */}
+                  <Card className='p-4 hover:shadow-md transition-shadow'>
+                    <div className='space-y-4'>
+                      <div className='flex items-center gap-2 mb-3'>
+                        <div className='p-1.5 bg-orange-100 dark:bg-orange-900/20 rounded'>
+                          <Clock className='w-4 h-4 text-orange-600' />
+                        </div>
+                        <h3 className='font-medium text-sm'>Request Status</h3>
+                      </div>
+                      <div className='space-y-3'>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Approved</span>
+                          </div>
+                          <span className='text-sm font-semibold text-green-600'>
+                            {detail.stats.totalApprovedRequests}
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-orange-500 rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Pending</span>
+                          </div>
+                          <span className='text-sm font-semibold text-orange-600'>
+                            {detail.stats.pendingRequests}
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-red-500 rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Rejected</span>
+                          </div>
+                          <span className='text-sm font-semibold text-red-600'>
+                            {detail.stats.rejectedRequests}
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-2 h-2 bg-gray-500 rounded-full'></div>
+                            <span className='text-sm text-muted-foreground'>Canceled</span>
+                          </div>
+                          <span className='text-sm font-semibold text-gray-600'>
+                            {detail.stats.canceledRequests}
+                          </span>
                         </div>
                       </div>
-                      <CardTitle className='text-2xl font-bold text-purple-600'>
-                        {detail.stats.unpaidUsedDays}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>
-                        Unpaid Days
-                      </p>
-                    </CardHeader>
-                  </Card>
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-green-100 dark:bg-green-900/20 rounded-lg'>
-                          <CheckCircle2 className='w-5 h-5 text-green-600' />
-                        </div>
-                      </div>
-                      <CardTitle className='text-2xl font-bold text-green-600'>
-                        {detail.stats.totalApprovedRequests}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>Approved</p>
-                    </CardHeader>
-                  </Card>
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg'>
-                          <Clock className='w-5 h-5 text-orange-600' />
-                        </div>
-                      </div>
-                      <CardTitle className='text-2xl font-bold text-orange-600'>
-                        {detail.stats.pendingRequests}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>Pending</p>
-                    </CardHeader>
-                  </Card>
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-red-100 dark:bg-red-900/20 rounded-lg'>
-                          <XCircle className='w-5 h-5 text-red-600' />
-                        </div>
-                      </div>
-                      <CardTitle className='text-2xl font-bold text-red-600'>
-                        {detail.stats.rejectedRequests}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>Rejected</p>
-                    </CardHeader>
-                  </Card>
-                  <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='p-2 bg-gray-100 dark:bg-gray-900/20 rounded-lg'>
-                          <Ban className='w-5 h-5 text-gray-600' />
-                        </div>
-                      </div>
-                      <CardTitle className='text-2xl font-bold text-gray-600'>
-                        {detail.stats.canceledRequests}
-                      </CardTitle>
-                      <p className='text-sm text-muted-foreground'>Canceled</p>
-                    </CardHeader>
+                    </div>
                   </Card>
                 </div>
               </div>

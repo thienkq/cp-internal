@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card';
+import { Layers } from 'lucide-react';
 import { getStatusCount } from '@/lib/utils';
 import { LeaveRequest } from '@/types';
 
@@ -18,44 +19,36 @@ const UsageOverview = ({
   totals: { paidApprovedDays: number; unpaidApprovedDays: number };
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='text-lg'>Usage Overview</CardTitle>
+    <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
+      <CardHeader className='pb-1'>
+        <CardTitle className='text-base flex items-center gap-2'>
+          <Layers className='w-3 h-3' />
+          Usage Overview
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-blue-600'>
-              {totals.paidApprovedDays}
+      <CardContent className='pt-0 pb-1'>
+        <div className='space-y-1'>
+          <div className='flex justify-between items-center'>
+            <div className='flex items-center gap-1.5'>
+              <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
+              <span className='text-xs text-muted-foreground'>Paid Days Used</span>
             </div>
-            <div className='text-sm font-medium text-muted-foreground'>
-              Paid Days Used
-            </div>
+            <span className='text-xs font-semibold text-blue-600'>{totals.paidApprovedDays}</span>
           </div>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-purple-600'>
-              {totals.unpaidApprovedDays}
+          <div className='flex justify-between items-center'>
+            <div className='flex items-center gap-1.5'>
+              <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
+              <span className='text-xs text-muted-foreground'>Unpaid Days Used</span>
             </div>
-            <div className='text-sm font-medium text-muted-foreground'>
-              Unpaid Days Used
-            </div>
+            <span className='text-xs font-semibold text-purple-600'>{totals.unpaidApprovedDays}</span>
           </div>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-orange-600'>
-              {getStatusCount(allLeaveRequests, 'pending')}
+          <div className='flex justify-between items-center'>
+            <div className='flex items-center gap-1.5'>
+              <div className='w-1.5 h-1.5 bg-orange-500 rounded-full'></div>
+              <span className='text-xs text-muted-foreground'>Pending Requests</span>
             </div>
-            <div className='text-sm font-medium text-muted-foreground'>
-              Pending Requests
-            </div>
+            <span className='text-xs font-semibold text-orange-600'>{getStatusCount(allLeaveRequests, 'pending')}</span>
           </div>
-          {/* <div className='text-center'>
-              <div className='text-lg font-semibold text-emerald-600'>
-                {totals.avgApprovalDays}
-              </div>
-              <div className='text-sm font-medium text-muted-foreground'>
-                Avg Approval Time (days)
-              </div>
-            </div> */}
         </div>
       </CardContent>
     </Card>

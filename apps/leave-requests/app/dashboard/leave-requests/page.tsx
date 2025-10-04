@@ -198,132 +198,108 @@ export default async function UserLeaveRequestsPage({
         </div>
 
         {/* Leave Balances */}
-        <div className='space-y-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <h2 className='text-2xl font-bold text-foreground'>
-                Leave Balance
-              </h2>
-              <p className='text-muted-foreground'>
-                Your time off overview for {selectedYear}
-              </p>
-            </div>
-          </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+        <div className='space-y-4'>
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
+            {/* Main Stats - 2 columns on large screens */}
+            <div className='lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3'>
             {/* Total Quota Card */}
             <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
+              <CardHeader className='pb-1'>
                 <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-primary/10 rounded-lg'>
-                    <Layers className='w-5 h-5 text-primary' />
+                  <div className='p-1 bg-primary/10 rounded-md'>
+                    <Layers className='w-3 h-3 text-primary' />
                   </div>
                   <Badge
                     variant={leaveBalance?.isOnboardingYear ? 'yellow' : 'blue'}
-                    className='text-xs'
+                    className='text-xs px-1.5 py-0.5'
                   >
                     {leaveBalance?.isOnboardingYear
                       ? 'Prorated'
                       : `Year ${leaveBalance?.employmentYear}`}
                   </Badge>
                 </div>
-                <CardTitle className='text-3xl font-bold text-primary'>
+                <CardTitle className='text-xl font-bold text-primary'>
                   {leaveBalance?.totalQuota ?? 0}
                 </CardTitle>
-                <p className='text-sm text-muted-foreground'>Total Quota</p>
+                <p className='text-xs text-muted-foreground'>Total Quota</p>
               </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  Base annual paid leave
-                </div>
-              </CardContent>
             </Card>
 
             {/* Available Days Card */}
             <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
+              <CardHeader className='pb-1'>
                 <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-green-100 dark:bg-green-900/20 rounded-lg'>
-                    <Gauge className='w-5 h-5 text-green-600' />
+                  <div className='p-1 bg-green-100 dark:bg-green-900/20 rounded-md'>
+                    <Gauge className='w-3 h-3 text-green-600' />
                   </div>
                   <div className='flex items-center gap-1 text-green-600'>
                     <span className='text-xs font-medium'>Available</span>
                   </div>
                 </div>
-                <CardTitle className='text-3xl font-bold text-green-600'>
+                <CardTitle className='text-xl font-bold text-green-600'>
                   {leaveBalance?.availableDays ?? 0}
                 </CardTitle>
-                <p className='text-sm text-muted-foreground'>Days Available</p>
+                <p className='text-xs text-muted-foreground'>Days Available</p>
               </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  Excludes bonus leave
-                </div>
-              </CardContent>
             </Card>
 
             {/* Committed Days Card */}
             <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
+              <CardHeader className='pb-1'>
                 <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg'>
-                    <CalendarCheck2 className='w-5 h-5 text-orange-600' />
+                  <div className='p-1 bg-orange-100 dark:bg-orange-900/20 rounded-md'>
+                    <CalendarCheck2 className='w-3 h-3 text-orange-600' />
                   </div>
                   <div className='flex items-center gap-1 text-orange-600'>
-                    <span className='text-xs font-medium'>Committed</span>
+                    <span className='text-xs font-medium'>Submitted</span>
                   </div>
                 </div>
-                <CardTitle className='text-3xl font-bold text-orange-600'>
+                <CardTitle className='text-xl font-bold text-orange-600'>
                   {(leaveBalance?.usedDays ?? 0) +
                     (leaveBalance?.pendingDays ?? 0)}
                 </CardTitle>
-                <p className='text-sm text-muted-foreground'>Days Committed</p>
-              </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                  <span>{leaveBalance?.usedDays ?? 0} approved</span>
-                  <span>•</span>
-                  <span>{leaveBalance?.pendingDays ?? 0} pending</span>
+                <div className='flex items-center justify-between'>
+                  <p className='text-xs text-muted-foreground'>Days Submitted</p>
+                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                    <span>{leaveBalance?.usedDays ?? 0} approved</span>
+                    <span>•</span>
+                    <span>{leaveBalance?.pendingDays ?? 0} pending</span>
+                  </div>
                 </div>
-              </CardContent>
+              </CardHeader>
             </Card>
 
             {/* Bonus Leave Card */}
             <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
+              <CardHeader className='pb-1'>
                 <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg'>
-                    <Gift className='w-5 h-5 text-purple-600' />
+                  <div className='p-1 bg-purple-100 dark:bg-purple-900/20 rounded-md'>
+                    <Gift className='w-3 h-3 text-purple-600' />
                   </div>
                   <Badge
                     variant={bonusSummary?.total_granted ? 'green' : 'outline'}
-                    className='text-xs'
+                    className='text-xs px-1.5 py-0.5'
                   >
                     {bonusSummary?.total_granted ? 'Active' : 'None'}
                   </Badge>
                 </div>
-                <CardTitle className='text-3xl font-bold text-purple-600'>
+                <CardTitle className='text-xl font-bold text-purple-600'>
                   {bonusSummary?.total_granted ?? 0}
                 </CardTitle>
-                <p className='text-sm text-muted-foreground'>Bonus Leave</p>
+                <p className='text-xs text-muted-foreground'>Bonus Leave</p>
               </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  {bonusSummary?.total_granted
-                    ? 'Additional days granted'
-                    : 'No bonus leave this year'}
-                </div>
-              </CardContent>
             </Card>
-          </div>
+            </div>
 
-          {/* Usage Progress Bar */}
-          <Card>
-            <CardHeader>
-              <CardTitle className='text-lg'>Usage Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
+            {/* Integrated Usage Overview - 1 column on large screens */}
+            <Card className='lg:col-span-1'>
+              <CardHeader className='pb-2'>
+                <CardTitle className='text-base flex items-center gap-2'>
+                  <Gauge className='w-3 h-3' />
+                  Usage Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-3'>
                 {/* Progress Bar */}
                 <div className='space-y-2'>
                   <div className='flex justify-between text-sm'>
@@ -360,169 +336,36 @@ export default async function UserLeaveRequestsPage({
                   </div>
                 </div>
 
-                {/* Breakdown */}
-                <div className='grid grid-cols-2 md:grid-cols-4 gap-4 pt-2'>
-                  <div className='text-center'>
-                    <div className='text-lg font-semibold text-green-600'>
-                      {leaveBalance?.availableDays ?? 0}
+                {/* Compact Breakdown */}
+                <div className='space-y-2'>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex items-center gap-1.5'>
+                      <div className='w-1.5 h-1.5 bg-green-500 rounded-full'></div>
+                      <span className='text-xs text-muted-foreground'>Available</span>
                     </div>
-                    <div className='text-sm font-medium text-muted-foreground'>
-                      Available
+                    <span className='text-xs font-semibold text-green-600'>{leaveBalance?.availableDays ?? 0}</span>
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex items-center gap-1.5'>
+                      <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
+                      <span className='text-xs text-muted-foreground'>Approved</span>
                     </div>
+                    <span className='text-xs font-semibold text-blue-600'>{leaveBalance?.usedDays ?? 0}</span>
                   </div>
-                  <div className='text-center'>
-                    <div className='text-lg font-semibold text-blue-600'>
-                      {leaveBalance?.usedDays ?? 0}
+                  <div className='flex justify-between items-center'>
+                    <div className='flex items-center gap-1.5'>
+                      <div className='w-1.5 h-1.5 bg-orange-500 rounded-full'></div>
+                      <span className='text-xs text-muted-foreground'>Pending</span>
                     </div>
-                    <div className='text-sm font-medium text-muted-foreground'>
-                      Approved
+                    <span className='text-xs font-semibold text-orange-600'>{leaveBalance?.pendingDays ?? 0}</span>
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex items-center gap-1.5'>
+                      <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
+                      <span className='text-xs text-muted-foreground'>Unpaid</span>
                     </div>
+                    <span className='text-xs font-semibold text-purple-600'>{unpaidUsedDays}</span>
                   </div>
-                  <div className='text-center'>
-                    <div className='text-lg font-semibold text-orange-600'>
-                      {leaveBalance?.pendingDays ?? 0}
-                    </div>
-                    <div className='text-sm font-medium text-muted-foreground'>
-                      Pending
-                    </div>
-                  </div>
-                  <div className='text-center'>
-                    <div className='text-lg font-semibold text-purple-600'>
-                      {unpaidUsedDays}
-                    </div>
-                    <div className='text-sm font-medium text-muted-foreground'>
-                      Unpaid
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Stats */}
-        <div className='space-y-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <h2 className='text-2xl font-bold text-foreground'>
-                Request Statistics
-              </h2>
-              <p className='text-muted-foreground'>
-                Summary of your leave requests for {selectedYear}
-              </p>
-            </div>
-          </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
-            {/* Pending Requests */}
-            <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg'>
-                    <Clock className='w-5 h-5 text-orange-600' />
-                  </div>
-                  <Badge variant='outline' className='text-xs'>
-                    Awaiting
-                  </Badge>
-                </div>
-                <CardTitle className='text-3xl font-bold text-orange-600'>
-                  {getStatusCount('pending')}
-                </CardTitle>
-                <p className='text-sm text-muted-foreground'>Pending</p>
-              </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  Waiting for manager approval
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Approved Requests */}
-            <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-green-100 dark:bg-green-900/20 rounded-lg'>
-                    <CheckCircle2 className='w-5 h-5 text-green-600' />
-                  </div>
-                  <Badge variant='green' className='text-xs'>
-                    Approved
-                  </Badge>
-                </div>
-                <CardTitle className='text-3xl font-bold text-green-600'>
-                  {getStatusCount('approved')}
-                </CardTitle>
-                <p className='text-sm text-muted-foreground'>Approved</p>
-              </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>This year</div>
-              </CardContent>
-            </Card>
-
-            {/* Rejected Requests */}
-            <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-red-100 dark:bg-red-900/20 rounded-lg'>
-                    <XCircle className='w-5 h-5 text-red-600' />
-                  </div>
-                  <Badge variant='destructive' className='text-xs'>
-                    Rejected
-                  </Badge>
-                </div>
-                <CardTitle className='text-3xl font-bold text-red-600'>
-                  {getStatusCount('rejected')}
-                </CardTitle>
-                <p className='text-sm text-muted-foreground'>Rejected</p>
-              </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>This year</div>
-              </CardContent>
-            </Card>
-
-            {/* Paid Days Used */}
-            <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg'>
-                    <CalendarCheck2 className='w-5 h-5 text-blue-600' />
-                  </div>
-                  <Badge variant='blue' className='text-xs'>
-                    Used
-                  </Badge>
-                </div>
-                <CardTitle className='text-3xl font-bold text-blue-600'>
-                  {getTotalDays()}
-                </CardTitle>
-                <p className='text-sm text-muted-foreground'>Paid Days Used</p>
-              </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  Counted toward quota
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Unpaid Days Used */}
-            <Card className='relative overflow-hidden group hover:shadow-lg transition-all duration-200'>
-              <CardHeader className='pb-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='p-2 bg-gray-100 dark:bg-gray-900/20 rounded-lg'>
-                    <Ban className='w-5 h-5 text-gray-600' />
-                  </div>
-                  <Badge variant='outline' className='text-xs'>
-                    Unpaid
-                  </Badge>
-                </div>
-                <CardTitle className='text-3xl font-bold text-gray-600'>
-                  {unpaidUsedDays}
-                </CardTitle>
-                <p className='text-sm text-muted-foreground'>
-                  Unpaid Days Used
-                </p>
-              </CardHeader>
-              <CardContent className='pt-0'>
-                <div className='text-xs text-muted-foreground'>
-                  Not counted toward quota
                 </div>
               </CardContent>
             </Card>

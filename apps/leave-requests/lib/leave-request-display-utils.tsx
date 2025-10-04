@@ -58,10 +58,10 @@ export const formatDateRange = (startDate: string, endDate?: string | null, isHa
   }
   if (endDate && startDate !== endDate) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{formatDate(startDate)}</span>
-        <span className="text-gray-400">→</span>
-        <span className="font-medium">{formatDate(endDate)}</span>
+      <div className="flex items-center gap-1">
+        <span className="font-medium text-sm">{formatDate(startDate)}</span>
+        <span className="text-gray-400 text-xs">→</span>
+        <span className="font-medium text-sm">{formatDate(endDate)}</span>
       </div>
     );
   }

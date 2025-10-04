@@ -64,7 +64,7 @@ export default function FilterDrawer({
   const yearsOptions = React.useMemo(() => {
     const now = new Date().getFullYear();
     const years: number[] = [];
-    for (let y = now + 1; y >= now - 5; y--) years.push(y);
+    for (let y = now + 1; y >= now - 2; y--) years.push(y);
     return years;
   }, []);
 
@@ -98,18 +98,18 @@ export default function FilterDrawer({
           Filter
         </Button>
       </SheetTrigger>
-      <SheetContent side='right'>
+      <SheetContent side='right' className='flex flex-col'>
         <SheetHeader>
           <SheetTitle>Filters</SheetTitle>
         </SheetHeader>
 
-        <div className='p-4 space-y-6'>
+        <div className='flex-1 overflow-y-auto p-4 space-y-6'>
           <div className='space-y-2'>
             <Label htmlFor='year'>Year</Label>
             <div className='border rounded-md'>
               <Command>
                 <CommandInput placeholder='Search year...' />
-                <CommandList className='max-h-64 overflow-auto'>
+                <CommandList className='max-h-32 overflow-auto'>
                   <CommandEmpty>No years found.</CommandEmpty>
                   <CommandGroup>
                     {yearsOptions.map((y) => (
@@ -134,7 +134,7 @@ export default function FilterDrawer({
             <div className='border rounded-md'>
               <Command>
                 <CommandInput placeholder='Search employee...' />
-                <CommandList className='max-h-64 overflow-auto'>
+                <CommandList className='max-h-32 overflow-auto'>
                   <CommandEmpty>No users found.</CommandEmpty>
                   <CommandGroup>
                     {usersWithUsage.map((u) => (
@@ -167,10 +167,10 @@ export default function FilterDrawer({
           </div>
         </div>
 
-        <SheetFooter>
-          <div className='flex gap-2'>
-            <Button onClick={applyFilters}>Apply</Button>
-            <Button variant='outline' onClick={clearFilters}>Clear</Button>
+        <SheetFooter className='flex-shrink-0 border-t pt-4'>
+          <div className='flex gap-2 w-full'>
+            <Button onClick={applyFilters} className='flex-1'>Apply</Button>
+            <Button variant='outline' onClick={clearFilters} className='flex-1'>Clear</Button>
           </div>
         </SheetFooter>
       </SheetContent>

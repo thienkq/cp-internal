@@ -219,14 +219,12 @@ export function LeaveRequestsTable({
                 <TableRow key={request.id} className="hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getStatusIcon(request.status)}
                       {getStatusBadge(request.status)}
                     </div>
                   </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium text-foreground">
                           {request.user?.full_name || 'Unknown User'}
