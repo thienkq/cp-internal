@@ -19,17 +19,6 @@ const DashboardPageClient = () => {
     <>
       {/* 🚀 IMMEDIATE: User Greeting + Pending Badge */}
       <div className='space-y-4'>
-        <div className='flex items-center justify-between'>
-          <h1 className='text-2xl font-bold text-foreground'>Welcome back, {userName}!</h1>
-          <div className='flex items-center gap-4'>
-            <Link
-              href='/dashboard/leave-requests'
-              className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
-            >
-              See All My Time Off Requests →
-            </Link>
-          </div>
-        </div>
 
         {/* ⚠️ Start Date Reminder Banner */}
         {!userData.start_date && (

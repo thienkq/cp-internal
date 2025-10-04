@@ -123,7 +123,7 @@ const AdminLeaveRequestsPageClient = ({
   }, [filteredLeaveRequests]);
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Leave Requests Management</h1>
@@ -153,11 +153,18 @@ const AdminLeaveRequestsPageClient = ({
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <QuickStats allLeaveRequests={filteredLeaveRequests} totals={filteredTotals} />
+      {/* Quick Stats and Usage Overview */}
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-3'>
+        {/* Main Stats - 2 columns on large screens */}
+        <div className='lg:col-span-2'>
+          <QuickStats allLeaveRequests={filteredLeaveRequests} totals={filteredTotals} />
+        </div>
 
-      {/* Usage Overview */}
-      <UsageOverview allLeaveRequests={filteredLeaveRequests} totals={filteredTotals} />
+        {/* Integrated Usage Overview - 1 column on large screens */}
+        <div className='lg:col-span-1'>
+          <UsageOverview allLeaveRequests={filteredLeaveRequests} totals={filteredTotals} />
+        </div>
+      </div>
 
       {/* All Leave Requests */}
       {/* Top-level Tabs: Leave Types and Users */}
