@@ -153,6 +153,7 @@ const ListUser = ({
     null
   );
   const [detail, setDetail] = React.useState<null | DetailResponse>(null);
+  const [expandedReason, setExpandedReason] = React.useState<string | null>(null);
 
   const [sortKey, setSortKey] = React.useState<SortKey>('total');
   const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
@@ -474,7 +475,7 @@ const ListUser = ({
               {/* History using shared Table components */}
               <div>
                 <div className='text-lg font-medium mb-2'>History</div>
-                <div className='max-h-96 overflow-auto rounded-md border'>
+                <div className='rounded-md border'>
                   <Table>
                     <TableHeader className='sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
                       <TableRow>
@@ -522,7 +523,6 @@ const ListUser = ({
                             </TableCell>
                             <TableCell>
                               <div className='flex items-center gap-2'>
-                                <Clock className='h-4 w-4 text-muted-foreground' />
                                 <span>
                                   {formatWorkingDays(
                                     calculateWorkingDays(
@@ -536,7 +536,6 @@ const ListUser = ({
                             </TableCell>
                             <TableCell>
                               <div className='flex items-center gap-2'>
-                                <Layers className='h-4 w-4 text-muted-foreground' />
                                 <span>
                                   {h.leave_type?.name || '-'}{' '}
                                   {h.leave_type?.is_paid === false ? (
@@ -563,7 +562,11 @@ const ListUser = ({
                             <TableCell>
                               {h.message ? (
                                 <div className='max-w-[220px]'>
-                                  <p className='text-sm text-foreground truncate' title={h.message}>
+                                  <p 
+                                    className='text-sm text-foreground truncate cursor-pointer hover:text-primary transition-colors' 
+                                    title={h.message}
+                                    onClick={() => setExpandedReason(h.message || null)}
+                                  >
                                     {h.message}
                                   </p>
                                 </div>
@@ -629,6 +632,22 @@ const ListUser = ({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Reason expansion dialog */}
+      <Dialog open={!!expandedReason} onOpenChange={() => setExpandedReason(null)}>
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Leave Request Reason</DialogTitle>
+          </DialogHeader>
+          <div className='mt-4'>
+            <div className='bg-muted/50 rounded-lg p-4'>
+              <p className='text-sm whitespace-pre-wrap break-words'>
+                {expandedReason}
+              </p>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
