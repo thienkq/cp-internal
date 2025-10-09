@@ -20,6 +20,7 @@ export interface UserForm {
   id: string;
   full_name: string;
   email: string;
+  role?: string;
 }
 
 // Common props interface for page client components

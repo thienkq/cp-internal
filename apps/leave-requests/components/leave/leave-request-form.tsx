@@ -335,11 +335,6 @@ export function LeaveRequestForm({
                         value={field.value}
                         onChange={field.onChange}
                         id='start_date'
-                        min={
-                          new Date(Date.now() + 24 * 60 * 60 * 1000)
-                            .toISOString()
-                            .split('T')[0]
-                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -363,10 +358,7 @@ export function LeaveRequestForm({
                           onChange={field.onChange}
                           id='end_date'
                           min={
-                            form.watch('start_date') ||
-                            new Date(Date.now() + 24 * 60 * 60 * 1000)
-                              .toISOString()
-                              .split('T')[0]
+                            form.watch('start_date')
                           }
                         />
                       </FormControl>
@@ -478,23 +470,18 @@ export function LeaveRequestForm({
                         Manager for Approval{' '}
                         <span className='text-red-500'>*</span>
                       </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Select your manager' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name || user.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        {(() => {
+                          const managerCandidates = users.filter(u => (u.role === 'manager') || (u.role === 'admin'))
+                          return (
+                            <UserMultiSelect
+                              users={managerCandidates}
+                              value={field.value ? [field.value] : []}
+                              onChange={(value) => field.onChange(value[value.length - 1] ?? '')}
+                            />
+                          )
+                        })()}
+                      </FormControl>
                       <FormMessage />
                       <FormDescription>
                         Select the manager who will approve your leave request
@@ -510,23 +497,13 @@ export function LeaveRequestForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Backup Person (Optional)</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Select backup person' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name || user.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <UserMultiSelect
+                          users={users}
+                          value={field.value ? [field.value] : []}
+                          onChange={(value) => field.onChange(value[value.length - 1] ?? '')}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

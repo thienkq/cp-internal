@@ -57,14 +57,20 @@ interface LeaveRequestsByType {
 }
 
 /**
- * Fetches all leave requests with user and leave type information
+ * Fetches all leave requests with user and leave type information for a specific year
  */
-async function fetchAllLeaveRequests(): Promise<LeaveRequestWithDetails[]> {
+async function fetchAllLeaveRequests(year: number): Promise<LeaveRequestWithDetails[]> {
   const db = getDb();
   
   // Create aliases for the users table to avoid conflicts
   const requesterUser = alias(users, 'requester_user');
   const approverUser = alias(users, 'approver_user');
+  const currentManagerUser = alias(users, 'current_manager_user');
+  const backupUser = alias(users, 'backup_user');
+
+  // Define date range for the selected year
+  const startOfYear = `${year}-01-01`;
+  const endOfYear = `${year}-12-31`;
 
   const allLeaveRequests = await db
     .select({
@@ -106,11 +112,29 @@ async function fetchAllLeaveRequests(): Promise<LeaveRequestWithDetails[]> {
       approved_by: {
         full_name: approverUser.full_name,
       },
+      // Current manager information
+      current_manager: {
+        full_name: currentManagerUser.full_name,
+        email: currentManagerUser.email,
+      },
+      // Backup person information
+      backup_person: {
+        full_name: backupUser.full_name,
+        email: backupUser.email,
+      },
     })
     .from(leaveRequests)
     .leftJoin(requesterUser, eq(leaveRequests.user_id, requesterUser.id))
     .leftJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
     .leftJoin(approverUser, eq(leaveRequests.approved_by_id, approverUser.id))
+    .leftJoin(currentManagerUser, eq(leaveRequests.current_manager_id, currentManagerUser.id))
+    .leftJoin(backupUser, eq(leaveRequests.backup_id, backupUser.id))
+    .where(
+      and(
+        gte(leaveRequests.start_date, startOfYear),
+        lte(leaveRequests.start_date, endOfYear)
+      )
+    )
     .orderBy(desc(leaveRequests.created_at));
 
   return allLeaveRequests as LeaveRequestWithDetails[];
@@ -267,7 +291,7 @@ export default async function AdminLeaveRequestsPage({
     approvedPaidRequests,
     approvedUnpaidRequests,
   ] = await Promise.all([
-    fetchAllLeaveRequests(),
+    fetchAllLeaveRequests(selectedYear),
     fetchLeaveTypes(),
     fetchAllUsers(),
     fetchApprovedLeaveRequests(startOfYear, endOfYear, true), // paid

@@ -22,6 +22,7 @@ const fetchLeaveRequestData = async () => {
         id: usersTable.id,
         full_name: usersTable.full_name,
         email: usersTable.email,
+        role: usersTable.role,
       })
       .from(usersTable)
       .orderBy(asc(usersTable.full_name)),

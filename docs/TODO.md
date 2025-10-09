@@ -79,3 +79,7 @@ const TENURE_ACCRUAL_RULES = {
 **Future Plan:** investigate further optimizations
 
 **Reference:** [Fixing slow performance in a Next.js app](https://blog.logrocket.com/fix-nextjs-app-slow-performance/)
+
+
+## Query performance
+### Pagination for All Leave Req list

@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { format } from "date-fns";
+import { format, isBefore, parseISO, startOfDay } from "date-fns";
 import { Button } from "@workspace/ui/components/button";
 import { Calendar } from "@workspace/ui/components/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@workspace/ui/components/popover";
@@ -41,7 +41,11 @@ export function DatePicker({ label, value, onChange, id, error, min }: DatePicke
             mode="single"
             selected={value ? new Date(value) : undefined}
             captionLayout="dropdown"
-            disabled={min ? (date) => date < new Date(min) : undefined}
+            disabled={min ? (date) => {
+              const minDate = startOfDay(parseISO(min));
+              const currentDate = startOfDay(date);
+              return isBefore(currentDate, minDate);
+            } : undefined}
             onSelect={date => {
               onChange?.(date ? format(date, "yyyy-MM-dd") : "");
               setOpen(false);
