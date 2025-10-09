@@ -47,6 +47,7 @@ import { Calendar, FileText, Users, Info, X, Plus } from 'lucide-react';
 
 import { ProjectMultiSelect } from '@/components/leave/project-multi-select';
 import { UserMultiSelect } from '@/components/leave/user-multi-select';
+import { UserSingleSelect } from '@/components/leave/user-single-select';
 import { DatePicker } from '@/components/users/date-picker';
 import {
   LeaveType,
@@ -474,10 +475,11 @@ export function LeaveRequestForm({
                         {(() => {
                           const managerCandidates = users.filter(u => (u.role === 'manager') || (u.role === 'admin'))
                           return (
-                            <UserMultiSelect
+                            <UserSingleSelect
                               users={managerCandidates}
-                              value={field.value ? [field.value] : []}
-                              onChange={(value) => field.onChange(value[value.length - 1] ?? '')}
+                              value={field.value || null}
+                              onChange={field.onChange}
+                              placeholder="Select manager..."
                             />
                           )
                         })()}
@@ -498,10 +500,11 @@ export function LeaveRequestForm({
                     <FormItem>
                       <FormLabel>Backup Person (Optional)</FormLabel>
                       <FormControl>
-                        <UserMultiSelect
+                        <UserSingleSelect
                           users={users}
-                          value={field.value ? [field.value] : []}
-                          onChange={(value) => field.onChange(value[value.length - 1] ?? '')}
+                          value={field.value || null}
+                          onChange={field.onChange}
+                          placeholder="Select backup person..."
                         />
                       </FormControl>
                       <FormMessage />
