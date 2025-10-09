@@ -20,15 +20,6 @@ export const leaveRequestSchema = z.object({
   internal_notifications: z.array(z.string()),
   external_notifications: z.array(z.string())
 }).refine((data) => {
-  // Start date must be in the future (greater than today)
-  const today = new Date()
-  const startDate = parseISO(data.start_date)
-  
-  return isAfter(startDate, today)
-}, {
-  message: "Start date must be after today",
-  path: ["start_date"]
-}).refine((data) => {
   // End date must be after start date (for full day requests)
   if (!data.is_half_day && data.end_date) {
     const startDate = parseISO(data.start_date)

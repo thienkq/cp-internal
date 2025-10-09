@@ -47,10 +47,12 @@ export const getStatusBadge = (status: string) => {
 export const formatDateRange = (startDate: string, endDate?: string | null, isHalfDay?: boolean, halfDayType?: string | null) => {
   if (isHalfDay && !endDate) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{formatDate(startDate)}</span>
-        <span className="inline-block w-2 h-2 bg-orange-400 rounded-full"></span>
-        <span className="text-xs text-orange-600 font-medium">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{formatDate(startDate)}</span>
+          <span className="inline-block w-2 h-2 bg-orange-400 rounded-full"></span>
+        </div>
+        <span className="block text-xs text-orange-600 font-medium mt-1">
           Half Day {halfDayType ? `(${halfDayType})` : ''}
         </span>
       </div>
