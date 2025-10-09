@@ -47,6 +47,7 @@ import { Calendar, FileText, Users, Info, X, Plus } from 'lucide-react';
 
 import { ProjectMultiSelect } from '@/components/leave/project-multi-select';
 import { UserMultiSelect } from '@/components/leave/user-multi-select';
+import { UserSingleSelect } from '@/components/leave/user-single-select';
 import { DatePicker } from '@/components/users/date-picker';
 import {
   LeaveType,
@@ -335,11 +336,6 @@ export function LeaveRequestForm({
                         value={field.value}
                         onChange={field.onChange}
                         id='start_date'
-                        min={
-                          new Date(Date.now() + 24 * 60 * 60 * 1000)
-                            .toISOString()
-                            .split('T')[0]
-                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -363,10 +359,7 @@ export function LeaveRequestForm({
                           onChange={field.onChange}
                           id='end_date'
                           min={
-                            form.watch('start_date') ||
-                            new Date(Date.now() + 24 * 60 * 60 * 1000)
-                              .toISOString()
-                              .split('T')[0]
+                            form.watch('start_date')
                           }
                         />
                       </FormControl>
@@ -478,23 +471,19 @@ export function LeaveRequestForm({
                         Manager for Approval{' '}
                         <span className='text-red-500'>*</span>
                       </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Select your manager' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name || user.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        {(() => {
+                          const managerCandidates = users.filter(u => (u.role === 'manager') || (u.role === 'admin'))
+                          return (
+                            <UserSingleSelect
+                              users={managerCandidates}
+                              value={field.value || null}
+                              onChange={field.onChange}
+                              placeholder="Select manager..."
+                            />
+                          )
+                        })()}
+                      </FormControl>
                       <FormMessage />
                       <FormDescription>
                         Select the manager who will approve your leave request
@@ -510,23 +499,14 @@ export function LeaveRequestForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Backup Person (Optional)</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Select backup person' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name || user.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <UserSingleSelect
+                          users={users}
+                          value={field.value || null}
+                          onChange={field.onChange}
+                          placeholder="Select backup person..."
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

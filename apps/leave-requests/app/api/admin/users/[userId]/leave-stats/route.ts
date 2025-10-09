@@ -5,6 +5,7 @@ import { getCurrentUser } from '@workspace/supabase';
 import { getAdminUser } from '@/lib/user-db-utils';
 import { NextRequest } from 'next/server';
 import { calculateWorkingDays } from '@/lib/utils';
+import { calculateCompleteLeaveEntitlement } from '@/lib/leave-quota-utils';
 
 export async function GET(
   req: NextRequest,
@@ -105,7 +106,7 @@ export async function GET(
     canceledRequests: requests.filter((r) => r.status === 'canceled').length,
   };
 
-  // Compute paid entitlement using company settings tenure rules
+  // Compute paid entitlement using leave-quota-utils totalQuota
   let entitlement: {
     totalPaidDays: number | null;
     employmentYear: number | null;
@@ -115,22 +116,13 @@ export async function GET(
   };
 
   try {
-    const [settings] = await db
-      .select({ tenure_accrual_rules: companySettings.tenure_accrual_rules })
-      .from(companySettings)
-      .limit(1);
-
     const startDate = userRecord.start_date
       ? new Date(userRecord.start_date)
       : null;
     const targetDate = new Date(`${year}-12-31`);
 
-    if (
-      settings?.tenure_accrual_rules &&
-      startDate &&
-      !Number.isNaN(startDate.getTime())
-    ) {
-      // Calculate employment year (1-based)
+    if (startDate && !Number.isNaN(startDate.getTime())) {
+      // Calculate employment year (1-based) for reporting
       let years = targetDate.getFullYear() - startDate.getFullYear();
       const annivThisYear = new Date(
         targetDate.getFullYear(),
@@ -142,22 +134,12 @@ export async function GET(
       }
       const employmentYear = Math.max(1, years + 1);
 
-      const rules = settings.tenure_accrual_rules as Record<string, number>;
-      // Find best matching rule: use exact year if present, else the greatest key <= employmentYear
-      const numericKeys = Object.keys(rules)
-        .map((k) => Number(k))
-        .filter((n) => !Number.isNaN(n))
-        .sort((a, b) => a - b);
-
-      let totalPaidDays: number | null = null;
-      if (rules[String(employmentYear)] !== undefined) {
-        totalPaidDays = rules[String(employmentYear)] ?? null;
-      } else if (numericKeys.length > 0) {
-        const floorKey =
-          numericKeys.filter((n) => n <= employmentYear).pop() ??
-          numericKeys[0];
-        totalPaidDays = rules[String(floorKey)] ?? null;
-      }
+      // Get authoritative total quota from leave-quota-utils
+      const fullEntitlement = await calculateCompleteLeaveEntitlement(
+        userRecord.id,
+        targetDate
+      );
+      const totalPaidDays = fullEntitlement.totalQuota;
 
       entitlement = { totalPaidDays, employmentYear };
     }

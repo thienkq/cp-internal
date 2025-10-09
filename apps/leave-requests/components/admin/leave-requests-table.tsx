@@ -11,10 +11,11 @@ import {
   TableHeader, 
   TableRow 
 } from "@workspace/ui/components/table";
-import { Calendar, Clock, User, FileText, AlertCircle, CheckCircle, XCircle, MinusCircle, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
+import { Calendar, Clock, User, FileText, AlertCircle, CheckCircle, XCircle, MinusCircle, ArrowUpDown, ChevronUp, ChevronDown, Eye } from "lucide-react";
 import { LeaveRequest } from "@/types";
 import { LeaveRequestActions } from "@/components/admin/leave-request-actions";
 import { getStatusBadge, formatDateRange, getDurationText } from "@/lib/leave-request-display-utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 
 interface LeaveRequestsTableProps {
   leaveRequests: LeaveRequest[];
@@ -121,6 +122,14 @@ export function LeaveRequestsTable({
     }
   };
 
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailRequest, setDetailRequest] = useState<LeaveRequest | null>(null);
+
+  const openDetails = (req: LeaveRequest) => {
+    setDetailRequest(req);
+    setDetailOpen(true);
+  };
+
   if (leaveRequests.length === 0) {
     return (
       <Card>
@@ -157,6 +166,7 @@ export function LeaveRequestsTable({
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -202,7 +212,6 @@ export function LeaveRequestsTable({
                     <SortIcon column="duration" />
                   </button>
                 </TableHead>
-                <TableHead className="w-[200px]">Projects</TableHead>
                 <TableHead className="w-[200px]">Reason</TableHead>
                 <TableHead className="w-[170px]">
                   <button onClick={() => handleSort("submitted")} className="flex items-center gap-1">
@@ -211,7 +220,7 @@ export function LeaveRequestsTable({
                   </button>
                 </TableHead>
                 <TableHead className="w-[150px]">Processed</TableHead>
-                {showActions && <TableHead className="w-[120px]">Actions</TableHead>}
+                {showActions && <TableHead className="w-[140px]">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -264,19 +273,7 @@ export function LeaveRequestsTable({
                     </div>
                   </TableCell>
                   
-                  <TableCell>
-                    {request.projects && request.projects.length > 0 ? (
-                      <div className="space-y-1 flex flex-wrap gap-1">
-                        {request.projects.map((project) => (
-                          <Badge key={project.id} variant="secondary" className="text-xs">
-                            {project.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">No projects</span>
-                    )}
-                  </TableCell>
+              
                   
                   <TableCell>
                     {request.message ? (
@@ -341,14 +338,21 @@ export function LeaveRequestsTable({
                   
                   {showActions && (
                     <TableCell>
-                      {request.status === "pending" && (
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs hover:underline"
+                          onClick={() => openDetails(request)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {request.status === "pending" && (
                           <LeaveRequestActions 
                             request={request} 
                             onActionComplete={handleActionComplete}
                           />
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -358,5 +362,102 @@ export function LeaveRequestsTable({
         </div>
       </CardContent>
     </Card>
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Leave Request Details</DialogTitle>
+        </DialogHeader>
+        {detailRequest && (
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="font-medium">Employee</div>
+                <div className="text-muted-foreground">
+                  {detailRequest.user?.full_name} ({detailRequest.user?.email})
+                </div>
+              </div>
+              <div>
+                <div className="font-medium">Leave Type</div>
+                <div className="text-muted-foreground">{detailRequest.leave_type?.name}</div>
+              </div>
+              <div>
+                <div className="font-medium">Dates</div>
+                <div className="text-muted-foreground">
+                  {formatDateRange(detailRequest.start_date, detailRequest.end_date, detailRequest.is_half_day, detailRequest.half_day_type)}
+                </div>
+              </div>
+              <div>
+                <div className="font-medium">Duration</div>
+                <div className="text-muted-foreground">{getDurationText(detailRequest.start_date, detailRequest.end_date, detailRequest.is_half_day)}</div>
+              </div>
+              <div>
+                <div className="font-medium">Status</div>
+                <div className="mt-1">{getStatusBadge(detailRequest.status)}</div>
+              </div>
+              <div>
+                <div className="font-medium">Submitted</div>
+                <div className="text-muted-foreground">{new Date(detailRequest.created_at).toLocaleString()}</div>
+              </div>
+              {detailRequest.approved_at && (
+                <div>
+                  <div className="font-medium">Approved</div>
+                  <div className="text-muted-foreground">{new Date(detailRequest.approved_at).toLocaleString()}</div>
+                </div>
+              )}
+              {detailRequest.canceled_at && (
+                <div>
+                  <div className="font-medium">Canceled</div>
+                  <div className="text-muted-foreground">{new Date(detailRequest.canceled_at).toLocaleString()}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="font-medium">Manager</div>
+                <div className="text-muted-foreground">{detailRequest.current_manager?.full_name ?? '-'}</div>
+              </div>
+              <div>
+                <div className="font-medium">Backup</div>
+                <div className="text-muted-foreground">{detailRequest.backup_person?.full_name ?? '-'}</div>
+              </div>
+              <div>
+                <div className="font-medium">Internal Notifications</div>
+                <div className="text-muted-foreground break-words">{(detailRequest.internal_notifications || []).join(', ') || '-'}</div>
+              </div>
+              <div>
+                <div className="font-medium">External Notifications</div>
+                <div className="text-muted-foreground break-words">{(detailRequest.external_notifications || []).join(', ') || '-'}</div>
+              </div>
+            </div>
+
+            <div>
+              <div className="font-medium">Projects</div>
+              {detailRequest.projects && detailRequest.projects.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {detailRequest.projects.map((p) => (
+                    <Badge key={p.id} variant="secondary" className="text-xs">{p.name}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-muted-foreground">-</div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="font-medium">Reason</div>
+                <div className="text-muted-foreground whitespace-pre-wrap">{detailRequest.message || '-'}</div>
+              </div>
+              <div>
+                <div className="font-medium">Approval Notes</div>
+                <div className="text-muted-foreground whitespace-pre-wrap">{detailRequest.approval_notes || '-'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 } 
