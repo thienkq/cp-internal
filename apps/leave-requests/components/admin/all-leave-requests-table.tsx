@@ -207,7 +207,6 @@ export function AllLeaveRequestsTable({
                     <SortIcon column="submitted" />
                   </button>
                 </TableHead>
-                <TableHead className="w-[150px]">Processed</TableHead>
                 {showActions && <TableHead className="w-[120px]">Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -297,45 +296,6 @@ export function AllLeaveRequestsTable({
                         year: 'numeric'
                       })}
                     </div>
-                  </TableCell>
-                  
-                  <TableCell>
-                    {request.status === 'approved' && request.approved_at ? (
-                      <div className="text-sm text-green-600">
-                        <div className="font-medium">Approved</div>
-                        <div className="text-xs">
-                          {new Date(request.approved_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </div>
-                        {request.approved_by && (
-                          <div className="text-xs text-muted-foreground">
-                            by {request.approved_by.full_name}
-                          </div>
-                        )}
-                      </div>
-                    ) : request.status === 'rejected' ? (
-                      <div className="text-sm text-red-600">
-                        <div className="font-medium">Rejected</div>
-                        {request.approval_notes && (
-                          <div className="text-xs text-muted-foreground truncate" title={request.approval_notes}>
-                            {request.approval_notes}
-                          </div>
-                        )}
-                      </div>
-                    ) : request.status === 'canceled' ? (
-                      <div className="text-sm text-gray-600">
-                        <div className="font-medium">Canceled</div>
-                        {request.cancel_reason && (
-                          <div className="text-xs text-muted-foreground truncate" title={request.cancel_reason}>
-                            {request.cancel_reason}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
                   </TableCell>
                   
                   {showActions && (
