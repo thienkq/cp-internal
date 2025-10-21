@@ -6,7 +6,6 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@workspace/ui/components/avatar";
-import { createBrowserClient } from "@workspace/supabase";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@workspace/ui/components/label";
@@ -17,6 +16,7 @@ import { genderOptions, roleOptions } from "./user-constants";
 import { userSchema, getUserFormDefaults, normalizeUserFormData, UserFormValues } from "./user-form.utils";
 import { User as UserIcon, Briefcase, Phone, Mail, Calendar, Edit3, UserPlus } from "lucide-react";
 import { getUserInitials, getUserDisplayName } from "@/lib/utils";
+import { createUser, updateUser } from "@/app/actions/users";
 
 type UserFormProps = {
   initialData: User | null;
@@ -39,20 +39,15 @@ export default function UserForm({ initialData, pageTitle, canEditWorkInfo = fal
   });
 
   const onSubmit = async (data: UserFormValues) => {
-    const supabase = createBrowserClient();
     const normalizedData = normalizeUserFormData(data);
-    let res;
+    let result;
     if (initialData) {
-      res = await supabase.from("users").update(normalizedData).eq("id", initialData.id).select();
+      result = await updateUser(initialData.id, normalizedData);
     } else {
-      res = await supabase.from("users").insert([normalizedData]).select();
+      result = await createUser(normalizedData);
     }
-    if (res.error) {
-      toast.error("Failed to save user.", { description: res.error.message });
-      return;
-    }
-    if (!res.data || res.data.length === 0) {
-      toast.error("Error: Operation failed.", { description: "The user may not exist or you may not have permission." });
+    if (!result.success) {
+      toast.error("Failed to save user.", { description: result.error });
       return;
     }
     toast.success("User saved successfully!");

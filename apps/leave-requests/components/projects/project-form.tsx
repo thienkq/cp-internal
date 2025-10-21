@@ -5,9 +5,9 @@ import { Button } from "@workspace/ui/components/button";
 import { Label } from "@workspace/ui/components/label";
 import { Switch } from "@workspace/ui/components/switch";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
 import { useEffect } from "react";
 import { Project } from "@/types";
+import { createProject, updateProject } from "@/app/actions/projects";
 
 export type ProjectFormValues = {
   name: string;
@@ -47,15 +47,14 @@ export default function ProjectForm({ initialData, onSuccess, onCancel }: Projec
   }, [initialData, reset]);
 
   const onSubmit = async (data: ProjectFormValues) => {
-    const supabase = createBrowserClient();
-    let res;
+    let result;
     if (initialData) {
-      res = await supabase.from("projects").update(data).eq("id", initialData.id).select();
+      result = await updateProject(initialData.id, data);
     } else {
-      res = await supabase.from("projects").insert([data]).select();
+      result = await createProject(data);
     }
-    if (res.error) {
-      toast.error("Failed to save project.", { description: res.error.message });
+    if (!result.success) {
+      toast.error("Failed to save project.", { description: result.error });
       return;
     }
     toast.success("Project saved successfully!");

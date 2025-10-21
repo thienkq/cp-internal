@@ -6,10 +6,10 @@ import { Label } from "@workspace/ui/components/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
 import type { ExtendedAbsence } from "@/types";
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle, Clock, Calendar } from "lucide-react";
+import { createExtendedAbsence, updateExtendedAbsence } from "@/app/actions/extended-absences";
 
 export type ExtendedAbsenceFormValues = {
   start_date: string;
@@ -91,16 +91,15 @@ export default function ExtendedAbsenceForm({ userId, absence, onSuccess, onCanc
       toast.error("End date cannot be before start date.");
       return;
     }
-    const supabase = createBrowserClient();
-    let res;
     const payload = { ...data, user_id: userId };
+    let result;
     if (absence) {
-      res = await supabase.from("extended_absences").update(payload).eq("id", absence.id).select();
+      result = await updateExtendedAbsence(absence.id, payload);
     } else {
-      res = await supabase.from("extended_absences").insert([payload]).select();
+      result = await createExtendedAbsence(payload);
     }
-    if (res.error) {
-      toast.error("Failed to save absence.", { description: res.error.message });
+    if (!result.success) {
+      toast.error("Failed to save absence.", { description: result.error });
       return;
     }
     toast.success("Absence saved successfully!");

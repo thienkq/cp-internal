@@ -40,7 +40,8 @@ export default function AssignmentList({ projectId}: { projectId: string}) {
   const columns = useMemo(() => [
     {
       header: "User",
-      accessorKey: "user.full_name",
+      accessorFn: (row: any) => row.user?.full_name || row.user?.email,
+      id: "user.full_name",
       cell: ({ row }: any) => row.original.user?.full_name || row.original.user?.email,
     },
     {

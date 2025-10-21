@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { createBrowserClient } from "@workspace/supabase";
 import ProjectTable from "@/components/projects/project-table";
 import ProjectForm from "@/components/projects/project-form";
 import { Dialog, DialogContent, DialogTitle } from "@workspace/ui/components/dialog";
@@ -8,6 +7,7 @@ import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { Project } from "@/types";
 import { useRouter } from "next/navigation";
+import { getAllProjects, updateProject } from "@/app/actions/projects";
 
 interface ProjectsClientProps {
   initialProjects: Project[];
@@ -20,8 +20,7 @@ export default function ProjectsClient({ initialProjects }: ProjectsClientProps)
   const router = useRouter();
 
   const fetchProjects = async () => {
-    const supabase = createBrowserClient();
-    const { data } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
+    const data = await getAllProjects();
     setProjects(data || []);
   };
 
@@ -31,9 +30,8 @@ export default function ProjectsClient({ initialProjects }: ProjectsClientProps)
   };
 
   const handleToggleActive = async (project: Project, value: boolean) => {
-    const supabase = createBrowserClient();
-    const { error } = await supabase.from("projects").update({ is_active: value }).eq("id", project.id);
-    if (error) {
+    const result = await updateProject(project.id, { is_active: value });
+    if (!result.success) {
       toast.error("Failed to update project");
     } else {
       toast.success("Project updated");

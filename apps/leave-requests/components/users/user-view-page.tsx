@@ -1,13 +1,7 @@
 import { notFound } from "next/navigation";
 import type { User } from "@/types";
 import UserForm from "./user-form";
-import { createServerClient } from "@workspace/supabase";
-
-async function getUserById(userId: string): Promise<User | null> {
-  const supabase = await createServerClient();
-  const { data } = await supabase.from('users').select('*').eq('id', userId).single();
-  return data as User | null;
-}
+import { getUserById } from "@/app/actions/users";
 
 type TUserViewPageProps = {
   userId: string;

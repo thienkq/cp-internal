@@ -7,9 +7,9 @@ import { Card, CardContent } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@workspace/ui/components/dialog";
 import AddressForm from "./address-form";
-import { createBrowserClient } from "@workspace/supabase";
 import { toast } from "sonner";
 import { Skeleton } from "@workspace/ui/components/skeleton";
+import { getAddressesByUserId, deleteAddress, setPrimaryAddress } from "@/app/actions/addresses";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -25,10 +25,7 @@ import { MapPin, Home, Building, Star, Plus, Edit, Trash2, Crown } from "lucide-
 
 // Helper to fetch addresses
 async function fetchAddresses(userId: string): Promise<Address[]> {
-  const supabase = createBrowserClient();
-  const { data, error } = await supabase.from("addresses").select("*").eq("user_id", userId);
-  if (error) throw new Error(error.message);
-  return data || [];
+  return await getAddressesByUserId(userId);
 }
 
 // Get icon and color for address type
@@ -82,10 +79,9 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
   const handleDelete = async () => {
     if (!addressToDelete) return;
     setLoading(true);
-    const supabase = createBrowserClient();
-    const { error } = await supabase.from("addresses").delete().eq("id", addressToDelete.id);
-    if (error) {
-      toast.error("Failed to delete address.", { description: error.message });
+    const result = await deleteAddress(addressToDelete.id);
+    if (!result.success) {
+      toast.error("Failed to delete address.", { description: result.error });
     } else {
       toast.success("Address deleted.");
       await refreshAddresses();
@@ -96,17 +92,12 @@ export default function AddressList({ addresses: initialAddresses, userId }: Add
   };
   const handleSetDefault = async (addressId: string) => {
     setLoading(true);
-    const supabase = createBrowserClient();
-    try {
-      await supabase.from("addresses").update({ is_primary: false }).eq("user_id", userId);
-      const { error } = await supabase.from("addresses").update({ is_primary: true }).eq("id", addressId);
-      if (error) {
-        throw new Error(error.message);
-      }
+    const result = await setPrimaryAddress(addressId, userId);
+    if (!result.success) {
+      toast.error("Failed to set primary address.", { description: result.error });
+    } else {
       toast.success("Primary address updated.");
       await refreshAddresses();
-    } catch (err: any) {
-      toast.error("Failed to set primary address.", { description: err.message });
     }
     setLoading(false);
   };

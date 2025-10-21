@@ -1,5 +1,5 @@
 "use server";
-import { createServerClient } from "@workspace/supabase";
+import { bulkCreateProjectAssignments } from "@/app/actions/project-assignments";
 
 export async function bulkAssignUsers({
   projectId,
@@ -16,16 +16,12 @@ export async function bulkAssignUsers({
   }>;
   assignedBy: string;
 }) {
-  const supabase = await createServerClient();
   const rows = assignments.map(a => ({
     ...a,
     project_id: projectId,
     assigned_by: assignedBy,
     status: "active",
   }));
-  const { error } = await supabase.from("project_assignments").insert(rows);
-  if (error) {
-    return { success: false, error: error.message };
-  }
-  return { success: true };
+  
+  return await bulkCreateProjectAssignments(rows);
 } 

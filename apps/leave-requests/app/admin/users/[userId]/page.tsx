@@ -7,6 +7,8 @@ import ExtendedAbsenceList from "@/components/users/extended-absence-list";
 import BonusLeaveGrants from "@/components/users/bonus-leave-grants";
 import type { User, Address } from "@/types";
 import { PageContainer } from "@workspace/ui/components/page-container";
+import { getUserById } from "@/app/actions/users";
+import { getAddressesByUserId } from "@/app/actions/addresses";
 
 export default async function AdminUserPage({ params }: { params: Promise<{ userId: string }> }) {
   const { user, supabase } = await getCurrentUser();
@@ -16,8 +18,8 @@ export default async function AdminUserPage({ params }: { params: Promise<{ user
   }
 
   const { userId } = await params;
-  const { data: userData } = await supabase.from("users").select("*").eq("id", userId).single();
-  const { data: addressData } = await supabase.from("addresses").select("*").eq("user_id", userId);
+  const userData = await getUserById(userId);
+  const addressData = await getAddressesByUserId(userId);
 
   if (!userData) {
     return <div>User not found.</div>;

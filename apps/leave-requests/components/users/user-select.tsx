@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { Label } from "@workspace/ui/components/label";
-import { createBrowserClient } from "@workspace/supabase";
+import { getActiveUsers } from "@/app/actions/users";
 
 export type UserSelectProps = {
   value: string | null | undefined;
@@ -19,10 +19,11 @@ export function UserSelect({ value, onChange, excludeUserId, label, placeholder 
 
   useEffect(() => {
     async function fetchUsers() {
-      const supabase = createBrowserClient();
-      const { data, error } = await supabase.from("users").select("id, full_name, email").eq("is_active", true);
-      if (!error) {
+      try {
+        const data = await getActiveUsers();
         setUsers(excludeUserId ? data.filter((u: any) => u.id !== excludeUserId) : data);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
       }
       setLoading(false);
     }
