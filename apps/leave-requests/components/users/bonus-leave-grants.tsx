@@ -14,9 +14,9 @@ import { createBrowserClient } from "@workspace/supabase";
 import { 
   grantBonusLeave, 
   deleteBonusLeaveGrant,
-  type BonusLeaveSummary,
   type GrantBonusLeaveData 
-} from "@/lib/bonus-leave-utils";
+} from "@/app/actions/bonus-leave";
+import { type BonusLeaveSummary } from "@/lib/bonus-leave-utils";
 import { Plus, Gift, Trash2, Calendar, User, Award } from "lucide-react";
 
 interface BonusLeaveGrantsProps {

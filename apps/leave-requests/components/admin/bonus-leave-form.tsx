@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { toast } from "sonner";
 import { createBrowserClient } from "@workspace/supabase";
-import { grantBonusLeave, type GrantBonusLeaveData } from "@/lib/bonus-leave-utils";
+import { grantBonusLeave, type GrantBonusLeaveData } from "@/app/actions/bonus-leave";
 import { Plus, Gift } from "lucide-react";
 import { UserSelect } from "@/components/users/user-select";
 

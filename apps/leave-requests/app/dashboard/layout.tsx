@@ -6,6 +6,7 @@ import {
   SidebarInset,
 } from '@workspace/ui/components/sidebar';
 import ProtectedComponent from '@/components/member/protected-component';
+import { ensureUserExists } from '@/lib/auth-utils';
 
 export default async function LeaveRequestDashboard({
   children,
@@ -13,6 +14,15 @@ export default async function LeaveRequestDashboard({
   children: React.ReactNode;
 }) {
   const user = await getUser();
+  
+  // Sync user to database if authenticated
+  if (user) {
+    try {
+      await ensureUserExists(user);
+    } catch (error) {
+      console.error("Failed to sync user to database:", error);
+    }
+  }
   
   return (
     <ProtectedComponent user={user}>

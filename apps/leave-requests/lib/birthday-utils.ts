@@ -1,4 +1,6 @@
-import { createServerClient } from "@workspace/supabase";
+import { getDb } from '@/db';
+import { users } from '@/db/schema';
+import { eq, and, isNotNull } from 'drizzle-orm';
 
 export interface BirthdayInfo {
   user_id: string;
@@ -14,23 +16,32 @@ export interface BirthdayInfo {
  * Only includes users with valid date of birth
  */
 export async function getThisMonthBirthdays(): Promise<BirthdayInfo[]> {
-  const supabase = await createServerClient();
+  const db = getDb();
   
   // Get all users with date of birth
-  const { data: users } = await supabase
-    .from("users")
-    .select("id, full_name, date_of_birth")
-    .not("date_of_birth", "is", null)
-    .eq("is_active", true);
+  const usersData = await db
+    .select({
+      id: users.id,
+      full_name: users.full_name,
+      date_of_birth: users.date_of_birth,
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.is_active, true),
+        isNotNull(users.date_of_birth)
+      )
+    );
   
-  if (!users) return [];
+  if (!usersData) return [];
   
   const today = new Date();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
   const thisMonthBirthdays = [];
   
-  for (const user of users) {
+  for (const user of usersData) {
+    if (!user.date_of_birth) continue;
     const birthDate = new Date(user.date_of_birth);
     const birthdayThisYear = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
     
@@ -55,37 +66,5 @@ export async function getThisMonthBirthdays(): Promise<BirthdayInfo[]> {
   return thisMonthBirthdays.sort((a, b) => a.birthday_date.getDate() - b.birthday_date.getDate());
 }
 
-/**
- * Check if today is a user's birthday
- */
-export function isBirthdayToday(dateOfBirth: string): boolean {
-  if (!dateOfBirth) return false;
-  
-  const birthDate = new Date(dateOfBirth);
-  const today = new Date();
-  
-  return birthDate.getMonth() === today.getMonth() && 
-         birthDate.getDate() === today.getDate();
-}
-
-/**
- * Get birthday message with age
- */
-export function getBirthdayMessage(fullName: string, age: number): string {
-  const ordinalSuffix = getOrdinalSuffix(age);
-  return `Happy ${age}${ordinalSuffix} Birthday, ${fullName}! 🎉`;
-}
-
-/**
- * Get ordinal suffix for numbers
- */
-export function getOrdinalSuffix(num: number): string {
-  if (num >= 11 && num <= 13) return 'th';
-  
-  switch (num % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
-  }
-} 
+// Note: isBirthdayToday, getBirthdayMessage, and getOrdinalSuffix moved to client-utils.ts
+// to avoid server-side dependencies in client components 

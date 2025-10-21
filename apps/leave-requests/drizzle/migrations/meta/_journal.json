@@ -8,6 +8,13 @@
       "when": 1757514987018,
       "tag": "20250910143627_initial_migration_from_supabase",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1761022462706,
+      "tag": "20251021045422_luxuriant_purple_man",
+      "breakpoints": true
     }
   ]
 }

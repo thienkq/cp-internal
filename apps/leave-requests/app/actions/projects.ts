@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { projects } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { Project } from "@/types";
+import { requireRole } from "@/lib/auth-utils";
 
 export async function getAllProjects(): Promise<Project[]> {
   const db = getDb();
@@ -21,6 +22,8 @@ export async function getProjectById(projectId: string): Promise<Project | null>
 }
 
 export async function createProject(projectData: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; data?: Project; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     const [newProject] = await db.insert(projects).values(projectData).returning();
@@ -31,6 +34,8 @@ export async function createProject(projectData: Omit<Project, 'id' | 'created_a
 }
 
 export async function updateProject(projectId: string, projectData: Partial<Omit<Project, 'id' | 'created_at' | 'updated_at'>>): Promise<{ success: boolean; data?: Project; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     const [updatedProject] = await db
@@ -45,6 +50,8 @@ export async function updateProject(projectId: string, projectData: Partial<Omit
 }
 
 export async function deleteProject(projectId: string): Promise<{ success: boolean; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     await db.delete(projects).where(eq(projects.id, projectId));

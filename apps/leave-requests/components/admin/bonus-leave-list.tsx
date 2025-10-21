@@ -6,7 +6,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { toast } from "sonner";
 import { createBrowserClient } from "@workspace/supabase";
-import { getAllBonusLeaveGrants, deleteBonusLeaveGrant, type BonusLeaveSummary } from "@/lib/bonus-leave-utils";
+import { deleteBonusLeaveGrant, getAllBonusLeaveGrants, type BonusLeaveSummary } from "@/app/actions/bonus-leave";
 import { Gift, Trash2, Award, Calendar, User } from "lucide-react";
 
 interface BonusLeaveListProps {

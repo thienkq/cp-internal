@@ -2,7 +2,12 @@ import { updateSession } from "@workspace/supabase";
 import { type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  const response = await updateSession(request);
+  
+  // Note: User sync to database is handled in server components/actions
+  // Middleware runs in Edge Runtime which doesn't support database operations
+  
+  return response;
 }
 
 export const config = {

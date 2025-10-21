@@ -4,8 +4,10 @@ import { getDb } from "@/db";
 import { addresses } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import type { Address } from "@/types";
+import { requireAuth } from "@/lib/auth-utils";
 
 export async function getAddressesByUserId(userId: string): Promise<Address[]> {
+  // TODO: Add authorization check (verify user can access this user's addresses)
   const db = getDb();
   const result = await db
     .select()
@@ -16,6 +18,7 @@ export async function getAddressesByUserId(userId: string): Promise<Address[]> {
 }
 
 export async function createAddress(addressData: Omit<Address, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; data?: Address; error?: string }> {
+  // TODO: Add authorization check (verify user can create address for this user)
   try {
     const db = getDb();
     
@@ -38,6 +41,7 @@ export async function createAddress(addressData: Omit<Address, 'id' | 'created_a
 }
 
 export async function updateAddress(addressId: string, addressData: Partial<Omit<Address, 'id' | 'created_at' | 'updated_at'>>): Promise<{ success: boolean; data?: Address; error?: string }> {
+  // TODO: Add authorization check (verify user can update this address)
   try {
     const db = getDb();
     
@@ -64,6 +68,7 @@ export async function updateAddress(addressId: string, addressData: Partial<Omit
 }
 
 export async function deleteAddress(addressId: string): Promise<{ success: boolean; error?: string }> {
+  // TODO: Add authorization check (verify user can delete this address)
   try {
     const db = getDb();
     await db.delete(addresses).where(eq(addresses.id, addressId));
@@ -74,6 +79,7 @@ export async function deleteAddress(addressId: string): Promise<{ success: boole
 }
 
 export async function setPrimaryAddress(addressId: string, userId: string): Promise<{ success: boolean; error?: string }> {
+  // TODO: Add authorization check (verify user can set primary address for this user)
   try {
     const db = getDb();
     

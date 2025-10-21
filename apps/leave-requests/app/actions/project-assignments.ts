@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { projectAssignments, users, projects } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import type { ProjectAssignment } from "@/types";
+import { requireRole } from "@/lib/auth-utils";
 
 export async function getProjectAssignmentsByUserId(userId: string): Promise<any[]> {
   const db = getDb();
@@ -33,6 +34,8 @@ export async function getProjectAssignmentsByUserId(userId: string): Promise<any
 }
 
 export async function createProjectAssignment(assignmentData: Omit<ProjectAssignment, 'id' | 'assigned_at' | 'updated_at'>): Promise<{ success: boolean; data?: ProjectAssignment; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     const [newAssignment] = await db.insert(projectAssignments).values(assignmentData).returning();
@@ -43,6 +46,8 @@ export async function createProjectAssignment(assignmentData: Omit<ProjectAssign
 }
 
 export async function updateProjectAssignment(assignmentId: string, assignmentData: Partial<Omit<ProjectAssignment, 'id' | 'assigned_at' | 'updated_at'>>): Promise<{ success: boolean; data?: ProjectAssignment; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     const [updatedAssignment] = await db
@@ -57,6 +62,8 @@ export async function updateProjectAssignment(assignmentId: string, assignmentDa
 }
 
 export async function deleteProjectAssignment(assignmentId: string): Promise<{ success: boolean; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     await db.delete(projectAssignments).where(eq(projectAssignments.id, assignmentId));

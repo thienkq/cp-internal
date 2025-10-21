@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import { Trophy, Sparkles, Calendar, Heart } from "lucide-react";
-import { getAnniversaryMessage } from "@/lib/anniversary-utils";
+import { getAnniversaryMessage } from "@/lib/client-utils";
 import WorkAnniversaryCelebration from "./work-anniversary-celebration";
 
 interface WorkAnniversaryBannerProps {

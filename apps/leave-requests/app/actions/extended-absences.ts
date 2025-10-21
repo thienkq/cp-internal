@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { extendedAbsences } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { ExtendedAbsence } from "@/types";
+import { requireRole } from "@/lib/auth-utils";
 
 export async function getExtendedAbsencesByUserId(userId: string): Promise<ExtendedAbsence[]> {
   const db = getDb();
@@ -16,6 +17,8 @@ export async function getExtendedAbsencesByUserId(userId: string): Promise<Exten
 }
 
 export async function createExtendedAbsence(absenceData: Omit<ExtendedAbsence, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; data?: ExtendedAbsence; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     const [newAbsence] = await db.insert(extendedAbsences).values(absenceData).returning();
@@ -26,6 +29,8 @@ export async function createExtendedAbsence(absenceData: Omit<ExtendedAbsence, '
 }
 
 export async function updateExtendedAbsence(absenceId: string, absenceData: Partial<Omit<ExtendedAbsence, 'id' | 'created_at' | 'updated_at'>>): Promise<{ success: boolean; data?: ExtendedAbsence; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     const [updatedAbsence] = await db
@@ -40,6 +45,8 @@ export async function updateExtendedAbsence(absenceId: string, absenceData: Part
 }
 
 export async function deleteExtendedAbsence(absenceId: string): Promise<{ success: boolean; error?: string }> {
+  // TODO: Add authorization check (admin only)
+  await requireRole(["admin"]);
   try {
     const db = getDb();
     await db.delete(extendedAbsences).where(eq(extendedAbsences.id, absenceId));
