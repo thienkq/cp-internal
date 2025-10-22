@@ -30,7 +30,7 @@ export async function createUser(userData: Omit<User, 'id' | 'created_at' | 'upd
   await requireRole(["admin"]);
   try {
     const db = getDb();
-    const [newUser] = await db.insert(users).values(userData).returning();
+    const [newUser] = await db.insert(users).values(userData as any).returning();
     return { success: true, data: newUser as User };
   } catch (error: any) {
     return { success: false, error: error.message };

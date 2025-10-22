@@ -4,13 +4,13 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { leaveRequests } from "@/db/schema";
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { isUserAdmin } from "@/lib/user-db-utils";
 
 export async function approveLeaveRequest(requestId: string, approvalNotes?: string) {
   try {
     // Get current user to verify admin role
-    const { user } = await getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new Error("User not authenticated");
     }
@@ -45,7 +45,7 @@ export async function approveLeaveRequest(requestId: string, approvalNotes?: str
 export async function rejectLeaveRequest(requestId: string, rejectionReason: string) {
   try {
     // Get current user to verify admin role
-    const { user } = await getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new Error("User not authenticated");
     }
@@ -80,7 +80,7 @@ export async function rejectLeaveRequest(requestId: string, rejectionReason: str
 export async function cancelLeaveRequest(requestId: string, cancelReason: string) {
   try {
     // Get current user to verify admin role
-    const { user } = await getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new Error("User not authenticated");
     }

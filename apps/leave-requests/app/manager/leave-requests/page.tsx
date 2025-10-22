@@ -1,10 +1,13 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { LeaveRequestTable } from "@/components/leave/leave-request-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Calendar, Clock, CheckSquare, XCircle } from "lucide-react";
+import { getDb } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 interface PageProps {
   searchParams: Promise<{
@@ -14,18 +17,19 @@ interface PageProps {
 }
 
 export default async function ManagerLeaveRequestsPage({ searchParams }: PageProps) {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");
   }
 
   // Fetch user data to confirm manager role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const db = getDb();
+  const [userData] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
 
   if (!userData || !["manager", "admin"].includes(userData.role)) {
     redirect("/dashboard");

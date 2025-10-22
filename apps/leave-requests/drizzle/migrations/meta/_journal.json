@@ -15,6 +15,20 @@
       "when": 1761022462706,
       "tag": "20251021045422_luxuriant_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761102300000,
+      "tag": "20251022045000_fix_userid_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761108650322,
+      "tag": "20251022045050_thin_captain_universe",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,11 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import SetAdminForm from "@/components/admin/set-admin-form";
 
 export default async function SetAdminPage() {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");

@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@workspace/ui/components/tabs";
 import UserForm from "@/components/users/user-form";
@@ -11,7 +11,7 @@ import { getUserById } from "@/app/actions/users";
 import { getAddressesByUserId } from "@/app/actions/addresses";
 
 export default async function AdminUserPage({ params }: { params: Promise<{ userId: string }> }) {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");

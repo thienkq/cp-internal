@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { PageContainer } from '@workspace/ui/components/page-container';
 import { EnhancedLeaveBalanceSection } from '@/components/dashboard/enhanced-leave-balance-section';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import { Button } from '@workspace/ui/components/button';
 import { ArrowLeft } from 'lucide-react';
 
 export default async function LeaveBalanceDetailsPage() {
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   return (
     <PageContainer>

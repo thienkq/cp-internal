@@ -1,23 +1,15 @@
 'use client'
 
-import { createBrowserClient } from '@workspace/supabase'
+import { signIn } from 'next-auth/react'
 import clsx from 'clsx'
 
 export default function GoogleSignInButton({ className }: { className?: string }) {
   const handleSignIn = async () => {
-    const supabase = createBrowserClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
-      },
-    })
-
-    if (error) {
+    try {
+      await signIn('google', {
+        redirectTo: '/dashboard',
+      })
+    } catch (error) {
       console.error('Error signing in with Google:', error)
     }
   }
@@ -51,4 +43,4 @@ export default function GoogleSignInButton({ className }: { className?: string }
       <span className="font-medium">Sign in with Google</span>
     </button>
   )
-} 
+}

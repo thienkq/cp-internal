@@ -1,12 +1,12 @@
 import {
-  pgTable, 
-  text, 
-  timestamp, 
-  uuid, 
-  integer, 
-  boolean, 
-  date, 
-  jsonb, 
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  integer,
+  boolean,
+  date,
+  jsonb,
   serial,
   check,
   index,
@@ -14,7 +14,8 @@ import {
   varchar,
   unique,
   foreignKey,
-  uniqueIndex
+  uniqueIndex,
+  primaryKey
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -36,7 +37,10 @@ export const signupEmailDomains = pgTable('signup_email_domains', {
 // Users table
 export const users = pgTable('users', {
   id: uuid().primaryKey().notNull(),
+  name: text(), // NextAuth adapter expects this
   email: text(),
+  emailVerified: timestamp('emailVerified'),
+  image: text(), // NextAuth adapter expects this
   full_name: text('full_name'),
   role: text().default('employee').notNull(),
   start_date: date('start_date'),
@@ -256,5 +260,58 @@ export const bonusLeaveGrants = pgTable('bonus_leave_grants', {
   check('bonus_leave_grants_days_granted_check', sql`days_granted > 0`),
   check('bonus_leave_grants_days_used_check', sql`days_used >= 0`),
   check('bonus_leave_grants_check', sql`days_used <= days_granted`),
+]);
+
+// NextAuth.js Tables
+
+// Accounts table for OAuth providers
+export const accounts = pgTable('accounts', {
+  userId: uuid('userId').notNull(),
+  type: text().notNull(),
+  provider: text().notNull(),
+  providerAccountId: text('providerAccountId').notNull(),
+  refresh_token: text('refresh_token'),
+  access_token: text('access_token'),
+  expires_at: integer('expires_at'),
+  token_type: text('token_type'),
+  scope: text(),
+  id_token: text('id_token'),
+  session_state: text('session_state'),
+}, (table) => [
+  primaryKey({
+    columns: [table.provider, table.providerAccountId],
+  }),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: 'accounts_userId_fkey'
+  }).onDelete('cascade'),
+  index('accounts_userId_idx').on(table.userId),
+]);
+
+// Sessions table for session management
+export const sessions = pgTable('sessions', {
+  sessionToken: text('sessionToken').primaryKey().notNull(),
+  userId: uuid('userId').notNull(),
+  expires: timestamp('expires').notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: 'sessions_userId_fkey'
+  }).onDelete('cascade'),
+  index('sessions_userId_idx').on(table.userId),
+]);
+
+// Verification tokens table for email verification
+// NextAuth adapter expects 'identifier' column instead of 'email'
+export const verificationTokens = pgTable('verification_tokens', {
+  identifier: text().notNull(), // NextAuth adapter expects this (typically email)
+  token: text().notNull(),
+  expires: timestamp().notNull(),
+}, (table) => [
+  primaryKey({
+    columns: [table.identifier, table.token],
+  }),
 ]);
 

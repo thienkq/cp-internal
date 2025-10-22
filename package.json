@@ -18,5 +18,10 @@
   "packageManager": "pnpm@10.4.1",
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@auth/core": "^0.41.0",
+    "@auth/drizzle-adapter": "^1.11.0",
+    "next-auth": "5.0.0-beta.29"
   }
 }

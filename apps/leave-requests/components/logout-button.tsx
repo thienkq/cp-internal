@@ -1,16 +1,13 @@
 "use client";
 
-import { createBrowserClient } from "@workspace/supabase";
+import { signOut } from "next-auth/react";
 import { Button } from "@workspace/ui/components/button";
-import { useRouter } from "next/navigation";
 
 export function LogoutButton() {
-  const router = useRouter();
-
   const logout = async () => {
-    const supabase = createBrowserClient();
-    await supabase.auth.signOut();
-    router.push("/auth/login");
+    await signOut({
+      redirectTo: "/auth/login",
+    });
   };
 
   return <Button onClick={logout}>Logout</Button>;

@@ -1,16 +1,17 @@
 export interface User {
   id: string;
-  email: string;
-  full_name: string;
+  email: string | null;
+  full_name: string | null;
   role: 'employee' | 'manager' | 'admin';
-  position: string;
-  start_date: string;
+  position: string | null;
+  start_date: string | null;
   end_date: string | null;
-  gender: string;
+  gender: string | null;
   manager_id: string | null;
-  phone?: string;
-  date_of_birth?: string;
+  phone?: string | null;
+  date_of_birth?: string | null;
   is_active?: boolean;
+  emailVerified?: Date | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +37,22 @@ export type Project = {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+};
+
+export type ProjectAssignment = {
+  id: string;
+  user_id: string;
+  project_id: string;
+  role: string;
+  is_lead: boolean;
+  start_date: string;
+  end_date: string | null;
+  status: string;
+  assigned_by: string | null;
+  assigned_at: string | null;
+  updated_at: string | null;
+  project?: Project;
+  user?: User;
 };
 
 export type ExtendedAbsence = {

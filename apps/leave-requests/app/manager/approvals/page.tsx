@@ -1,41 +1,43 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { LeaveRequestList } from "@/components/leave/leave-request-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Clock, AlertCircle } from "lucide-react";
+import { getDb } from "@/db";
+import { users, leaveRequests } from "@/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 
 export default async function ManagerApprovalsPage() {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");
   }
 
   // Fetch user data to confirm manager role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const db = getDb();
+  const [userData] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
 
   if (!userData || !["manager", "admin"].includes(userData.role)) {
     redirect("/dashboard");
   }
 
   // Fetch pending leave requests where current user is the manager
-  const { data: pendingRequests } = await supabase
-    .from("leave_requests")
-    .select(`
-      *,
-      user:users!leave_requests_user_id_fkey(id, full_name, email),
-      leave_type:leave_types(name, description),
-      projects,
-      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
-    `)
-    .eq("current_manager_id", user.id)
-    .eq("status", "pending")
-    .order("created_at", { ascending: true }); // Oldest first for priority
+  const pendingRequests = await db
+    .select()
+    .from(leaveRequests)
+    .where(
+      and(
+        eq(leaveRequests.current_manager_id, user.id),
+        eq(leaveRequests.status, "pending")
+      )
+    )
+    .orderBy(asc(leaveRequests.created_at));
 
   // Separate urgent requests (starting soon)
   const now = new Date();

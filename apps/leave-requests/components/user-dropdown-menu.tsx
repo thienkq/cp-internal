@@ -26,16 +26,21 @@ import {
   DropdownMenuSubTrigger,
 } from '@workspace/ui/components/dropdown-menu';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  createBrowserClient,
-  type User as SupabaseUser,
-} from '@workspace/supabase';
 import { useCallback } from 'react';
 import { getUserInitials, getUserDisplayName } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import { signOut } from 'next-auth/react';
+
+interface NextAuthUser {
+  id?: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  role?: string;
+}
 
 interface UserDropdownMenuProps {
-  user?: SupabaseUser | null;
+  user?: NextAuthUser | null;
   userProfile?: {
     role: 'employee' | 'manager' | 'admin';
   } | null;
@@ -48,14 +53,12 @@ export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
 
   const handleSignOut = useCallback(async () => {
     try {
-      const supabase = createBrowserClient();
-      await supabase.auth.signOut();
-      router.push('/auth/login');
+      await signOut({ callbackUrl: '/auth/login' });
     } catch (error) {
       console.error('Sign out error:', error);
       // You might want to show a toast notification here
     }
-  }, [router]);
+  }, []);
 
   const userInitials = getUserInitials(user);
   const displayName = getUserDisplayName(user);

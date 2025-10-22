@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { redirect } from 'next/navigation';
 import { PageContainer } from '@workspace/ui/components/page-container';
 import ProfilePageClient from './page.client';
@@ -8,7 +8,7 @@ import { eq } from 'drizzle-orm';
 import { User, Address } from '@/types';
 
 export default async function ProfilePage() {
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   const userId = user?.id as string;
 

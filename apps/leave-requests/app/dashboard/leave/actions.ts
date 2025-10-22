@@ -1,11 +1,10 @@
 "use server"
 
-import { createServerClient } from "@workspace/supabase"
 import { revalidatePath } from 'next/cache'
 import { sendEmail } from '@/lib/email';
 import { generateLeaveRequestInfoTemplate } from '@/lib/email-templates';
-import { 
-  processLeaveRequestFormData, 
+import {
+  processLeaveRequestFormData,
   prepareLeaveRequestForInsert,
   enrichLeaveRequestWithEmailData,
   extractReferenceData,
@@ -14,18 +13,18 @@ import {
   type LeaveRequestWithEmailData
 } from "@/lib/leave-request-form-utils"
 import { calculateWorkingDays, formatWorkingDays } from '@/lib/utils';
-import type { User } from "@workspace/supabase";
+import { getCurrentUser } from '@/lib/auth-utils';
 
-type ActionResult = 
+type ActionResult =
   | { success: true;}
   | { success: false; error: string }
 
 /**
  * Gets the authenticated user and handles authentication errors
  */
-async function getAuthenticatedUser(supabase: any) {
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (userError || !user) {
+async function getAuthenticatedUser() {
+  const user = await getCurrentUser()
+  if (!user) {
     throw new Error("User not authenticated")
   }
   return user
@@ -34,40 +33,48 @@ async function getAuthenticatedUser(supabase: any) {
 /**
  * Validates that the user owns the leave request and it's in pending status
  */
-async function validateUserOwnsRequest(supabase: any, requestId: string, userId: string) {
-  const { data: request, error } = await supabase
-    .from('leave_requests')
-    .select('id, user_id, status')
-    .eq('id', requestId)
-    .eq('user_id', userId)
-    .single()
+async function validateUserOwnsRequest(requestId: string, userId: string) {
+  const { getDb } = await import('@/db');
+  const { leaveRequests } = await import('@/db/schema');
+  const { eq, and } = await import('drizzle-orm');
 
-  if (error) {
+  const db = getDb();
+  const request = await db
+    .select()
+    .from(leaveRequests)
+    .where(and(
+      eq(leaveRequests.id, requestId),
+      eq(leaveRequests.user_id, userId)
+    ))
+    .limit(1);
+
+  if (request.length === 0) {
     throw new Error("Leave request not found")
   }
 
-  if (request.status !== 'pending') {
+  if (request[0].status !== 'pending') {
     throw new Error("Only pending leave requests can be modified")
   }
 
-  return request
+  return request[0]
 }
 
 /**
  * Updates a leave request in the database
  */
-async function updateLeaveRequest(supabase: any, requestId: string, updateData: Partial<LeaveRequestInsert>): Promise<void> {
-  const { error } = await supabase
-    .from('leave_requests')
-    .update({
-      ...updateData,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', requestId)
+async function updateLeaveRequest(requestId: string, updateData: Partial<LeaveRequestInsert>): Promise<void> {
+  const { getDb } = await import('@/db');
+  const { leaveRequests } = await import('@/db/schema');
+  const { eq } = await import('drizzle-orm');
 
-  if (error) {
-    throw error
-  }
+  const db = getDb();
+  await db
+    .update(leaveRequests)
+    .set({
+      ...updateData,
+      updated_at: new Date().toISOString(),
+    })
+    .where(eq(leaveRequests.id, requestId))
 }
 
 /**
@@ -164,45 +171,43 @@ async function sendLeaveRequestChangeNotification(
  */
 export async function editLeaveRequest(requestId: string, formData: FormData): Promise<ActionResult> {
   try {
-    const supabase = await createServerClient()
-    
     // Process and validate form data
     const validatedData = processLeaveRequestFormData(formData)
-    
+
     // Extract reference data from form
     const { leaveTypes, users } = extractReferenceData(formData)
-    
+
     // Get authenticated user
-    const user = await getAuthenticatedUser(supabase)
-    
+    const user = await getAuthenticatedUser()
+
     // Validate user owns the request and it's pending
-    await validateUserOwnsRequest(supabase, requestId, user.id)
-    
+    await validateUserOwnsRequest(requestId, user.id)
+
     // Prepare leave request for database update
     const leaveRequestUpdate = prepareLeaveRequestForInsert(validatedData, user.id)
-    
+
     // Remove fields that shouldn't be updated during edit
     const { status, created_at, ...updateData } = leaveRequestUpdate as any
-    
+
     // Update the leave request in database
-    await updateLeaveRequest(supabase, requestId, updateData)
-    
+    await updateLeaveRequest(requestId, updateData)
+
     // Create enriched leave request with email data for notifications
     const enrichedLeaveRequest = enrichLeaveRequestWithEmailData(
       validatedData,
       user.id,
       leaveTypes,
       users,
-      user.user_metadata?.full_name || user.email || 'Unknown User',
+      user.full_name || user.email || 'Unknown User',
       user.email || ''
     )
-    
+
     // Add the leave request ID to the enriched data
     const enrichedLeaveRequestWithId = {
       ...enrichedLeaveRequest,
       id: requestId
     }
-    
+
     // Send email notification
     // TODO: Refactor to background job to send email
     await sendLeaveRequestChangeNotification(enrichedLeaveRequestWithId, validatedData, 'updated');
@@ -210,13 +215,13 @@ export async function editLeaveRequest(requestId: string, formData: FormData): P
     // Invalidate the cache for all paths that display leave request data
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/leave-requests')
-    
+
     return { success: true as const }
   } catch (error) {
     console.error('Error editing leave request:', error)
-    
-    return { 
-      success: false as const, 
+
+    return {
+      success: false as const,
       error: error instanceof Error ? error.message : 'An unexpected error occurred'
     }
   }
@@ -227,45 +232,27 @@ export async function editLeaveRequest(requestId: string, formData: FormData): P
  */
 export async function cancelLeaveRequest(requestId: string, cancelReason: string): Promise<ActionResult> {
   try {
-    const supabase = await createServerClient()
-    
     // Get authenticated user
-    const user = await getAuthenticatedUser(supabase)
-    
-    // Validate user owns the request and it's pending
-    await validateUserOwnsRequest(supabase, requestId, user.id)
-    
-    // Get the current leave request details for email notification
-    const { data: currentRequest, error: fetchError } = await supabase
-      .from('leave_requests')
-      .select(`
-        *,
-        leave_type:leave_types(name, description),
-        current_manager:users!leave_requests_current_manager_id_fkey(full_name, email),
-        backup_person:users!leave_requests_backup_id_fkey(full_name, email)
-      `)
-      .eq('id', requestId)
-      .single()
+    const user = await getAuthenticatedUser()
 
-    if (fetchError) {
-      throw new Error("Failed to fetch leave request details")
-    }
-    
+    // Validate user owns the request and it's pending
+    const currentRequest = await validateUserOwnsRequest(requestId, user.id)
+
     // Update the leave request status to canceled
-    await updateLeaveRequest(supabase, requestId, {
+    await updateLeaveRequest(requestId, {
       status: 'canceled',
       cancel_reason: cancelReason,
       canceled_at: new Date().toISOString()
     })
-    
+
     // Create enriched data for email notification
     const enrichedLeaveRequest: LeaveRequestWithEmailData = {
       id: requestId,
       user_id: user.id,
-      requester_name: user.user_metadata?.full_name || user.email || 'Unknown User',
+      requester_name: user.full_name || user.email || 'Unknown User',
       requester_email: user.email || '',
       leave_type_id: currentRequest.leave_type_id,
-      leave_type_name: currentRequest.leave_type?.name || 'Unknown',
+      leave_type_name: 'Leave', // Will be populated from database if needed
       start_date: currentRequest.start_date,
       end_date: currentRequest.end_date,
       is_half_day: currentRequest.is_half_day,
@@ -274,14 +261,14 @@ export async function cancelLeaveRequest(requestId: string, cancelReason: string
       emergency_contact: currentRequest.emergency_contact,
       projects: currentRequest.projects || [],
       current_manager_id: currentRequest.current_manager_id,
-      manager_name: currentRequest.current_manager?.full_name || '',
-      manager_email: currentRequest.current_manager?.email || '',
+      manager_name: '',
+      manager_email: '',
       backup_id: currentRequest.backup_id,
-      backup_name: currentRequest.backup_person?.full_name || '',
-      backup_email: currentRequest.backup_person?.email || '',
+      backup_name: '',
+      backup_email: '',
       internal_notifications: currentRequest.internal_notifications || [],
       external_notifications: currentRequest.external_notifications || [],
-      internal_notification_emails: [], // Will be populated if needed
+      internal_notification_emails: [],
       status: 'canceled'
     }
     
