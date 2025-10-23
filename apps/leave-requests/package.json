@@ -26,7 +26,6 @@
     "@auth/drizzle-adapter": "^1.11.0",
     "@hookform/resolvers": "^5.1.1",
     "@tanstack/react-table": "^8.21.3",
-    "@workspace/supabase": "workspace:*",
     "@workspace/ui": "workspace:*",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
