@@ -57,18 +57,18 @@ export async function getAllBonusLeaveGrantsServer(year?: number): Promise<Bonus
       }
       
       grouped[key].total_granted += grant.days_granted;
-      grouped[key].total_used += grant.days_used;
+      grouped[key].total_used += grant.days_used || 0;
       grouped[key].grants.push({
         id: grant.id,
         user_id: grant.user_id,
         year: grant.year,
         days_granted: grant.days_granted,
-        days_used: grant.days_used,
-        reason: grant.reason,
+        days_used: grant.days_used || 0,
+        reason: grant.reason || undefined,
         granted_by: grant.granted_by,
-        granted_at: grant.granted_at,
-        created_at: grant.created_at,
-        updated_at: grant.updated_at
+        granted_at: grant.granted_at || '',
+        created_at: grant.created_at || '',
+        updated_at: grant.updated_at || ''
       });
     });
     

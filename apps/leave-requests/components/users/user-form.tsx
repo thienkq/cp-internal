@@ -42,9 +42,9 @@ export default function UserForm({ initialData, pageTitle, canEditWorkInfo = fal
     const normalizedData = normalizeUserFormData(data);
     let result;
     if (initialData) {
-      result = await updateUser(initialData.id, normalizedData);
+      result = await updateUser(initialData.id, normalizedData as any);
     } else {
-      result = await createUser(normalizedData);
+      result = await createUser(normalizedData as any);
     }
     if (!result.success) {
       toast.error("Failed to save user.", { description: result.error });

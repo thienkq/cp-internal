@@ -41,7 +41,7 @@ export default async function ManagerDashboardPage() {
   const recentRequests = teamRequests?.slice(0, 5) || [];
 
   // Get unique team members
-  const teamMembers = teamRequests?.reduce((acc: any[], req) => {
+  const teamMembers = teamRequests?.reduce((acc: any[], req: any) => {
     if (req.user && !acc.find((member: any) => member.id === req.user.id)) {
       acc.push(req.user);
     }
@@ -126,7 +126,7 @@ export default async function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <LeaveRequestList
-                leaveRequests={pendingRequests}
+                leaveRequests={pendingRequests as any}
                 title=""
                 showUserColumn={true}
                 showActions={true}
@@ -148,7 +148,7 @@ export default async function ManagerDashboardPage() {
           </div>
           
           <LeaveRequestList
-            leaveRequests={recentRequests}
+            leaveRequests={recentRequests as any}
             title="Latest Leave Requests"
             showUserColumn={true}
             showActions={true}

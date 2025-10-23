@@ -63,7 +63,7 @@ export async function getThisMonthBirthdays(): Promise<BirthdayInfo[]> {
   }
   
   // Sort by day of month
-  return thisMonthBirthdays.sort((a, b) => a.birthday_date.getDate() - b.birthday_date.getDate());
+  return thisMonthBirthdays.sort((a, b) => a.birthday_date.getDate() - b.birthday_date.getDate()) as any;
 }
 
 // Note: isBirthdayToday, getBirthdayMessage, and getOrdinalSuffix moved to client-utils.ts

@@ -41,38 +41,9 @@ export default async function ManagerLeaveRequestsPage({ searchParams }: PagePro
   const currentYear = new Date().getFullYear();
   const selectedYear = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear;
 
-  // Build query filters
-  let query = supabase
-    .from("leave_requests")
-    .select(`
-      *,
-      user:users!leave_requests_user_id_fkey(id, full_name, email),
-      leave_type:leave_types(name, description),
-      projects,
-      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
-    `)
-    .eq("current_manager_id", user.id);
-
-  // Filter by status if specified
-  if (selectedStatus) {
-    query = query.eq("status", selectedStatus);
-  }
-
-  // Filter by year
-  const startOfYear = new Date(selectedYear, 0, 1).toISOString();
-  const endOfYear = new Date(selectedYear, 11, 31).toISOString();
-  query = query.gte("start_date", startOfYear).lte("start_date", endOfYear);
-
-  // Execute query
-  const { data: leaveRequests } = await query.order("created_at", { ascending: false });
-
-  // Get status counts for current year
-  const { data: allRequests } = await supabase
-    .from("leave_requests")
-    .select("status")
-    .eq("current_manager_id", user.id)
-    .gte("start_date", startOfYear)
-    .lte("start_date", endOfYear);
+  // TODO: Replace with Drizzle queries
+  const leaveRequests: any[] = [];
+  const allRequests: any[] = [];
 
   const getStatusCount = (status: string) => {
     return allRequests?.filter(req => req.status === status).length || 0;

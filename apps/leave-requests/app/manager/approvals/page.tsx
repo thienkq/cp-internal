@@ -133,7 +133,7 @@ export default async function ManagerApprovalsPage() {
             </CardHeader>
             <CardContent className="p-0">
               <LeaveRequestList
-                leaveRequests={urgentRequests}
+                leaveRequests={urgentRequests as any}
                 title=""
                 showUserColumn={true}
                 showActions={true}
@@ -154,7 +154,7 @@ export default async function ManagerApprovalsPage() {
             </CardHeader>
             <CardContent className="p-0">
               <LeaveRequestList
-                leaveRequests={regularRequests}
+                leaveRequests={regularRequests as any}
                 title=""
                 showUserColumn={true}
                 showActions={true}

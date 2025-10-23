@@ -8,7 +8,7 @@ import { useState, useTransition, useEffect } from "react";
 import { bulkAssignUsers } from "@/app/admin/projects/[projectId]/assignments/actions";
 import { toast } from "sonner";
 import { MultiSelect, type MultiSelectOption } from "@/components/common/multi-select";
-import { createBrowserClient } from "@workspace/supabase";
+// TODO: Replace Supabase calls with API routes
 import { assignmentRoleOptions } from "../users/user-constants";
 
 interface AssignmentConfig {
@@ -27,15 +27,8 @@ export default function AssignmentForm({ users, projectId }: { users: any[]; pro
 
   // Fetch current user id on mount
   useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createBrowserClient();
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user?.id) {
-        setCurrentUserId(data.user.id);
-      }
-      setLoadingUser(false);
-    };
-    fetchUser();
+    // TODO: Replace with NextAuth client-side auth
+    setLoadingUser(false);
   }, []);
 
   const userOptions: MultiSelectOption[] = users.map(user => ({

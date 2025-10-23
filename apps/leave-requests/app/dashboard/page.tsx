@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-utils';
 import { PageContainer } from '@workspace/ui/components/page-container';
 import { DashboardSkeleton } from '@/components/skeletons';
 import DashboardPageClient from './page.client';
+import type { User } from '@/types';
 import { getUserBonusLeaveSummary } from '@/lib/bonus-leave-utils';
 import {
   getAnniversaryInfo,

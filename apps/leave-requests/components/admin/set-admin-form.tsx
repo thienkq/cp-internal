@@ -4,7 +4,6 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
 
 export default function SetAdminForm() {
   const [email, setEmail] = useState("");
@@ -15,33 +14,8 @@ export default function SetAdminForm() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createBrowserClient();
-      
-      // Find user by email
-      const { data: user, error: userError } = await supabase
-        .from("users")
-        .select("id, email, full_name")
-        .eq("email", email)
-        .single();
-
-      if (userError || !user) {
-        toast.error("User not found");
-        return;
-      }
-
-      // Update user role to admin
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ role: "admin" })
-        .eq("id", user.id);
-
-      if (updateError) {
-        console.error("Error updating user role:", updateError);
-        toast.error("Failed to set admin role");
-        return;
-      }
-
-      toast.success(`Successfully set ${user.full_name} (${user.email}) as admin`);
+      // TODO: Create API route for updating user roles
+      toast.error("This functionality needs to be implemented with an API route");
       setEmail("");
     } catch (error) {
       console.error("Error setting admin role:", error);

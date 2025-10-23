@@ -44,7 +44,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ user
           <ExtendedAbsenceList userId={userId} />
         </TabsContent>
         <TabsContent value="bonus-leave">
-          <BonusLeaveGrants userId={userId} userName={userData.full_name} />
+          <BonusLeaveGrants userId={userId} userName={userData.full_name || ''} />
         </TabsContent>
       </Tabs>
     </PageContainer>

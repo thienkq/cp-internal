@@ -62,8 +62,7 @@ export function UserDropdownMenu({ user, userProfile }: UserDropdownMenuProps) {
 
   const userInitials = getUserInitials(user);
   const displayName = getUserDisplayName(user);
-  const avatarUrl =
-    user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const avatarUrl = (user as any)?.image;
 
   const themeOptions = [
     { value: 'system', label: 'System', icon: Monitor },

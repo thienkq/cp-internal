@@ -4,6 +4,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import { getDb } from "@/db"
 import { users, accounts, sessions, verificationTokens } from "@/db/schema"
 import { eq } from "drizzle-orm"
+import { randomUUID } from "crypto"
 
 if (!process.env.GOOGLE_CLIENT_ID) {
   throw new Error("Missing GOOGLE_CLIENT_ID environment variable")
@@ -17,7 +18,7 @@ if (!process.env.NEXTAUTH_SECRET) {
   throw new Error("Missing NEXTAUTH_SECRET environment variable")
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   debug: process.env.NODE_ENV === 'development',
   adapter: DrizzleAdapter(getDb(), {
     usersTable: users,
@@ -73,7 +74,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         } else {
           console.log("No existing user found with email:", user.email)
-          return false
+          console.log("Creating new user...")
+
+          // Create new user with default role
+          const newUser = await db.insert(users).values({
+            id: randomUUID(),
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: 'employee', // Default role
+            is_active: true,
+          }).returning()
+
+          if (newUser.length > 0 && newUser[0]) {
+            user.id = newUser[0].id
+            console.log("Created new user with ID:", user.id)
+          } else {
+            console.log("Failed to create new user")
+            return false
+          }
         }
       } catch (error) {
         console.error("Error in signIn callback:", error)
@@ -184,3 +203,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 })
 
+export const { handlers, auth, signIn, signOut } = nextAuth as any

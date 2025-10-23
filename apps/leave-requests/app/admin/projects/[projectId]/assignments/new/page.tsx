@@ -1,36 +1,26 @@
-import { createServerClient } from "@workspace/supabase";
+import { requireAuth } from "@/lib/auth-server-utils";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { notFound } from "next/navigation";
 import AssignmentForm from "@/components/projects/assignment-form";
 
 export default async function ProjectAssignmentNewPage({ params }: { params: Promise<{ projectId: string }> }) {
-  const supabase = await createServerClient();
+  await requireAuth();
   const { projectId } = await params;
 
-  // Fetch project
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", projectId)
-    .single();
+  // TODO: Fetch project using Drizzle
+  const project = null;
+  const projectError = null;
 
   if (projectError || !project) {
     notFound();
   }
 
-  // Fetch users
-  const { data: users, error: usersError } = await supabase
-    .from("users")
-    .select("id, full_name, email, role")
-    .order("full_name", { ascending: true });
-
-  if (usersError) {
-    return <div className="text-red-600">Failed to load users.</div>;
-  }
+  // TODO: Fetch users using Drizzle
+  const users: any[] = [];
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-bold mb-4">Add Assignment for {project.name}</h1>
+      <h1 className="text-2xl font-bold mb-4">Add Assignment for Project</h1>
       <div className="bg-white rounded shadow p-4">
         <AssignmentForm users={users} projectId={projectId} />
       </div>

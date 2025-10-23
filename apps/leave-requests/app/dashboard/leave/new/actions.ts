@@ -1,6 +1,9 @@
 'use server';
 
-import { createServerClient } from '@workspace/supabase';
+import { getUser } from '@/lib/auth-server-utils';
+import { getDb } from '@/db';
+import { leaveRequests, users, leaveTypes } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from '@/lib/email';
 import {
@@ -17,8 +20,6 @@ import {
   type LeaveRequestWithEmailData,
 } from '@/lib/leave-request-form-utils';
 import { calculateWorkingDays, formatWorkingDays } from '@/lib/utils';
-import { getDb } from '@/db';
-import { leaveRequests } from '@/db/schema';
 
 type SubmitLeaveRequestResult =
   | { success: true }
@@ -28,12 +29,8 @@ type SubmitLeaveRequestResult =
  * Gets the authenticated user and handles authentication errors
  */
 async function getAuthenticatedUser() {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) {
+  const user = await getUser();
+  if (!user) {
     throw new Error('User not authenticated');
   }
   return user;
@@ -184,7 +181,7 @@ export async function submitLeaveRequest(
       user.id,
       leaveTypes,
       users,
-      user.user_metadata?.full_name || user.email || 'Unknown User',
+      user.name || user.email || 'Unknown User',
       user.email || ''
     );
 

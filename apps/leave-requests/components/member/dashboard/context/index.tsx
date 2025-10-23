@@ -1,13 +1,13 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { User } from '@workspace/supabase';
+// TODO: Replace with NextAuth User type
 import { AnniversaryInfo } from '@/lib/anniversary-utils';
 import { LeaveBalance } from '@/lib/leave-quota-utils';
 import { BonusLeaveSummary } from '@/lib/bonus-leave-utils';
 
 export type DashboardContextType = {
-  user: User;
+  user: any;
   userName: string;
   userData: {
     id: string;
@@ -30,7 +30,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(
 // Provider component
 export const DashboardProvider: React.FC<{
   children: React.ReactNode;
-  user: User;
+  user: any;
   userName: string;
   userData: {
     id: string;

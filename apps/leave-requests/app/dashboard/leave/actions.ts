@@ -52,7 +52,7 @@ async function validateUserOwnsRequest(requestId: string, userId: string) {
     throw new Error("Leave request not found")
   }
 
-  if (request[0].status !== 'pending') {
+  if (request[0]?.status !== 'pending') {
     throw new Error("Only pending leave requests can be modified")
   }
 
@@ -256,10 +256,10 @@ export async function cancelLeaveRequest(requestId: string, cancelReason: string
       start_date: currentRequest.start_date,
       end_date: currentRequest.end_date,
       is_half_day: currentRequest.is_half_day,
-      half_day_type: currentRequest.half_day_type,
-      message: currentRequest.message,
+      half_day_type: currentRequest.half_day_type as "morning" | "afternoon" | null,
+      message: currentRequest.message || '',
       emergency_contact: currentRequest.emergency_contact,
-      projects: currentRequest.projects || [],
+      projects: (currentRequest.projects as any) || [],
       current_manager_id: currentRequest.current_manager_id,
       manager_name: '',
       manager_email: '',
@@ -278,12 +278,12 @@ export async function cancelLeaveRequest(requestId: string, cancelReason: string
       start_date: currentRequest.start_date,
       end_date: currentRequest.end_date,
       is_half_day: currentRequest.is_half_day,
-      half_day_type: currentRequest.half_day_type,
+      half_day_type: currentRequest.half_day_type as "morning" | "afternoon" | null,
       message: currentRequest.message || '',
       emergency_contact: currentRequest.emergency_contact,
-      projects: currentRequest.projects || [],
-      current_manager_id: currentRequest.current_manager_id,
-      backup_id: currentRequest.backup_id,
+      projects: (currentRequest.projects as any) || [],
+      current_manager_id: currentRequest.current_manager_id || '',
+      backup_id: currentRequest.backup_id || '',
       internal_notifications: currentRequest.internal_notifications || [],
       external_notifications: currentRequest.external_notifications || []
     }

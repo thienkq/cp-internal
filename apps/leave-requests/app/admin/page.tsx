@@ -5,29 +5,20 @@ import { Calendar, Trophy, Users, Gift, FileText } from "lucide-react";
 import { getThisMonthAnniversaries } from "@/lib/anniversary-utils";
 import { getThisMonthBirthdays } from "@/lib/birthday-utils";
 import { PendingLeaveRequestsTable } from "@/components/admin/pending-leave-requests-table";
-import { createServerClient } from "@workspace/supabase";
+import { requireAuth } from "@/lib/auth-server-utils";
 
 export default async function AdminPage() {
+  // Require authentication
+  await requireAuth();
+
   // Get this month's anniversaries and birthdays on the server side
   const anniversaries = await getThisMonthAnniversaries();
   const birthdays = await getThisMonthBirthdays();
 
-  // Fetch pending leave requests
-  const supabase = await createServerClient();
-  const { data: allLeaveRequests, error } = await supabase
-    .from("leave_requests")
-    .select(`
-      *,
-      user:users!leave_requests_user_id_fkey(full_name, email),
-      leave_type:leave_types(name, description),
-      projects,
-      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
-    `)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
+  // TODO: Fetch pending leave requests using Drizzle
+  let allLeaveRequests: any[] = [];
   // Get pending requests only
-  const pendingRequests = allLeaveRequests?.filter(req => req.status === "pending") || [];
+  const pendingRequests: any[] = [];
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 

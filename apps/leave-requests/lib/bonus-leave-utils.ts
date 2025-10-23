@@ -1,7 +1,7 @@
 import { getDb } from '@/db';
 import { bonusLeaveGrants, users } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { createBrowserClient } from "@workspace/supabase";
+// TODO: Replace with NextAuth client-side auth
 
 export interface BonusLeaveGrant {
   id: string;
@@ -52,7 +52,7 @@ export async function getUserBonusLeaveGrants(userId: string, year?: number): Pr
       .where(and(...whereConditions))
       .orderBy(desc(bonusLeaveGrants.created_at));
     
-    return data || [];
+    return (data || []) as any;
   } catch (error) {
     console.error("Error fetching bonus leave grants:", error);
     return [];
@@ -95,12 +95,12 @@ export async function getUserBonusLeaveSummary(userId: string, year: number): Pr
     }
     
     const totalGranted = grants.reduce((sum, grant) => sum + grant.days_granted, 0);
-    const totalUsed = grants.reduce((sum, grant) => sum + grant.days_used, 0);
+    const totalUsed = grants.reduce((sum, grant) => sum + (grant.days_used || 0), 0);
     const remaining = totalGranted - totalUsed;
     
     return {
       user_id: userId,
-      full_name: grants[0].full_name || 'Unknown User',
+      full_name: grants[0]?.full_name || 'Unknown User',
       year,
       total_granted: totalGranted,
       total_used: totalUsed,
@@ -110,14 +110,14 @@ export async function getUserBonusLeaveSummary(userId: string, year: number): Pr
         user_id: grant.user_id,
         year: grant.year,
         days_granted: grant.days_granted,
-        days_used: grant.days_used,
+        days_used: grant.days_used || 0,
         reason: grant.reason,
         granted_by: grant.granted_by,
-        granted_by_name: grant.granted_by_name,
+        granted_by_name: (grant as any).granted_by_name,
         granted_at: grant.granted_at,
         created_at: grant.created_at,
         updated_at: grant.updated_at
-      }))
+      })) as any
     };
   } catch (error) {
     console.error("Error fetching bonus leave summary:", error);

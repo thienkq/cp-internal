@@ -87,7 +87,7 @@ export async function calculateEffectiveTenure(
   if (absences) {
     for (const absence of absences) {
       // Use helper function to determine if absence should be processed
-      if (!shouldProcessAbsenceForTenure(absence, targetDate)) {
+      if (!shouldProcessAbsenceForTenure(absence as any, targetDate)) {
         continue;
       }
       
@@ -238,7 +238,7 @@ export async function getUpcomingAnniversaries(limit: number = 10): Promise<Arra
   // Sort by days until anniversary and limit results
   return upcomingAnniversaries
     .sort((a, b) => a.days_until - b.days_until)
-    .slice(0, limit);
+    .slice(0, limit) as any;
 }
 
 /**
@@ -306,7 +306,7 @@ export async function getThisMonthAnniversaries(): Promise<Array<{
   }
   
   // Sort by day of month
-  return thisMonthAnniversaries.sort((a, b) => a.anniversary_date.getDate() - b.anniversary_date.getDate());
+  return thisMonthAnniversaries.sort((a, b) => a.anniversary_date.getDate() - b.anniversary_date.getDate()) as any;
 }
 
 // Note: getAnniversaryMessage and getOrdinalSuffix moved to client-utils.ts
