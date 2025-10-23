@@ -8,7 +8,7 @@ import {
 import { Badge } from '@workspace/ui/components/badge';
 import { LeaveTypeTabs } from '@/components/leave/leave-type-tabs';
 import { Button } from '@workspace/ui/components/button';
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { getDb } from '@/db';
 import {
   leaveRequests,
@@ -45,7 +45,7 @@ interface PageProps {
 export default async function UserLeaveRequestsPage({
   searchParams,
 }: PageProps) {
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   const userId = user?.id as string;
 

@@ -4,7 +4,7 @@ import BirthdayWrapper from '@/components/birthday-wrapper';
 import BirthdayBanner from '@/components/birthday-banner';
 import AnniversaryWrapper from '@/components/anniversary-wrapper';
 import WorkAnniversaryBanner from '@/components/work-anniversary-banner';
-import { isBirthdayToday } from '@/lib/birthday-utils';
+import { isBirthdayToday } from '@/lib/client-utils';
 import { useDashboardContext } from '../member/dashboard/context';
 
 export function AnniversarySection() {

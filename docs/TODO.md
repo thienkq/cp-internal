@@ -83,3 +83,5 @@ const TENURE_ACCRUAL_RULES = {
 
 ## Query performance
 ### Pagination for All Leave Req list
+
+## Calendar integration

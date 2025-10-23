@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
-import { createBrowserClient } from "@workspace/supabase";
 import { Badge } from "@workspace/ui/components/badge";
+import { getProjectAssignmentsByUserId, createProjectAssignment, updateProjectAssignment, deleteProjectAssignment } from "@/app/actions/project-assignments";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
@@ -100,7 +100,6 @@ export default function MyAssignmentList({
   // Add or edit assignment
   const handleSave = async (values: any, id?: string) => {
     setEditLoading(true);
-    const supabase = createBrowserClient();
     // Always send null for end_date if blank
     // Remove 'project' field if present
     const { project, ...rest } = values;
@@ -108,54 +107,40 @@ export default function MyAssignmentList({
       ...rest,
       end_date: values.end_date ? values.end_date : null,
     };
-    let error;
+    
+    let result;
     if (id) {
       // Edit
-      ({ error } = await supabase
-        .from("project_assignments")
-        .update(valuesToSave)
-        .eq("id", id));
+      result = await updateProjectAssignment(id, valuesToSave);
       setAddMode(false); // Close add form if editing
     } else {
       // Add
-      ({ error } = await supabase
-        .from("project_assignments")
-        .insert([{ ...valuesToSave, user_id: userId }])
-      );
+      result = await createProjectAssignment({ ...valuesToSave, user_id: userId });
       setEditId(null); // Close edit form if adding
     }
     setEditLoading(false);
     setAddMode(false);
     setEditId(null);
-    if (!error) {
+    if (result.success) {
       // Refresh assignments
-      const { data } = await supabase
-        .from("project_assignments")
-        .select("*, project:project_id(id, name)")
-        .eq("user_id", userId)
-        .order("assigned_at", { ascending: false });
+      const data = await getProjectAssignmentsByUserId(userId);
       setAssignments(data || []);
     } else {
-      alert("Failed to save assignment: " + error.message);
+      alert("Failed to save assignment: " + result.error);
     }
   };
 
   const handleDelete = async (id: string) => {
     setDeleteLoading(true);
-    const supabase = createBrowserClient();
-    const { error } = await supabase.from("project_assignments").delete().eq("id", id);
+    const result = await deleteProjectAssignment(id);
     setDeleteLoading(false);
     setDeleteId(null);
-    if (!error) {
+    if (result.success) {
       // Refresh assignments
-      const { data } = await supabase
-        .from("project_assignments")
-        .select("*, project:project_id(id, name)")
-        .eq("user_id", userId)
-        .order("assigned_at", { ascending: false });
+      const data = await getProjectAssignmentsByUserId(userId);
       setAssignments(data || []);
     } else {
-      alert("Failed to delete assignment: " + error.message);
+      alert("Failed to delete assignment: " + result.error);
     }
   };
 

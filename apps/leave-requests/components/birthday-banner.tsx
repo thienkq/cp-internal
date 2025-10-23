@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alert } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
 import { Cake, Sparkles, Heart } from "lucide-react";
-import { getBirthdayMessage, getOrdinalSuffix } from "@/lib/birthday-utils";
+import { getBirthdayMessage, getOrdinalSuffix } from "@/lib/client-utils";
 import BirthdayCelebration from "./birthday-celebration";
 
 interface BirthdayBannerProps {

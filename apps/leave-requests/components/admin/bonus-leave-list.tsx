@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Badge } from "@workspace/ui/components/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
-import { getAllBonusLeaveGrants, deleteBonusLeaveGrant, type BonusLeaveSummary } from "@/lib/bonus-leave-utils";
+// TODO: Replace with NextAuth client-side auth
+import { deleteBonusLeaveGrant, getAllBonusLeaveGrants, type BonusLeaveSummary } from "@/app/actions/bonus-leave";
 import { Gift, Trash2, Award, Calendar, User } from "lucide-react";
 
 interface BonusLeaveListProps {

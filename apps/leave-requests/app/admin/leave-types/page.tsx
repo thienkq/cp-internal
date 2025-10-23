@@ -1,16 +1,24 @@
-import { createServerClient } from "@workspace/supabase"
+import { requireAuth } from "@/lib/auth-server-utils"
+import { getDb } from "@/db"
+import { leaveTypes } from "@/db/schema"
+import { asc } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 
 export default async function LeaveTypesPage() {
-  const supabase = await createServerClient()
-  
-  const { data: leaveTypes, error } = await supabase
-    .from('leave_types')
-    .select('*')
-    .order('created_at', { ascending: true })
+  // Require authentication
+  await requireAuth()
 
-  if (error) {
+  // Fetch leave types using Drizzle
+  const db = getDb()
+  let leaveTypesData: typeof leaveTypes.$inferSelect[] = []
+
+  try {
+    leaveTypesData = await db
+      .select()
+      .from(leaveTypes)
+      .orderBy(asc(leaveTypes.created_at))
+  } catch (error) {
     console.error('Error fetching leave types:', error)
   }
 
@@ -24,7 +32,7 @@ export default async function LeaveTypesPage() {
 
       {/* Leave Types Cards */}
       <div className="space-y-4">
-        {leaveTypes?.map((leaveType: any) => (
+        {leaveTypesData?.map((leaveType) => (
           <Card key={leaveType.id} className="bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

@@ -10,13 +10,13 @@ import { Separator } from "@workspace/ui/components/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@workspace/ui/components/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
+// TODO: Replace Supabase calls with API routes
 import { 
   grantBonusLeave, 
   deleteBonusLeaveGrant,
-  type BonusLeaveSummary,
   type GrantBonusLeaveData 
-} from "@/lib/bonus-leave-utils";
+} from "@/app/actions/bonus-leave";
+import { type BonusLeaveSummary } from "@/lib/bonus-leave-utils";
 import { Plus, Gift, Trash2, Calendar, User, Award } from "lucide-react";
 
 interface BonusLeaveGrantsProps {
@@ -42,21 +42,8 @@ export default function BonusLeaveGrants({ userId, userName }: BonusLeaveGrantsP
   const loadBonusLeaveData = async () => {
     setIsLoading(true);
     try {
-      const supabase = createBrowserClient();
-      const { data: grants, error } = await supabase
-        .from("bonus_leave_grants")
-        .select(`
-          *,
-          user:users!bonus_leave_grants_user_id_fkey(full_name)
-        `)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching bonus leave grants:", error);
-        toast.error("Failed to load bonus leave data");
-        return;
-      }
+      // TODO: Replace with API route call
+      const grants: any[] = [];
 
       if (!grants || grants.length === 0) {
         setBonusLeaveData([]);
@@ -118,13 +105,7 @@ export default function BonusLeaveGrants({ userId, userName }: BonusLeaveGrantsP
     setIsSubmitting(true);
 
     try {
-      const supabase = createBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("You must be logged in to grant bonus leave");
-        return;
-      }
+      // TODO: Replace with NextAuth client-side auth check
 
       const grantData: GrantBonusLeaveData = {
         user_id: userId,
@@ -133,7 +114,8 @@ export default function BonusLeaveGrants({ userId, userName }: BonusLeaveGrantsP
         reason: formData.reason || undefined
       };
 
-      const result = await grantBonusLeave(grantData, user.id);
+      // TODO: Get current user ID from NextAuth
+      const result = await grantBonusLeave(grantData, 'current-user-id');
       
       if (result) {
         toast.success("Bonus leave granted successfully!");

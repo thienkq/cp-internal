@@ -1,8 +1,9 @@
 import { Suspense } from 'react';
-import { getCurrentUser, User } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { PageContainer } from '@workspace/ui/components/page-container';
 import { DashboardSkeleton } from '@/components/skeletons';
 import DashboardPageClient from './page.client';
+import type { User } from '@/types';
 import { getUserBonusLeaveSummary } from '@/lib/bonus-leave-utils';
 import {
   getAnniversaryInfo,
@@ -28,7 +29,7 @@ import { calculateWorkingDays } from '@/lib/utils';
 
 // 🚀 OPTIMIZED PARALLEL DATA FETCHING
 async function getDashboardData() {
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
   const db = getDb();
 
   const userId = user?.id as string;

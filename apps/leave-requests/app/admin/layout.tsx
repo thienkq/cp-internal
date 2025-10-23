@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { TopNavbar } from '@/components/layout/top-navbar';
 import {
@@ -14,7 +14,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   // 1. Get the current auth user
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/auth/login'); // Not logged in, redirect to login

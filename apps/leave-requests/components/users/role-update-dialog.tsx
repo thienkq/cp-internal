@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 import { Label } from "@workspace/ui/components/label";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
+// TODO: Replace Supabase calls with API routes
 import { roleOptions } from "./user-constants";
 import type { User } from "@/types";
 
@@ -34,20 +34,8 @@ export function RoleUpdateDialog({ user, isOpen, onClose, onSuccess }: RoleUpdat
     setIsSubmitting(true);
 
     try {
-      const supabase = createBrowserClient();
-      
-      const { error } = await supabase
-        .from("users")
-        .update({ role: selectedRole })
-        .eq("id", user.id);
-
-      if (error) {
-        console.error("Error updating user role:", error);
-        toast.error("Failed to update role");
-        return;
-      }
-
-      toast.success(`Successfully updated ${user.full_name}'s role to ${roleOptions.find(r => r.value === selectedRole)?.label}`);
+      // TODO: Create API route for updating user roles
+      toast.error("This functionality needs to be implemented with an API route");
       onSuccess();
       onClose();
     } catch (error) {

@@ -1,5 +1,5 @@
 import { LeaveRequest } from '@/types';
-import { type User } from '@workspace/supabase';
+// TODO: Replace with NextAuth User type
 import {
   eachDayOfInterval,
   isWeekend,
@@ -14,7 +14,7 @@ import {
  * @param user - Supabase user object
  * @returns string - User initials (e.g., "JD" for "John Doe")
  */
-export function getUserInitials(user: User | null | undefined): string {
+export function getUserInitials(user: any | null | undefined): string {
   if (!user) return 'U';
 
   // Try to get initials from user's name first (Google login)
@@ -89,7 +89,7 @@ function getInitialsFromEmail(email: string): string {
  * @param user - Supabase user object
  * @returns string - Display name
  */
-export function getUserDisplayName(user: User | null | undefined): string {
+export function getUserDisplayName(user: any | null | undefined): string {
   if (!user) return 'User';
 
   // Try to get full name first

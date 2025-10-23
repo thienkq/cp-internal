@@ -1,12 +1,12 @@
 import {
-  pgTable, 
-  text, 
-  timestamp, 
-  uuid, 
-  integer, 
-  boolean, 
-  date, 
-  jsonb, 
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  integer,
+  boolean,
+  date,
+  jsonb,
   serial,
   check,
   index,
@@ -14,8 +14,8 @@ import {
   varchar,
   unique,
   foreignKey,
-  pgPolicy,
-  uniqueIndex
+  uniqueIndex,
+  primaryKey
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -37,7 +37,10 @@ export const signupEmailDomains = pgTable('signup_email_domains', {
 // Users table
 export const users = pgTable('users', {
   id: uuid().primaryKey().notNull(),
+  name: text(), // NextAuth adapter expects this
   email: text(),
+  emailVerified: timestamp('emailVerified'),
+  image: text(), // NextAuth adapter expects this
   full_name: text('full_name'),
   role: text().default('employee').notNull(),
   start_date: date('start_date'),
@@ -57,25 +60,6 @@ export const users = pgTable('users', {
     name: 'users_manager_id_fkey'
   }),
   unique('users_email_key').on(table.email),
-  pgPolicy('Admins can perform all actions on users', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'], 
-    using: sql`(get_user_role(auth.uid()) = 'admin'::text)`, 
-    withCheck: sql`(get_user_role(auth.uid()) = 'admin'::text)`  
-  }),
-  pgPolicy('Authenticated users can view other users', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['authenticated'] 
-  }),
-  pgPolicy('Users can update their own profile', { 
-    as: 'permissive', 
-    for: 'update', 
-    to: ['authenticated'],
-    using: sql`(auth.uid() = id)`,
-    withCheck: sql`(auth.uid() = id)`
-  }),
   check('users_role_check', sql`role = ANY (ARRAY['employee'::text, 'manager'::text, 'admin'::text])`),
 ]);
 
@@ -111,23 +95,6 @@ export const projects = pgTable('projects', {
   updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
   unique('projects_name_key').on(table.name),
-  pgPolicy('Anyone can view projects', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'], 
-    using: sql`true` 
-  }),
-  pgPolicy('Admins can manage projects', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`,
-    withCheck: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
-  }),
 ]);
 
 // Project Assignments table
@@ -159,24 +126,6 @@ export const projectAssignments = pgTable('project_assignments', {
     foreignColumns: [users.id],
     name: 'project_assignments_assigned_by_fkey'
   }),
-  pgPolicy('admin_crud_project_assignments', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'], 
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`, 
-    withCheck: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`  
-  }),
-  pgPolicy('user_crud_own_assignments', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`user_id = auth.uid()`,
-    withCheck: sql`user_id = auth.uid()`
-  }),
   check('valid_date_range', sql`(end_date IS NULL) OR (end_date >= start_date)`),
 ]);
 
@@ -189,24 +138,6 @@ export const companySettings = pgTable('company_settings', {
   created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
   updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, () => [
-  pgPolicy('Allow read to all authenticated users', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'], 
-    using: sql`(auth.role() = 'authenticated'::text)` 
-  }),
-  pgPolicy('Admins can modify company_settings', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(auth.jwt() ->> 'role' = 'admin'::text)`
-  }),
-  pgPolicy('Service role can modify', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(auth.role() = 'service_role'::text)`
-  }),
 ]);
 
 // Leave Types table
@@ -222,24 +153,6 @@ export const leaveTypes = pgTable('leave_types', {
   updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
   unique('leave_types_name_key').on(table.name),
-  pgPolicy('Allow read to all authenticated users', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'], 
-    using: sql`(auth.role() = 'authenticated'::text)` 
-  }),
-  pgPolicy('Admins can modify leave_types', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(auth.jwt() ->> 'role' = 'admin'::text)`
-  }),
-  pgPolicy('Service role can modify', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(auth.role() = 'service_role'::text)`
-  }),
 ]);
 
 // Leave Requests table
@@ -296,42 +209,6 @@ export const leaveRequests = pgTable('leave_requests', {
     foreignColumns: [users.id],
     name: 'leave_requests_user_id_fkey'
   }).onUpdate('cascade').onDelete('cascade'),
-  pgPolicy('Users can view their own leave requests', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'], 
-    using: sql`(auth.uid() = user_id)` 
-  }),
-  pgPolicy('Users can insert their own leave requests', { 
-    as: 'permissive', 
-    for: 'insert', 
-    to: ['public'],
-    withCheck: sql`(auth.uid() = user_id)`
-  }),
-  pgPolicy('Service role can do everything', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(auth.role() = 'service_role'::text)`
-  }),
-  pgPolicy('Admins and managers can view and update all leave requests', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = ANY (ARRAY['admin'::text, 'manager'::text])))))`,
-    withCheck: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = ANY (ARRAY['admin'::text, 'manager'::text])))))`
-  }),
-  pgPolicy('Users can update their own pending leave requests', { 
-    as: 'permissive', 
-    for: 'update', 
-    to: ['public'],
-    using: sql`((auth.uid() = user_id) AND (status = 'pending'::text))`,
-    withCheck: sql`((auth.uid() = user_id) AND (status = ANY (ARRAY['pending'::text, 'canceled'::text])))`
-  }),
   check('leave_requests_half_day_type_check', sql`half_day_type = ANY (ARRAY['morning'::text, 'afternoon'::text])`),
   check('leave_requests_status_check', sql`status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'canceled'::text])`),
 ]);
@@ -351,20 +228,6 @@ export const extendedAbsences = pgTable('extended_absences', {
     foreignColumns: [users.id],
     name: 'extended_absences_user_id_fkey'
   }).onDelete('cascade'),
-  pgPolicy('Users can view their own extended absences', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'], 
-    using: sql`(auth.uid() = user_id)` 
-  }),
-  pgPolicy('Admins can manage all extended absences', { 
-    as: 'permissive', 
-    for: 'all', 
-    to: ['public'],
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
-  }),
 ]);
 
 // Bonus Leave Grants table
@@ -393,50 +256,62 @@ export const bonusLeaveGrants = pgTable('bonus_leave_grants', {
     foreignColumns: [users.id],
     name: 'bonus_leave_grants_granted_by_fkey'
   }),
-  pgPolicy('Users can view own bonus leave grants', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'], 
-    using: sql`(auth.uid() = user_id)` 
-  }),
-  pgPolicy('Admins can view all bonus leave grants', { 
-    as: 'permissive', 
-    for: 'select', 
-    to: ['public'],
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
-  }),
-  pgPolicy('Admins can insert bonus leave grants', { 
-    as: 'permissive', 
-    for: 'insert', 
-    to: ['public'],
-    withCheck: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
-  }),
-  pgPolicy('Admins can update bonus leave grants', { 
-    as: 'permissive', 
-    for: 'update', 
-    to: ['public'],
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`,
-    withCheck: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
-  }),
-  pgPolicy('Admins can delete bonus leave grants', { 
-    as: 'permissive', 
-    for: 'delete', 
-    to: ['public'],
-    using: sql`(EXISTS ( SELECT 1
-   FROM users u
-  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))`
-  }),
   check('bonus_leave_grants_year_check', sql`(year >= 2020) AND (year <= 2030)`),
   check('bonus_leave_grants_days_granted_check', sql`days_granted > 0`),
   check('bonus_leave_grants_days_used_check', sql`days_used >= 0`),
   check('bonus_leave_grants_check', sql`days_used <= days_granted`),
+]);
+
+// NextAuth.js Tables
+
+// Accounts table for OAuth providers
+export const accounts = pgTable('accounts', {
+  userId: uuid('userId').notNull(),
+  type: text().notNull(),
+  provider: text().notNull(),
+  providerAccountId: text('providerAccountId').notNull(),
+  refresh_token: text('refresh_token'),
+  access_token: text('access_token'),
+  expires_at: integer('expires_at'),
+  token_type: text('token_type'),
+  scope: text(),
+  id_token: text('id_token'),
+  session_state: text('session_state'),
+}, (table) => [
+  primaryKey({
+    columns: [table.provider, table.providerAccountId],
+  }),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: 'accounts_userId_fkey'
+  }).onDelete('cascade'),
+  index('accounts_userId_idx').on(table.userId),
+]);
+
+// Sessions table for session management
+export const sessions = pgTable('sessions', {
+  sessionToken: text('sessionToken').primaryKey().notNull(),
+  userId: uuid('userId').notNull(),
+  expires: timestamp('expires').notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: 'sessions_userId_fkey'
+  }).onDelete('cascade'),
+  index('sessions_userId_idx').on(table.userId),
+]);
+
+// Verification tokens table for email verification
+// NextAuth adapter expects 'identifier' column instead of 'email'
+export const verificationTokens = pgTable('verification_tokens', {
+  identifier: text().notNull(), // NextAuth adapter expects this (typically email)
+  token: text().notNull(),
+  expires: timestamp().notNull(),
+}, (table) => [
+  primaryKey({
+    columns: [table.identifier, table.token],
+  }),
 ]);
 

@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { PageContainer } from '@workspace/ui/components/page-container';
 import {
   Card,
@@ -12,10 +12,10 @@ import BonusLeaveList from '@/components/admin/bonus-leave-list';
 import { getAllBonusLeaveGrantsServer } from '@/lib/bonus-leave-server-utils';
 
 export default async function BonusLeavePage() {
-  const { user } = (await getCurrentUser());
+  const user = (await getCurrentUser());
 
   const userId = user?.id as string;
-  const fullName = user?.user_metadata?.full_name as string;
+  const fullName = user?.full_name as string;
 
   // Get current year bonus leave summary
   const currentYear = new Date().getFullYear();

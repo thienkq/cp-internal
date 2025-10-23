@@ -1,7 +1,7 @@
 import { getDb } from '@/db';
 import { companySettings, leaveRequests, leaveTypes, users } from '@/db/schema';
 import { and, desc, eq, gte, lte } from 'drizzle-orm';
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { getAdminUser } from '@/lib/user-db-utils';
 import { NextRequest } from 'next/server';
 import { calculateWorkingDays } from '@/lib/utils';
@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   // Authentication: ensure the caller is an authenticated admin
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }

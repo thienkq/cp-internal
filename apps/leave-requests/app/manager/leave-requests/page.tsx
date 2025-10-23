@@ -1,10 +1,13 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { LeaveRequestTable } from "@/components/leave/leave-request-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Calendar, Clock, CheckSquare, XCircle } from "lucide-react";
+import { getDb } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 interface PageProps {
   searchParams: Promise<{
@@ -14,18 +17,19 @@ interface PageProps {
 }
 
 export default async function ManagerLeaveRequestsPage({ searchParams }: PageProps) {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");
   }
 
   // Fetch user data to confirm manager role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const db = getDb();
+  const [userData] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
 
   if (!userData || !["manager", "admin"].includes(userData.role)) {
     redirect("/dashboard");
@@ -37,38 +41,9 @@ export default async function ManagerLeaveRequestsPage({ searchParams }: PagePro
   const currentYear = new Date().getFullYear();
   const selectedYear = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear;
 
-  // Build query filters
-  let query = supabase
-    .from("leave_requests")
-    .select(`
-      *,
-      user:users!leave_requests_user_id_fkey(id, full_name, email),
-      leave_type:leave_types(name, description),
-      projects,
-      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
-    `)
-    .eq("current_manager_id", user.id);
-
-  // Filter by status if specified
-  if (selectedStatus) {
-    query = query.eq("status", selectedStatus);
-  }
-
-  // Filter by year
-  const startOfYear = new Date(selectedYear, 0, 1).toISOString();
-  const endOfYear = new Date(selectedYear, 11, 31).toISOString();
-  query = query.gte("start_date", startOfYear).lte("start_date", endOfYear);
-
-  // Execute query
-  const { data: leaveRequests } = await query.order("created_at", { ascending: false });
-
-  // Get status counts for current year
-  const { data: allRequests } = await supabase
-    .from("leave_requests")
-    .select("status")
-    .eq("current_manager_id", user.id)
-    .gte("start_date", startOfYear)
-    .lte("start_date", endOfYear);
+  // TODO: Replace with Drizzle queries
+  const leaveRequests: any[] = [];
+  const allRequests: any[] = [];
 
   const getStatusCount = (status: string) => {
     return allRequests?.filter(req => req.status === status).length || 0;

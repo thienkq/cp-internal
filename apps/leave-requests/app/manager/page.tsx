@@ -1,41 +1,39 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Calendar, Clock, Users, CheckSquare } from "lucide-react";
 import { LeaveRequestList } from "@/components/leave/leave-request-list";
+import { getDb } from "@/db";
+import { users, leaveRequests } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export default async function ManagerDashboardPage() {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");
   }
 
   // Fetch user data to confirm manager role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  const db = getDb();
+  const [userData] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
 
   if (!userData || !["manager", "admin"].includes(userData.role)) {
     redirect("/dashboard");
   }
 
   // Fetch leave requests where current user is the manager
-  const { data: teamRequests } = await supabase
-    .from("leave_requests")
-    .select(`
-      *,
-      user:users!leave_requests_user_id_fkey(id, full_name, email),
-      leave_type:leave_types(name, description),
-      projects,
-      approved_by:users!leave_requests_approved_by_id_fkey(full_name)
-    `)
-    .eq("current_manager_id", user.id)
-    .order("created_at", { ascending: false });
+  const teamRequests = await db
+    .select()
+    .from(leaveRequests)
+    .where(eq(leaveRequests.current_manager_id, user.id))
+    .orderBy(desc(leaveRequests.created_at));
 
   // Get statistics
   const pendingRequests = teamRequests?.filter(req => req.status === 'pending') || [];
@@ -43,7 +41,7 @@ export default async function ManagerDashboardPage() {
   const recentRequests = teamRequests?.slice(0, 5) || [];
 
   // Get unique team members
-  const teamMembers = teamRequests?.reduce((acc: any[], req) => {
+  const teamMembers = teamRequests?.reduce((acc: any[], req: any) => {
     if (req.user && !acc.find((member: any) => member.id === req.user.id)) {
       acc.push(req.user);
     }
@@ -128,7 +126,7 @@ export default async function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <LeaveRequestList
-                leaveRequests={pendingRequests}
+                leaveRequests={pendingRequests as any}
                 title=""
                 showUserColumn={true}
                 showActions={true}
@@ -150,7 +148,7 @@ export default async function ManagerDashboardPage() {
           </div>
           
           <LeaveRequestList
-            leaveRequests={recentRequests}
+            leaveRequests={recentRequests as any}
             title="Latest Leave Requests"
             showUserColumn={true}
             showActions={true}

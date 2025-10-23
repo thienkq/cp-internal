@@ -8,9 +8,9 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Checkbox } from "@workspace/ui/components/checkbox";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@workspace/ui/components/select";
 import { toast } from "sonner";
-import { createBrowserClient } from "@workspace/supabase";
 import { useEffect } from "react";
 import { MapPin, Home, Building, Globe, Mail, Star } from "lucide-react";
+import { createAddress, updateAddress } from "@/app/actions/addresses";
 
 export type AddressFormValues = {
   address_line: string;
@@ -73,23 +73,16 @@ export default function AddressForm({ userId, address, onSuccess, onCancel }: Ad
   }, [address, reset]);
 
   const onSubmit = async (data: AddressFormValues) => {
-    const supabase = createBrowserClient();
-    let res;
+    const payload = { ...data, user_id: userId };
+    let result;
     if (address) {
-      // Update
-      res = await supabase.from("addresses").update({ ...data, user_id: userId }).eq("id", address.id).select();
+      result = await updateAddress(address.id, payload);
     } else {
-      // Insert
-      res = await supabase.from("addresses").insert([{ ...data, user_id: userId }]).select();
+      result = await createAddress(payload);
     }
-    if (res.error) {
-      toast.error("Failed to save address.", { description: res.error.message });
+    if (!result.success) {
+      toast.error("Failed to save address.", { description: result.error });
       return;
-    }
-    // If set as primary, unset others
-    if (data.is_primary && res.data && res.data[0]) {
-      await supabase.from("addresses").update({ is_primary: false }).eq("user_id", userId).neq("id", res.data[0].id);
-      await supabase.from("addresses").update({ is_primary: true }).eq("id", res.data[0].id);
     }
     toast.success("Address saved successfully!");
     onSuccess();

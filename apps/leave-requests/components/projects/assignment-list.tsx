@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
-import { createBrowserClient } from "@workspace/supabase";
+// TODO: Replace Supabase calls with API routes
 import { DataTable } from "../common/data-table";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -21,17 +21,8 @@ export default function AssignmentList({ projectId}: { projectId: string}) {
     async function fetchAssignments() {
       setLoading(true);
       setError(null);
-      const supabase = createBrowserClient();
-      const { data, error } = await supabase
-        .from("project_assignments")
-        .select("*, user:user_id(id, full_name, email)")
-        .eq("project_id", projectId)
-        .order("assigned_at", { ascending: false });
-      if (error) {
-        setError(error.message);
-      } else {
-        setAssignments(data || []);
-      }
+      // TODO: Replace with API route call
+      setAssignments([]);
       setLoading(false);
     }
     fetchAssignments();
@@ -40,7 +31,8 @@ export default function AssignmentList({ projectId}: { projectId: string}) {
   const columns = useMemo(() => [
     {
       header: "User",
-      accessorKey: "user.full_name",
+      accessorFn: (row: any) => row.user?.full_name || row.user?.email,
+      id: "user.full_name",
       cell: ({ row }: any) => row.original.user?.full_name || row.original.user?.email,
     },
     {
@@ -100,29 +92,10 @@ export default function AssignmentList({ projectId}: { projectId: string}) {
   const handleSave = async () => {
     if (!editAssignment) return;
     setSaving(true);
-    const supabase = createBrowserClient();
-    const { error } = await supabase
-      .from("project_assignments")
-      .update({
-        status: editValues.status,
-        start_date: editValues.start_date,
-        end_date: editValues.end_date || null,
-      })
-      .eq("id", editAssignment.id);
+    // TODO: Replace with API route call
     setSaving(false);
     setEditAssignment(null);
     setEditValues({});
-    if (!error) {
-      // Refresh assignments
-      const { data } = await supabase
-        .from("project_assignments")
-        .select("*, user:user_id(id, full_name, email)")
-        .eq("project_id", projectId)
-        .order("assigned_at", { ascending: false });
-      setAssignments(data || []);
-    } else {
-      alert("Failed to update assignment: " + error.message);
-    }
   };
 
   if (loading) return <div>Loading assignments...</div>;

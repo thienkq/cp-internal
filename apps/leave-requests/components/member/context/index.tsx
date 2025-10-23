@@ -1,10 +1,17 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { User } from '@workspace/supabase';
+
+interface NextAuthUser {
+  id?: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  role?: string;
+}
 
 export type AuthenticationContextType = {
-  user: User;
+  user: NextAuthUser;
 };
 const AuthenticationContext = createContext<
   AuthenticationContextType | undefined
@@ -13,7 +20,7 @@ const AuthenticationContext = createContext<
 // Provider component
 export const AuthenticationProvider: React.FC<{
   children: React.ReactNode;
-  user: User;
+  user: NextAuthUser;
 }> = ({ children, user }) => {
   // Context value
   const contextValue: AuthenticationContextType = {

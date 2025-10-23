@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@workspace/supabase';
+import { getCurrentUser } from '@/lib/auth-utils';
 import { redirect } from 'next/navigation';
 import EditLeaveRequestPageClient from './page.client';
 import { getLeaveRequestServerProps } from '@/lib/get-leave-request-server-props';
@@ -16,7 +16,7 @@ interface EditLeaveRequestPageProps {
 export default async function EditLeaveRequestPage({
   params,
 }: EditLeaveRequestPageProps) {
-  const { user } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   const userId = user?.id as string;
 

@@ -1,59 +1,60 @@
 "use server";
 
-import { createServerClient } from "@workspace/supabase";
+import { getUser } from "@/lib/auth-server-utils";
+import { getDb } from "@/db";
+import { users, leaveRequests } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function approveLeaveRequest(requestId: string, approvalNotes?: string) {
   try {
-    const supabase = await createServerClient();
-    
+    const db = getDb();
+
     // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const user = await getUser();
+    if (!user) {
       throw new Error("User not authenticated");
     }
 
     // Check if user is admin or manager
-    const { data: userData, error: roleError } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const userData = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
 
-    if (roleError || !userData || !["admin", "manager"].includes(userData.role)) {
+    if (!userData.length || !["admin", "manager"].includes(userData[0]?.role || '')) {
       throw new Error("Unauthorized: Admin or Manager access required");
     }
 
     // If user is a manager (not admin), verify they are the assigned manager for this request
-    if (userData.role === "manager") {
-      const { data: requestData, error: requestError } = await supabase
-        .from("leave_requests")
-        .select("current_manager_id")
-        .eq("id", requestId)
-        .single();
+    if (userData[0]?.role === "manager") {
+      const requestData = await db
+        .select({ current_manager_id: leaveRequests.current_manager_id })
+        .from(leaveRequests)
+        .where(eq(leaveRequests.id, requestId))
+        .limit(1);
 
-      if (requestError || !requestData) {
+      if (!requestData.length) {
         throw new Error("Leave request not found");
       }
 
-      if (requestData.current_manager_id !== user.id) {
+      if (requestData[0]?.current_manager_id !== user.id) {
         throw new Error("Unauthorized: You can only approve requests for your team members");
       }
     }
 
     // Update the leave request
-    const { error } = await supabase
-      .from("leave_requests")
-      .update({
+    await db
+      .update(leaveRequests)
+      .set({
         status: "approved",
         approved_by_id: user.id,
         approved_at: new Date().toISOString(),
         approval_notes: approvalNotes || null,
         updated_at: new Date().toISOString()
       })
-      .eq("id", requestId);
-
-    if (error) throw error;
+      .where(eq(leaveRequests.id, requestId));
 
     // Revalidate both admin and manager paths
     revalidatePath("/admin");
@@ -67,55 +68,53 @@ export async function approveLeaveRequest(requestId: string, approvalNotes?: str
 
 export async function rejectLeaveRequest(requestId: string, rejectionReason: string) {
   try {
-    const supabase = await createServerClient();
-    
+    const db = getDb();
+
     // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const user = await getUser();
+    if (!user) {
       throw new Error("User not authenticated");
     }
 
     // Check if user is admin or manager
-    const { data: userData, error: roleError } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const userData = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
 
-    if (roleError || !userData || !["admin", "manager"].includes(userData.role)) {
+    if (!userData.length || !["admin", "manager"].includes(userData[0]?.role || '')) {
       throw new Error("Unauthorized: Admin or Manager access required");
     }
 
     // If user is a manager (not admin), verify they are the assigned manager for this request
-    if (userData.role === "manager") {
-      const { data: requestData, error: requestError } = await supabase
-        .from("leave_requests")
-        .select("current_manager_id")
-        .eq("id", requestId)
-        .single();
+    if (userData[0]?.role === "manager") {
+      const requestData = await db
+        .select({ current_manager_id: leaveRequests.current_manager_id })
+        .from(leaveRequests)
+        .where(eq(leaveRequests.id, requestId))
+        .limit(1);
 
-      if (requestError || !requestData) {
+      if (!requestData.length) {
         throw new Error("Leave request not found");
       }
 
-      if (requestData.current_manager_id !== user.id) {
+      if (requestData[0]?.current_manager_id !== user.id) {
         throw new Error("Unauthorized: You can only reject requests for your team members");
       }
     }
 
     // Update the leave request
-    const { error } = await supabase
-      .from("leave_requests")
-      .update({
+    await db
+      .update(leaveRequests)
+      .set({
         status: "rejected",
         approved_by_id: user.id,
         approved_at: new Date().toISOString(),
         approval_notes: rejectionReason,
         updated_at: new Date().toISOString()
       })
-      .eq("id", requestId);
-
-    if (error) throw error;
+      .where(eq(leaveRequests.id, requestId));
 
     // Revalidate both admin and manager paths
     revalidatePath("/admin");
@@ -129,54 +128,52 @@ export async function rejectLeaveRequest(requestId: string, rejectionReason: str
 
 export async function cancelLeaveRequest(requestId: string, cancelReason: string) {
   try {
-    const supabase = await createServerClient();
-    
+    const db = getDb();
+
     // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const user = await getUser();
+    if (!user) {
       throw new Error("User not authenticated");
     }
 
     // Check if user is admin or manager
-    const { data: userData, error: roleError } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const userData = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
 
-    if (roleError || !userData || !["admin", "manager"].includes(userData.role)) {
+    if (!userData.length || !["admin", "manager"].includes(userData[0]?.role || '')) {
       throw new Error("Unauthorized: Admin or Manager access required");
     }
 
     // If user is a manager (not admin), verify they are the assigned manager for this request
-    if (userData.role === "manager") {
-      const { data: requestData, error: requestError } = await supabase
-        .from("leave_requests")
-        .select("current_manager_id")
-        .eq("id", requestId)
-        .single();
+    if (userData[0]?.role === "manager") {
+      const requestData = await db
+        .select({ current_manager_id: leaveRequests.current_manager_id })
+        .from(leaveRequests)
+        .where(eq(leaveRequests.id, requestId))
+        .limit(1);
 
-      if (requestError || !requestData) {
+      if (!requestData.length) {
         throw new Error("Leave request not found");
       }
 
-      if (requestData.current_manager_id !== user.id) {
+      if (requestData[0]?.current_manager_id !== user.id) {
         throw new Error("Unauthorized: You can only cancel requests for your team members");
       }
     }
 
     // Update the leave request
-    const { error } = await supabase
-      .from("leave_requests")
-      .update({
+    await db
+      .update(leaveRequests)
+      .set({
         status: "canceled",
         canceled_at: new Date().toISOString(),
         cancel_reason: cancelReason,
         updated_at: new Date().toISOString()
       })
-      .eq("id", requestId);
-    
-    if (error) throw error;
+      .where(eq(leaveRequests.id, requestId));
 
     // Revalidate both admin and manager paths
     revalidatePath("/admin");

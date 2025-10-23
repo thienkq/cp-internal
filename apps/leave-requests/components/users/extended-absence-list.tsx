@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@workspace/ui/components/dialog";
 import { Badge } from "@workspace/ui/components/badge";
 import { Plus, Edit, Trash2, Calendar, Clock, AlertTriangle, CheckCircle } from "lucide-react";
-import { createBrowserClient } from "@workspace/supabase";
 import { toast } from "sonner";
 import ExtendedAbsenceForm from "./extended-absence-form";
+import { getExtendedAbsencesByUserId, deleteExtendedAbsence } from "@/app/actions/extended-absences";
 
 interface ExtendedAbsenceWithImpact extends ExtendedAbsence {
   durationDays: number;
@@ -46,13 +46,12 @@ export default function ExtendedAbsenceList({ userId }: { userId: string }) {
 
   const fetchAbsences = async () => {
     setLoading(true);
-    const supabase = createBrowserClient();
-    const { data, error } = await supabase.from("extended_absences").select("*").eq("user_id", userId).order("start_date", { ascending: false });
-    if (error) {
-      toast.error("Failed to fetch absences.", { description: error.message });
-    } else {
-      const absencesWithImpact = (data || []).map(calculateAbsenceImpact);
+    try {
+      const data = await getExtendedAbsencesByUserId(userId);
+      const absencesWithImpact = data.map(calculateAbsenceImpact);
       setAbsences(absencesWithImpact);
+    } catch (error: any) {
+      toast.error("Failed to fetch absences.", { description: error.message });
     }
     setLoading(false);
   };
@@ -73,10 +72,9 @@ export default function ExtendedAbsenceList({ userId }: { userId: string }) {
   const handleDelete = async (absence: ExtendedAbsence) => {
     if (!window.confirm("Are you sure you want to delete this extended absence?")) return;
     setLoading(true);
-    const supabase = createBrowserClient();
-    const { error } = await supabase.from("extended_absences").delete().eq("id", absence.id);
-    if (error) {
-      toast.error("Failed to delete absence.", { description: error.message });
+    const result = await deleteExtendedAbsence(absence.id);
+    if (!result.success) {
+      toast.error("Failed to delete absence.", { description: result.error });
     } else {
       toast.success("Absence deleted.");
       await fetchAbsences();

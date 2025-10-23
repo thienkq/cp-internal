@@ -1,4 +1,6 @@
-import { createServerClient } from '@workspace/supabase';
+import { getDb } from '@/db';
+import { users, leaveRequests, leaveTypes, extendedAbsences } from '@/db/schema';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import {
   calculateEffectiveTenure,
   shouldProcessAbsenceForTenure,
@@ -196,14 +198,18 @@ async function calculateAbsenceImpact(
   anniversaryDelay: number;
   tenureReduction: string;
 }> {
-  const supabase = await createServerClient();
+  const db = getDb();
 
   // Get all extended absences (reuse same query pattern as anniversary utils)
-  const { data: absences } = await supabase
-    .from('extended_absences')
-    .select('*')
-    .eq('user_id', userId)
-    .lte('end_date', targetDate.toISOString().split('T')[0]);
+  const absences = await db
+    .select()
+    .from(extendedAbsences)
+    .where(
+      and(
+        eq(extendedAbsences.user_id, userId),
+        lte(extendedAbsences.end_date, targetDate.toISOString().split('T')[0] as string)
+      )
+    );
 
   let totalAbsenceDays = 0;
 
@@ -277,14 +283,16 @@ export async function calculateCompleteLeaveEntitlement(
   userId: string,
   targetDate: Date = new Date()
 ): Promise<LeaveEntitlement> {
-  const supabase = await createServerClient();
+  const db = getDb();
 
   // Get user details
-  const { data: user } = await supabase
-    .from('users')
-    .select('start_date')
-    .eq('id', userId)
-    .single();
+  const userResult = await db
+    .select({ start_date: users.start_date })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  const user = userResult[0];
 
   if (!user?.start_date) {
     // If no start date is set, default to 12 days (onboarding year quota)
@@ -384,7 +392,7 @@ export async function calculateLeaveBalance(
   userId: string,
   leaveYear: number = new Date().getFullYear()
 ): Promise<LeaveBalance> {
-  const supabase = await createServerClient();
+  const db = getDb();
 
   // Get leave entitlement - use current date for current year, end of year for future years
   const currentYear = new Date().getFullYear();
@@ -396,36 +404,39 @@ export async function calculateLeaveBalance(
   );
 
   // Get leave requests for the year - only include paid leave types
-  const { data: leaveRequests } = await supabase
-    .from('leave_requests')
-    .select(
-      `
-      status, 
-      start_date, 
-      end_date, 
-      is_half_day,
-      leave_types!inner(is_paid)
-    `
-    )
-    .eq('user_id', userId)
-    .eq('leave_types.is_paid', true)
-    .gte('start_date', `${leaveYear}-01-01`)
-    .lte('start_date', `${leaveYear}-12-31`);
+  const leaveRequestsData = await db
+    .select({
+      status: leaveRequests.status,
+      start_date: leaveRequests.start_date,
+      end_date: leaveRequests.end_date,
+      is_half_day: leaveRequests.is_half_day,
+      is_paid: leaveTypes.is_paid,
+    })
+    .from(leaveRequests)
+    .innerJoin(leaveTypes, eq(leaveRequests.leave_type_id, leaveTypes.id))
+    .where(
+      and(
+        eq(leaveRequests.user_id, userId),
+        eq(leaveTypes.is_paid, true),
+        gte(leaveRequests.start_date, `${leaveYear}-01-01`),
+        lte(leaveRequests.start_date, `${leaveYear}-12-31`)
+      )
+    );
 
 
   const usedDaysFebToDec = calculateUsedDaysFebToDec(
-    (leaveRequests as unknown as LeaveRequestData[]) || [],
+    (leaveRequestsData as unknown as LeaveRequestData[]) || [],
     currentYear
   );
   let usedDays = 0;
   let pendingDays = 0;
 
-  if (leaveRequests) {
-    for (const request of leaveRequests) {
+  if (leaveRequestsData) {
+    for (const request of leaveRequestsData) {
       // Only paid leave types are returned from the query, so all requests count against quota
       const days = calculateLeaveDays(
         request.start_date,
-        request.end_date,
+        request.end_date || request.start_date,
         request.is_half_day
       );
 
@@ -457,11 +468,15 @@ export async function calculateLeaveBalance(
 export interface LeaveRequestData {
   status: string;
   start_date: string;
-  end_date: string;
+  end_date: string | null;
   is_half_day: boolean;
-  leave_types: {
+  // Support both shapes:
+  // - Supabase: leave_types.is_paid
+  // - Drizzle select: is_paid at top-level
+  leave_types?: {
     is_paid: boolean;
   };
+  is_paid?: boolean;
 }
 
 // Carry-over calculation functions (optimized to use passed data)
@@ -476,7 +491,7 @@ export function calculateUsedDaysFebToDec(
     .filter(
       (request) =>
         request.status === 'approved' &&
-        request.leave_types.is_paid &&
+        ((request.leave_types?.is_paid ?? request.is_paid) === true) &&
         request.start_date >= febStart &&
         request.start_date <= decEnd
     )
@@ -485,7 +500,7 @@ export function calculateUsedDaysFebToDec(
         total +
         calculateLeaveDays(
           request.start_date,
-          request.end_date,
+          request.end_date || request.start_date,
           request.is_half_day
         )
       );
@@ -503,7 +518,7 @@ export function calculateUsedDaysJan(
     .filter(
       (request) =>
         request.status === 'approved' &&
-        request.leave_types.is_paid &&
+        ((request.leave_types?.is_paid ?? request.is_paid) === true) &&
         request.start_date >= janStart &&
         request.start_date <= janEnd
     )
@@ -512,7 +527,7 @@ export function calculateUsedDaysJan(
         total +
         calculateLeaveDays(
           request.start_date,
-          request.end_date,
+          request.end_date || request.start_date,
           request.is_half_day
         )
       );

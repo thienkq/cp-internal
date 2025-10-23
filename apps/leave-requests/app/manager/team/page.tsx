@@ -1,39 +1,38 @@
-import { getCurrentUser } from "@workspace/supabase";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@workspace/ui/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar";
 import { Users, Calendar, Clock, CheckSquare } from "lucide-react";
+import { getDb } from "@/db";
+import { users, leaveRequests } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export default async function ManagerTeamPage() {
-  const { user, supabase } = await getCurrentUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/auth/login");
   }
 
   // Fetch user data to confirm manager role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const db = getDb();
+  const [userData] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
 
   if (!userData || !["manager", "admin"].includes(userData.role)) {
     redirect("/dashboard");
   }
 
   // Fetch all leave requests for team members to get unique team members
-  const { data: teamRequests } = await supabase
-    .from("leave_requests")
-    .select(`
-      user_id,
-      status,
-      start_date,
-      user:users!leave_requests_user_id_fkey(id, full_name, email, role)
-    `)
-    .eq("current_manager_id", user.id);
+  const teamRequests = await db
+    .select()
+    .from(leaveRequests)
+    .where(eq(leaveRequests.current_manager_id, user.id));
 
   // Get unique team members with their statistics
   const teamMembersMap = new Map<string, any>();

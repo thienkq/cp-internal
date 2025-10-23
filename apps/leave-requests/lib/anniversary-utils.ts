@@ -1,4 +1,6 @@
-import { createServerClient } from "@workspace/supabase";
+import { getDb } from '@/db';
+import { extendedAbsences, users } from '@/db/schema';
+import { eq, and, lte, gte } from 'drizzle-orm';
 
 export interface ExtendedAbsence {
   id: string;
@@ -66,22 +68,26 @@ export async function calculateEffectiveTenure(
     return { years: 0, months: 0, days: 0 };
   }
   
-  const supabase = await createServerClient();
+  const db = getDb();
   
   // Get all extended absences for the user that have ended by the target date
   // This matches the documented logic: only process completed absences
-  const { data: absences } = await supabase
-    .from("extended_absences")
-    .select("*")
-    .eq("user_id", userId)
-    .lte("end_date", targetDate.toISOString().split('T')[0]);
+  const absences = await db
+    .select()
+    .from(extendedAbsences)
+    .where(
+      and(
+        eq(extendedAbsences.user_id, userId),
+        lte(extendedAbsences.end_date, targetDate.toISOString().split('T')[0] as string)
+      )
+    );
 
   let totalAbsenceDays = 0;
 
   if (absences) {
     for (const absence of absences) {
       // Use helper function to determine if absence should be processed
-      if (!shouldProcessAbsenceForTenure(absence, targetDate)) {
+      if (!shouldProcessAbsenceForTenure(absence as any, targetDate)) {
         continue;
       }
       
@@ -192,21 +198,29 @@ export async function getUpcomingAnniversaries(limit: number = 10): Promise<Arra
   years: number;
   days_until: number;
 }>> {
-  const supabase = await createServerClient();
+  const db = getDb();
   
   // Get all users with start dates
-  const { data: users } = await supabase
-    .from("users")
-    .select("id, full_name, start_date")
-    .not("start_date", "is", null)
-    .eq("is_active", true);
+  const usersData = await db
+    .select({
+      id: users.id,
+      full_name: users.full_name,
+      start_date: users.start_date,
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.is_active, true)
+      )
+    );
   
-  if (!users) return [];
+  if (!usersData) return [];
   
   const today = new Date();
   const upcomingAnniversaries = [];
   
-  for (const user of users) {
+  for (const user of usersData) {
+    if (!user.start_date) continue;
     const anniversaryInfo = await getAnniversaryInfo(user.start_date, user.id, today);
     
     if (anniversaryInfo && anniversaryInfo.daysUntilNext <= 365) {
@@ -224,7 +238,7 @@ export async function getUpcomingAnniversaries(limit: number = 10): Promise<Arra
   // Sort by days until anniversary and limit results
   return upcomingAnniversaries
     .sort((a, b) => a.days_until - b.days_until)
-    .slice(0, limit);
+    .slice(0, limit) as any;
 }
 
 /**
@@ -239,23 +253,31 @@ export async function getThisMonthAnniversaries(): Promise<Array<{
   years: number;
   days_until: number;
 }>> {
-  const supabase = await createServerClient();
+  const db = getDb();
   
   // Get all users with start dates
-  const { data: users } = await supabase
-    .from("users")
-    .select("id, full_name, start_date")
-    .not("start_date", "is", null)
-    .eq("is_active", true);
+  const usersData = await db
+    .select({
+      id: users.id,
+      full_name: users.full_name,
+      start_date: users.start_date,
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.is_active, true)
+      )
+    );
   
-  if (!users) return [];
+  if (!usersData) return [];
   
   const today = new Date();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
   const thisMonthAnniversaries = [];
   
-  for (const user of users) {
+  for (const user of usersData) {
+    if (!user.start_date) continue;
     const start = new Date(user.start_date);
     const anniversaryThisYear = new Date(currentYear, start.getMonth(), start.getDate());
     
@@ -284,42 +306,8 @@ export async function getThisMonthAnniversaries(): Promise<Array<{
   }
   
   // Sort by day of month
-  return thisMonthAnniversaries.sort((a, b) => a.anniversary_date.getDate() - b.anniversary_date.getDate());
+  return thisMonthAnniversaries.sort((a, b) => a.anniversary_date.getDate() - b.anniversary_date.getDate()) as any;
 }
 
-/**
- * Get anniversary message based on years
- */
-export function getAnniversaryMessage(fullName: string, years: number): string {
-  if (years === 1) {
-    return `Happy 1st Work Anniversary, ${fullName}! 🎉`;
-  } else if (years === 2) {
-    return `Happy 2nd Work Anniversary, ${fullName}! 🎊`;
-  } else if (years === 3) {
-    return `Happy 3rd Work Anniversary, ${fullName}! 🏆`;
-  } else if (years === 5) {
-    return `Happy 5th Work Anniversary, ${fullName}! 🎖️`;
-  } else if (years === 10) {
-    return `Happy 10th Work Anniversary, ${fullName}! 💎`;
-  } else {
-    return `Happy ${years}${getOrdinalSuffix(years)} Work Anniversary, ${fullName}! 🎉`;
-  }
-}
-
-/**
- * Get ordinal suffix for numbers
- */
-export function getOrdinalSuffix(num: number): string {
-  const j = num % 10;
-  const k = num % 100;
-  if (j === 1 && k !== 11) {
-    return "st";
-  }
-  if (j === 2 && k !== 12) {
-    return "nd";
-  }
-  if (j === 3 && k !== 13) {
-    return "rd";
-  }
-  return "th";
-} 
+// Note: getAnniversaryMessage and getOrdinalSuffix moved to client-utils.ts
+// to avoid server-side dependencies in client components 
