@@ -1,4 +1,5 @@
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { sql } from "drizzle-orm";
 import { Pool } from "pg";
 
 // Global singleton pattern for connection pooling
@@ -13,12 +14,21 @@ function createPool(): Pool {
     throw new Error("Missing DATABASE_URL environment variable for Postgres");
   }
   
+  console.log("Creating database pool with URL:", DATABASE_URL.replace(/:[^:]*@/, ':***@')); // Log URL without password
+  
   return new Pool({
     connectionString: DATABASE_URL,
-    max: 20,                    // Maximum connections in pool
-    min: 5,                     // Minimum connections to maintain
-    idleTimeoutMillis: 30000,   // Close idle connections after 30s
-    connectionTimeoutMillis: 2000, // Timeout for getting connection
+    max: 5,                     // Very low max connections for serverless
+    min: 0,                     // No minimum connections for serverless
+    idleTimeoutMillis: 10000,   // Short idle timeout for serverless
+    connectionTimeoutMillis: 60000, // Very long connection timeout for network latency
+    // Serverless optimizations
+    allowExitOnIdle: true,      // Allow process to exit when idle
+    // SSL configuration for production
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    // Additional serverless optimizations
+    keepAlive: true,            // Keep connections alive
+    keepAliveInitialDelayMillis: 0, // Start keep-alive immediately
   });
 }
 
@@ -53,6 +63,61 @@ export function getDb(): NodePgDatabase {
     globalDb = drizzle(pool);
   }
   return globalDb;
+}
+
+// Add connection health check
+export async function checkDatabaseHealth(): Promise<boolean> {
+  try {
+    const db = getDb();
+    await db.execute(sql`SELECT 1`);
+    console.log("Database health check passed");
+    return true;
+  } catch (error) {
+    console.error("Database health check failed:", error);
+    return false;
+  }
+}
+
+// Warm up database connection for serverless environments
+export async function warmUpConnection(): Promise<void> {
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      console.log("Warming up database connection for serverless...");
+      const db = getDb();
+      // Execute a simple query to establish connection
+      await db.execute(sql`SELECT 1`);
+      console.log("Database connection warmed up successfully");
+    } catch (error) {
+      console.error("Failed to warm up database connection:", error);
+      // Don't throw error, just log it
+    }
+  }
+}
+
+// Add retry logic for database operations
+export async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Database operation failed (attempt ${attempt}/${maxRetries}):`, error);
+      
+      if (attempt < maxRetries) {
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      }
+    }
+  }
+  
+  throw new Error(`Database operation failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`);
 }
 
 // Build-time safe database getter

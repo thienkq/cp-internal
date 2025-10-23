@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
-import { getDb, getDbSafe } from "@/db"
+import { getDb, getDbSafe, withRetry, checkDatabaseHealth, warmUpConnection } from "@/db"
 import { users, accounts, sessions, verificationTokens } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { randomUUID } from "crypto"
@@ -19,16 +19,79 @@ const validateEnvVars = () => {
   if (!process.env.NEXTAUTH_SECRET) {
     throw new Error("Missing NEXTAUTH_SECRET environment variable")
   }
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error("Missing DATABASE_URL environment variable")
+  }
+
+  if (!process.env.NEXTAUTH_URL) {
+    throw new Error("Missing NEXTAUTH_URL environment variable")
+  }
+}
+
+// Validate database connection with retry logic (optimized for serverless)
+const validateDatabase = async () => {
+  try {
+    console.log("Starting database validation for serverless environment...")
+    
+    // Warm up connection first in production
+    await warmUpConnection()
+    
+    // First check database health with longer timeout
+    const isHealthy = await withRetry(async () => {
+      return await checkDatabaseHealth()
+    }, 2, 5000) // 2 retries, 5 second delay
+    
+    if (!isHealthy) {
+      throw new Error("Database health check failed")
+    }
+    
+    // Test with retry logic optimized for serverless
+    await withRetry(async () => {
+      const db = getDb()
+      // Test database connection with a simple query
+      await db.select().from(users).limit(1)
+      console.log("Database connection validated successfully")
+      
+      // Test accounts table specifically
+      await db.select().from(accounts).limit(1)
+      console.log("Accounts table accessible")
+      
+      // Test sessions table specifically  
+      await db.select().from(sessions).limit(1)
+      console.log("Sessions table accessible")
+    }, 2, 3000) // 2 retries, 3 second delay for serverless
+    
+  } catch (error) {
+    console.error("Database connection validation failed:", error)
+    console.error("Error details:", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      name: (error as Error).name
+    })
+    throw new Error("Database connection failed: " + (error as Error).message)
+  }
+}
+
+// Create a more robust database adapter
+const createAdapter = () => {
+  try {
+    const db = getDb()
+    return DrizzleAdapter(db, {
+      usersTable: users,
+      accountsTable: accounts,
+      sessionsTable: sessions,
+      verificationTokensTable: verificationTokens,
+    })
+  } catch (error) {
+    console.error("Failed to create database adapter:", error)
+    throw new Error("Database adapter creation failed: " + (error as Error).message)
+  }
 }
 
 const nextAuth = NextAuth({
   debug: process.env.NODE_ENV === 'development',
-  adapter: DrizzleAdapter(getDbSafe() || getDb(), {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
+  adapter: createAdapter(),
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "dummy-client-id-for-build",
@@ -52,6 +115,9 @@ const nextAuth = NextAuth({
       console.log("Account provider:", account?.provider)
 
       try {
+        // Validate database connection first
+        await validateDatabase()
+        
         const db = getDb()
 
         // Find existing user by email
@@ -102,6 +168,11 @@ const nextAuth = NextAuth({
         }
       } catch (error) {
         console.error("Error in signIn callback:", error)
+        console.error("Error details:", {
+          message: (error as Error).message,
+          stack: (error as Error).stack,
+          name: (error as Error).name
+        })
         return false
       }
 
@@ -188,6 +259,8 @@ const nextAuth = NextAuth({
       console.log("Account linked for user:", user.id)
       console.log("Account:", account)
     },
+    // Note: error event handler is not available in current NextAuth version
+    // Error handling is done through try-catch blocks in callbacks
   },
 
   session: {
