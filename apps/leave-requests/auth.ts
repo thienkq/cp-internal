@@ -1,26 +1,29 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
-import { getDb } from "@/db"
+import { getDb, getDbSafe } from "@/db"
 import { users, accounts, sessions, verificationTokens } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { randomUUID } from "crypto"
 
-if (!process.env.GOOGLE_CLIENT_ID) {
-  throw new Error("Missing GOOGLE_CLIENT_ID environment variable")
-}
+// Validate environment variables at runtime, not build time
+const validateEnvVars = () => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new Error("Missing GOOGLE_CLIENT_ID environment variable")
+  }
 
-if (!process.env.GOOGLE_CLIENT_SECRET) {
-  throw new Error("Missing GOOGLE_CLIENT_SECRET environment variable")
-}
+  if (!process.env.GOOGLE_CLIENT_SECRET) {
+    throw new Error("Missing GOOGLE_CLIENT_SECRET environment variable")
+  }
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("Missing NEXTAUTH_SECRET environment variable")
+  if (!process.env.NEXTAUTH_SECRET) {
+    throw new Error("Missing NEXTAUTH_SECRET environment variable")
+  }
 }
 
 const nextAuth = NextAuth({
   debug: process.env.NODE_ENV === 'development',
-  adapter: DrizzleAdapter(getDb(), {
+  adapter: DrizzleAdapter(getDbSafe() || getDb(), {
     usersTable: users,
     accountsTable: accounts,
     sessionsTable: sessions,
@@ -28,8 +31,8 @@ const nextAuth = NextAuth({
   }),
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID || "dummy-client-id-for-build",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "dummy-client-secret-for-build",
       allowDangerousEmailAccountLinking: true,
     }),
   ],
@@ -41,6 +44,9 @@ const nextAuth = NextAuth({
   trustHost: true,
   callbacks: {
     async signIn({ user, account }) {
+      // Validate environment variables at runtime
+      validateEnvVars()
+      
       console.log("=== signIn callback START ===")
       console.log("Google user ID:", user.id, "Email:", user.email)
       console.log("Account provider:", account?.provider)

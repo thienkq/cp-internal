@@ -1,4 +1,3 @@
-import { DATABASE_URL } from "@/config/database";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
@@ -7,6 +6,9 @@ let globalPool: Pool | null = null;
 let globalDb: NodePgDatabase | null = null;
 
 function createPool(): Pool {
+  // Get DATABASE_URL at runtime, not at module load time
+  const DATABASE_URL = process.env.DATABASE_URL;
+  
   if (!DATABASE_URL) {
     throw new Error("Missing DATABASE_URL environment variable for Postgres");
   }
@@ -51,6 +53,19 @@ export function getDb(): NodePgDatabase {
     globalDb = drizzle(pool);
   }
   return globalDb;
+}
+
+// Build-time safe database getter
+export function getDbSafe(): NodePgDatabase | null {
+  try {
+    return getDb();
+  } catch (error) {
+    // During build time, return null if database connection fails
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 // Optional: Graceful shutdown helper
