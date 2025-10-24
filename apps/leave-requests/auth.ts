@@ -91,7 +91,7 @@ const createAdapter = () => {
 
 const nextAuth = NextAuth({
   debug: process.env.NODE_ENV === 'development',
-  adapter: createAdapter(),
+  adapter: createAdapter() as any, // Type assertion to bypass version conflict
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "dummy-client-id-for-build",
