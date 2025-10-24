@@ -18,17 +18,15 @@ function createPool(): Pool {
   
   return new Pool({
     connectionString: DATABASE_URL,
-    max: 5,                     // Very low max connections for serverless
+    max: 3,                     // Very low max connections for serverless
     min: 0,                     // No minimum connections for serverless
     idleTimeoutMillis: 10000,   // Short idle timeout for serverless
-    connectionTimeoutMillis: 60000, // Very long connection timeout for network latency
+    connectionTimeoutMillis: 5000, // Very long connection timeout for network latency
     // Serverless optimizations
     allowExitOnIdle: true,      // Allow process to exit when idle
-    // SSL configuration for production
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     // Additional serverless optimizations
-    keepAlive: true,            // Keep connections alive
-    keepAliveInitialDelayMillis: 0, // Start keep-alive immediately
+    // keepAlive: true,            // Keep connections alive
+    // keepAliveInitialDelayMillis: 0, // Start keep-alive immediately
   });
 }
 
