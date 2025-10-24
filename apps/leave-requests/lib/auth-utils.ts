@@ -4,10 +4,42 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
- * Get the current authenticated user from the database
- * Returns just the user object (not { user, supabase })
+ * Get the current authenticated user from session (optimized - no DB query)
+ * Returns user data from session for better performance
  */
 export async function getCurrentUser() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  // Return user data from session (no DB query for optimization)
+  return {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image,
+    full_name: session.user.full_name,
+    role: session.user.role,
+    start_date: session.user.start_date,
+    end_date: session.user.end_date,
+    gender: session.user.gender,
+    position: session.user.position,
+    phone: session.user.phone,
+    date_of_birth: session.user.date_of_birth,
+    is_active: session.user.is_active,
+    manager_id: session.user.manager_id,
+    created_at: session.user.created_at,
+    updated_at: session.user.updated_at,
+  };
+}
+
+/**
+ * Get the current authenticated user from database (fresh data)
+ * Use this when you need the latest user data from the database
+ * This makes a DB query, so use sparingly for performance
+ */
+export async function getCurrentUserFromDb() {
   const session = await auth();
   if (!session?.user?.id) {
     return null;

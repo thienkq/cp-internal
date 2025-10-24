@@ -185,11 +185,26 @@ const nextAuth = NextAuth({
       console.log("Session object:", JSON.stringify(session, null, 2))
       console.log("User object:", JSON.stringify(user, null, 2))
 
-      // Add user data to session
+      // Add ALL user data to session for optimization
       if (session.user && user) {
+        const userData = user as any; // Type assertion for database user fields
         session.user.id = user.id
-        session.user.role = (user as any).role as string
-        console.log("Session user updated with ID:", session.user.id, "Role:", session.user.role)
+        session.user.role = userData.role as string
+        session.user.full_name = userData.full_name as string
+        session.user.email = user.email
+        session.user.name = user.name
+        session.user.image = user.image
+        session.user.date_of_birth = userData.date_of_birth as string
+        session.user.start_date = userData.start_date as string
+        session.user.end_date = userData.end_date as string
+        session.user.gender = userData.gender as string
+        session.user.position = userData.position as string
+        session.user.phone = userData.phone as string
+        session.user.is_active = userData.is_active as boolean
+        session.user.manager_id = userData.manager_id as string
+        session.user.created_at = userData.created_at as string
+        session.user.updated_at = userData.updated_at as string
+        console.log("Session user updated with all fields:", session.user.id, "Role:", session.user.role)
       } else {
         console.log("Missing session.user or user object")
       }
